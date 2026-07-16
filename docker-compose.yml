@@ -1,0 +1,32 @@
+services:
+  sas-agent:
+    build:
+      context: ..
+      dockerfile: sas-agent/Dockerfile
+    container_name: sas-agent
+    ports:
+      - "${HOST_RSA_PORT:-9000}:9000"
+      - "${HOST_ECC_PORT:-9001}:9001"
+    environment:
+      BAND_LOW: "3550000000"
+      BAND_HIGH: "3700000000"
+      SAS_DATABASE_PATH: /data/sas_mvp.db
+    volumes:
+      - sas-agent-data:/data
+      - ../src/harness/certs:/app/src/harness/certs:ro
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import socket; s=socket.socket(); s.settimeout(2); s.connect(('127.0.0.1', 9000))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 20s
+
+volumes:
+  sas-agent-data:

@@ -1,0 +1,5 @@
+# Overlay for regression tests: UUT must reach peer SAS-TH on host localhost:9010.
+services:
+  sas-agent:
+    network_mode: host
+    ports: []

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -16,8 +17,19 @@ MISSING_PARAM = 102
 INVALID_PARAM = 103
 UNSUPPORTED_SPECTRUM = 300
 
-CBRS_LOW_HZ = 3_550_000_000
-CBRS_HIGH_HZ = 3_700_000_000
+_DEFAULT_BAND_LOW_HZ = 3_550_000_000
+_DEFAULT_BAND_HIGH_HZ = 3_700_000_000
+
+
+def _band_limit_hz(name: str, default: int) -> int:
+    raw = os.environ.get(name)
+    if raw is None or not str(raw).strip():
+        return default
+    return int(raw)
+
+
+CBRS_LOW_HZ = _band_limit_hz("BAND_LOW", _DEFAULT_BAND_LOW_HZ)
+CBRS_HIGH_HZ = _band_limit_hz("BAND_HIGH", _DEFAULT_BAND_HIGH_HZ)
 CHANNEL_HZ = 10_000_000
 FSS_PROTECTION_KM = 150.0
 FSS_EXCLUSION_LOW_HZ = 3_650_000_000

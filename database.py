@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import threading
 from pathlib import Path
 
@@ -9,7 +10,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-DB_PATH = Path(__file__).resolve().parent / "sas_mvp.db"
+_default_db = Path(__file__).resolve().parent / "sas_mvp.db"
+_db_override = os.environ.get("SAS_DATABASE_PATH", "").strip()
+DB_PATH = Path(_db_override) if _db_override else _default_db
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 DATABASE_URL = f"sqlite:///{DB_PATH}"
 
 engine = create_engine(
