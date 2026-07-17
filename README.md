@@ -37,6 +37,22 @@ source .venv/bin/activate
 python main.py
 ```
 
+To parameterize the RF / regulatory package without changing code, pass a JSON
+band profile. Built-in equivalents are under `examples/`:
+
+```bash
+# CBRS / WInnForum (3550–3700 MHz) — use this to verify CBRS behaviour
+export BAND_PROFILE_FILE=./examples/band_profile.cbrs_winnforum.json
+
+# Anatel private networks (3700–3800 MHz)
+# export BAND_PROFILE_FILE=./examples/band_profile.br_anatel_privativa.json
+
+python main.py
+```
+
+Or select a built-in profile with `BAND_PROFILE=cbrs_winnforum` (default) or
+`BAND_PROFILE=br_anatel_privativa`. See [docs/band_profiles.md](docs/band_profiles.md).
+
 The service requires `server.cert`, `server.key`, `server-ecc.cert`,
 `server-ecc.key`, and `ca.cert` in `../src/harness/certs`.
 

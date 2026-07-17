@@ -111,7 +111,8 @@ class ProfileManagerTests(unittest.TestCase):
     def setUp(self):
         pm.reset_active_band_profile()
         self._env = {
-            k: os.environ.get(k) for k in ("BAND_PROFILE", "BAND_LOW", "BAND_HIGH")
+            k: os.environ.get(k)
+            for k in ("BAND_PROFILE", "BAND_PROFILE_FILE", "BAND_LOW", "BAND_HIGH")
         }
 
     def tearDown(self):
@@ -124,6 +125,7 @@ class ProfileManagerTests(unittest.TestCase):
 
     def test_default_is_cbrs(self):
         os.environ.pop("BAND_PROFILE", None)
+        os.environ.pop("BAND_PROFILE_FILE", None)
         profile = pm.initialize_active_profile(force=True)
         self.assertEqual(profile.profile_id, CBRS_WINNFORUM_PROFILE_ID)
 
@@ -176,10 +178,49 @@ class ProfileManagerTests(unittest.TestCase):
         pm.register_profile("lab_band", factory)
         self.assertIn("lab_band", pm.list_profile_ids())
         os.environ["BAND_PROFILE"] = "lab_band"
+        os.environ.pop("BAND_PROFILE_FILE", None)
         os.environ.pop("BAND_LOW", None)
         os.environ.pop("BAND_HIGH", None)
         profile = pm.initialize_active_profile(force=True)
         self.assertEqual(profile.channel_width_hz, 20_000_000)
+
+    def test_profile_file_env_takes_precedence(self):
+        import json
+        import tempfile
+
+        payload = {
+            "profile_id": "from_file",
+            "band_low_hz": 3_800_000_000,
+            "band_high_hz": 3_900_000_000,
+            "channel_width_hz": 20_000_000,
+            "regulatory_rule_id": "FILE_CUSTOM",
+            "protection": {"pal_gaa": False, "esc": False},
+        }
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, encoding="utf-8"
+        ) as handle:
+            json.dump(payload, handle)
+            path = handle.name
+        try:
+            os.environ["BAND_PROFILE"] = CBRS_WINNFORUM_PROFILE_ID
+            os.environ["BAND_PROFILE_FILE"] = path
+            os.environ.pop("BAND_LOW", None)
+            os.environ.pop("BAND_HIGH", None)
+            profile = pm.initialize_active_profile(force=True)
+            self.assertEqual(profile.profile_id, "from_file")
+            self.assertEqual(profile.channel_width_hz, 20_000_000)
+            self.assertEqual(profile.regulatory_rule_id, "FILE_CUSTOM")
+            self.assertIn("from_file", pm.list_profile_ids())
+        finally:
+            try:
+                os.unlink(path)
+            except OSError:
+                pass
+
+    def test_missing_profile_file_raises(self):
+        os.environ["BAND_PROFILE_FILE"] = "/tmp/does-not-exist-band-profile.json"
+        with self.assertRaises(FileNotFoundError):
+            pm.initialize_active_profile(force=True)
 
 
 class MeasReportProfileTests(unittest.TestCase):

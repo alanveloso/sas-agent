@@ -209,7 +209,7 @@ def br_anatel_privativa_profile() -> BandProfile:
 
 
 def profile_from_mapping(data: Mapping[str, object]) -> BandProfile:
-    """Build a BandProfile from a plain dict (config / future YAML)."""
+    """Build a BandProfile from a plain dict (JSON config / mapping)."""
     protection_raw = data.get("protection") or {}
     if not isinstance(protection_raw, Mapping):
         raise TypeError("protection must be a mapping")
