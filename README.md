@@ -102,6 +102,7 @@ Local authorization-lifecycle checks:
 ## Documentation
 
 - [Architecture and authorization lifecycle](docs/architecture.md)
+- [API reference: CBSD–SAS, Control Plane–SAS, and SAS–SAS](docs/api.md)
 - [Band profiles](docs/band_profiles.md)
 - [Testing and third-party code](docs/testing.md)
 
