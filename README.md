@@ -239,16 +239,13 @@ persisted PAL fields. Newly issued PAL grants are bounded so that
 
 **Revocation / eviction**
 
-The intended control-plane contract represents revocation by sending the same
-`palId` with an expiration in the past. A complete enforcement implementation
-must then terminate grants derived from that PAL and return WInnForum response
-code `500` with an expired `transmitExpireTime` on their next Heartbeat.
-
-The current code persists the retroactive expiration, but does **not** yet link
-existing grants back to the PAL and mark them `terminated`. Consequently, this
-operation prevents reliable future PAL use but does not provide immediate
-eviction of an already active grant. Treat immediate revocation as an open
-integration requirement, not as a production guarantee.
+The control-plane contract represents revocation by sending the same `palId`
+with `licenseStatus` other than `VALID` and/or an expiration in the past. The
+agent mirrors each PAL into a generic `AuthorizationSource`, terminates every
+Grant derived from that source in the same transaction, and fail-closes the
+next Heartbeat with WInnForum response code `500` (`TERMINATED_GRANT`) and a
+`transmitExpireTime` in the past. Successful Heartbeat renewals never extend
+`transmitExpireTime` or `grantExpireTime` beyond `authorization_expires_at`.
 
 ## Executando os Testes de Conformidade (WInnForum)
 
@@ -260,10 +257,17 @@ and the WINNF-TS-0061 test suites.
 |---|---:|---|
 | Spectrum Inquiry (`SIQ`) | 12/12 passing | Channel discovery, PAL/GAA availability, and error handling |
 | Grant (`GRA`) | 16/16 passing | Grant authorization, channel rules, conflicts, and expiration bounds |
+| Heartbeat (`HBT`) | 12/12 passing | Transmit windows, renewals, termination / suspension codes |
 
 These counts are a recorded regression baseline, not a certification claim.
 Run the suites again after changes to infrastructure, policy, persistence, or
 frequency configuration.
+
+Local authorization-lifecycle checks (no Docker harness required):
+
+```bash
+.venv/bin/python -m unittest tests.test_authorization_lifecycle -v
+```
 
 O test harness oficial não é armazenado nem baixado para a árvore deste
 repositório. O `Dockerfile.harness` clona uma revisão validada do projeto
@@ -274,7 +278,7 @@ da imagem `sas-harness`. Trate essa imagem como uma caixa preta imutável:
 A única dependência da máquina host é o **Docker**. Não é necessário instalar
 Git, Python nem as bibliotecas legadas do harness localmente.
 
-Execute a suíte SIQ/GRA contra o agente local:
+Execute as suítes SIQ/GRA/HBT contra o agente local:
 
 ```bash
 ./run_cbrs_tests.sh
@@ -289,8 +293,9 @@ O runner, sem intervenção manual:
 - extrai apenas os certificados para um diretório temporário fora do
   repositório, removido ao final;
 - sobe o `sas-agent` via Docker Compose (`network_mode: host`);
-- roda `WINNF_FT_S_SIQ_testcase` e `WINNF_FT_S_GRA_testcase` dentro do
-  container do harness, com `sas.cfg` apontando para `localhost:9000/9001`;
+- roda `WINNF_FT_S_SIQ_testcase`, `WINNF_FT_S_GRA_testcase` e
+  `WINNF_FT_S_HBT_testcase` dentro do container do harness, com `sas.cfg`
+  apontando para `localhost:9000/9001`;
 - restaura a configuração original e derruba os contêineres ao final.
 
 > **ALERTA: o test harness oficial do WInnForum recomenda Python 3.11 e declara
@@ -302,8 +307,11 @@ O runner, sem intervenção manual:
 ## Implementation notes
 
 - FastAPI provides the HTTP interfaces.
-- SQLAlchemy and SQLite persist CBSD, grant, PAL, peer SAS, and injected
-  regulatory state.
+- SQLAlchemy and SQLite persist CBSD, grant, PAL, authorization sources, peer
+  SAS, and injected regulatory state.
+- Grants bind to a generic authorization origin (`authorization_source_type` /
+  `authorization_source_id` / `authorization_expires_at`) so control-plane
+  revocations cascade into Heartbeat termination.
 - mTLS authenticates CBSDs, administrators, and peer SAS nodes.
 - The Docker image exposes ports `9000` and `9001` and persists its database
   under `/data`.

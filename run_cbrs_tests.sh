@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CBRS regression: Docker sas-agent + WINNF SIQ/GRA harness suites.
+# CBRS regression: Docker sas-agent + WINNF SIQ/GRA/HBT harness suites.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -108,6 +108,7 @@ FAILED=0
 SUITES=(
   testcases.WINNF_FT_S_SIQ_testcase
   testcases.WINNF_FT_S_GRA_testcase
+  testcases.WINNF_FT_S_HBT_testcase
 )
 
 for suite in "${SUITES[@]}"; do

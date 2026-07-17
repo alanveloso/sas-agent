@@ -9,6 +9,12 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from models.models import AdminInjectedData, BlacklistedFccId, Cbsd, Grant
+from services.authorization_service import (
+    AUTH_TERMINATION_REASONS,
+    clamp_datetime,
+    is_authorization_valid,
+    utc_now,
+)
 from services.grant_service import DEFAULT_GRANT_DURATION_SEC, HEARTBEAT_INTERVAL_SEC
 from services.meas_report import (
     FLAG_DPA_ACTIVE,
@@ -42,14 +48,16 @@ def _fmt(dt: datetime) -> str:
 
 
 def _past_tx() -> datetime:
-    return datetime.utcnow().replace(microsecond=0) - timedelta(seconds=1)
+    return utc_now() - timedelta(seconds=1)
 
 
-def _future_tx(grant_expire: datetime) -> datetime:
-    tx = datetime.utcnow().replace(microsecond=0) + timedelta(seconds=TRANSMIT_EXPIRE_SEC)
-    # transmitExpireTime must be ≤ grantExpireTime.
-    if tx > grant_expire.replace(microsecond=0):
-        tx = grant_expire.replace(microsecond=0)
+def _future_tx(
+    grant_expire: datetime, authorization_expires_at: datetime | None = None
+) -> datetime:
+    tx = utc_now() + timedelta(seconds=TRANSMIT_EXPIRE_SEC)
+    # transmitExpireTime must be ≤ grantExpireTime and ≤ authorization ceiling.
+    tx = clamp_datetime(tx, grant_expire)
+    tx = clamp_datetime(tx, authorization_expires_at)
     return tx
 
 
@@ -106,6 +114,21 @@ def _grant_overlaps_active_dpa(db: Session, grant: Grant) -> bool:
     return False
 
 
+def _terminate_for_authorization(
+    grant: Grant, reason: str
+) -> None:
+    grant.terminated = True
+    grant.termination_reason = reason
+    grant.authorized = False
+
+
+def _authorization_failure_response(
+    grant: Grant, cbsd_id: str, grant_id: str, reason: str
+) -> dict[str, Any]:
+    _terminate_for_authorization(grant, reason)
+    return _base(TERMINATED_GRANT, cbsd_id=cbsd_id, grant_id=grant_id)
+
+
 def process_heartbeat(
     db: Session, requests: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
@@ -146,6 +169,48 @@ def process_heartbeat(
             )
             continue
 
+        # Fail-closed authorization revalidation before generic terminated handling.
+        # Missing / revoked / expired sources → 500 TERMINATED_GRANT.
+        now = utc_now()
+        if (
+            grant.termination_reason in AUTH_TERMINATION_REASONS
+            and grant.terminated
+        ):
+            responses.append(
+                _base(TERMINATED_GRANT, cbsd_id=cbsd_id, grant_id=grant_id)
+            )
+            continue
+
+        auth_ok, auth_reason, auth_source = is_authorization_valid(
+            db,
+            grant.authorization_source_type,
+            grant.authorization_source_id,
+            now=now,
+        )
+        if not auth_ok:
+            responses.append(
+                _authorization_failure_response(
+                    grant,
+                    cbsd_id,
+                    grant_id,
+                    auth_reason or "AUTHORIZATION_INVALID",
+                )
+            )
+            continue
+
+        # Keep grant snapshot in sync with authoritative ceiling.
+        if auth_source is not None:
+            grant.authorization_expires_at = auth_source.expires_at
+
+        auth_ceiling = grant.authorization_expires_at
+        if auth_ceiling is not None and auth_ceiling.replace(microsecond=0) <= now:
+            responses.append(
+                _authorization_failure_response(
+                    grant, cbsd_id, grant_id, "AUTHORIZATION_EXPIRED"
+                )
+            )
+            continue
+
         # GRA_6: peer FAD reports an active grant for the same CBSD → terminate (500).
         from services.cpas_service import peer_has_grant_for_cbsd
 
@@ -176,9 +241,7 @@ def process_heartbeat(
             )
             continue
 
-        if grant.grant_expire_time.replace(microsecond=0) <= datetime.utcnow().replace(
-            microsecond=0
-        ):
+        if grant.grant_expire_time.replace(microsecond=0) <= now:
             responses.append(
                 _base(INVALID_PARAM, cbsd_id=cbsd_id, grant_id=grant_id)
             )
@@ -234,11 +297,25 @@ def process_heartbeat(
                 continue
 
         if req.get("grantRenew") is True:
-            grant.grant_expire_time = datetime.utcnow() + timedelta(
-                seconds=DEFAULT_GRANT_DURATION_SEC
-            )
+            renewed = utc_now() + timedelta(seconds=DEFAULT_GRANT_DURATION_SEC)
+            grant.grant_expire_time = clamp_datetime(renewed, auth_ceiling)
+            if grant.grant_expire_time <= now:
+                responses.append(
+                    _authorization_failure_response(
+                        grant, cbsd_id, grant_id, "AUTHORIZATION_EXPIRED"
+                    )
+                )
+                continue
 
-        tx = _future_tx(grant.grant_expire_time)
+        tx = _future_tx(grant.grant_expire_time, auth_ceiling)
+        if tx <= now:
+            responses.append(
+                _authorization_failure_response(
+                    grant, cbsd_id, grant_id, "AUTHORIZATION_EXPIRED"
+                )
+            )
+            continue
+
         grant.transmit_expire_time = tx
         grant.authorized = True
 

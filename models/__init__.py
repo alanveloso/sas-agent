@@ -1,5 +1,6 @@
 from models.models import (
     AdminInjectedData,
+    AuthorizationSource,
     BlacklistedFccId,
     Cbsd,
     ConditionalRegistration,
@@ -17,6 +18,7 @@ from models.models import (
 
 __all__ = [
     "AdminInjectedData",
+    "AuthorizationSource",
     "BlacklistedFccId",
     "Cbsd",
     "ConditionalRegistration",

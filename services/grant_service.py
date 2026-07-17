@@ -10,6 +10,17 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from models.models import BlacklistedFccId, Cbsd, FccIdRecord, Grant
+from services.authorization_service import (
+    GAA_SOURCE_ID,
+    SOURCE_TYPE_GAA,
+    SOURCE_TYPE_PAL,
+    clamp_datetime,
+    ensure_gaa_authorization,
+    is_authorization_valid,
+    parse_utc,
+    sync_grant_authorization_snapshot,
+    utc_now,
+)
 from services.geometry import point_in_geojson
 from services.spectrum_inquiry_service import (
     CBRS_HIGH_HZ,
@@ -121,8 +132,9 @@ def _has_freq_conflict(
 def _ppa_pal_context(
     db: Session, cbsd: Cbsd
 ) -> list[dict[str, Any]]:
-    """Return list of {low, high, in_cluster, in_ppa, license_exp} for linked PPAs."""
+    """Return list of PAL contexts for linked PPAs (includes palId / status)."""
     lat, lon = _cbsd_location(cbsd)
+    # Active-only PALs: revoked/expired licenses never authorize a Grant.
     pals = _load_injected(db, "pal")
     zones = _load_injected(db, "zone")
     pal_by_id = {p.get("palId"): p for p in pals if p.get("palId")}
@@ -149,11 +161,13 @@ def _ppa_pal_context(
             license_exp = (pal.get("license") or {}).get("licenseExpiration")
             contexts.append(
                 {
+                    "pal_id": pal_id,
                     "low": pf[0],
                     "high": pf[1],
                     "in_cluster": in_cluster,
                     "in_ppa": in_ppa,
                     "license_exp": license_exp,
+                    "license_status": pal.get("licenseStatus") or "VALID",
                     "user_id": pal.get("userId"),
                 }
             )
@@ -162,9 +176,9 @@ def _ppa_pal_context(
 
 def _resolve_channel(
     contexts: list[dict[str, Any]], low: int, high: int, *, cbsd_user_id: str
-) -> tuple[int | None, str | None, datetime | None]:
+) -> tuple[int | None, str | None, datetime | None, str | None]:
     """
-    Return (error_code, channel_type, pal_license_exp).
+    Return (error_code, channel_type, pal_license_exp, pal_id).
     error_code None means OK.
     """
     covering_pal: list[dict[str, Any]] = []
@@ -178,37 +192,33 @@ def _resolve_channel(
     # Inside claimed PPA but not in cluster → interference on PAL overlap.
     for ctx in overlapping_pal:
         if ctx["in_ppa"] and not ctx["in_cluster"]:
-            return INTERFERENCE, None, None
+            return INTERFERENCE, None, None, None
 
     # Mix of PAL + GAA: request overlaps PAL for cluster member but not fully inside.
     for ctx in overlapping_pal:
         if ctx["in_cluster"] and not (low >= ctx["low"] and high <= ctx["high"]):
-            return INVALID_PARAM, None, None
+            return INVALID_PARAM, None, None, None
 
     if covering_pal:
         for ctx in covering_pal:
             if ctx["in_cluster"] and ctx.get("user_id") == cbsd_user_id:
-                exp = None
-                if ctx.get("license_exp"):
-                    try:
-                        exp = datetime.strptime(
-                            ctx["license_exp"], "%Y-%m-%dT%H:%M:%SZ"
-                        )
-                    except (TypeError, ValueError):
-                        exp = None
-                return None, "PAL", exp
+                exp = parse_utc(ctx.get("license_exp"))
+                # Expired / malformed PAL must not issue a Grant.
+                if ctx.get("license_exp") and exp is None:
+                    return INTERFERENCE, None, None, None
+                if exp is not None and exp <= utc_now():
+                    return INTERFERENCE, None, None, None
+                return None, SOURCE_TYPE_PAL, exp, ctx.get("pal_id")
         # Fully inside a PAL channel but not authorized → interference.
-        return INTERFERENCE, None, None
+        return INTERFERENCE, None, None, None
 
-    return None, "GAA", None
+    return None, SOURCE_TYPE_GAA, None, None
 
 
-def _grant_expire_time(pal_license_exp: datetime | None) -> datetime:
-    default = datetime.utcnow() + timedelta(seconds=DEFAULT_GRANT_DURATION_SEC)
-    if pal_license_exp is None:
-        return default
-    # Must be ≤ PAL licenseExpiration (GRA.13).
-    return min(default, pal_license_exp)
+def _grant_expire_time(auth_expires_at: datetime | None) -> datetime:
+    default = utc_now() + timedelta(seconds=DEFAULT_GRANT_DURATION_SEC)
+    # Must be ≤ authorization expiration when present (GRA.13 / PAL license).
+    return clamp_datetime(default, auth_expires_at)
 
 
 def process_grant(
@@ -230,6 +240,7 @@ def process_grant(
     responses: list[dict[str, Any]] = []
     # Frequencies approved earlier in this same batch (conflict within batch).
     pending_by_cbsd: dict[str, list[tuple[int, int]]] = {}
+    ensure_gaa_authorization(db)
 
     for req in requests:
         cbsd_id = req.get("cbsdId")
@@ -288,13 +299,35 @@ def process_grant(
             continue
 
         contexts = _ppa_pal_context(db, cbsd)
-        ch_err, channel_type, pal_exp = _resolve_channel(
+        ch_err, channel_type, pal_exp, pal_id = _resolve_channel(
             contexts, low, high, cbsd_user_id=cbsd.user_id
         )
         if ch_err is not None:
             responses.append(_resp(ch_err, cbsd_id=cbsd_id))
             continue
         assert channel_type is not None
+
+        # Resolve and re-validate the authorization source immediately before persist.
+        if channel_type == SOURCE_TYPE_PAL:
+            if not pal_id:
+                responses.append(_resp(INTERFERENCE, cbsd_id=cbsd_id))
+                continue
+            auth_ok, _reason, auth_source = is_authorization_valid(
+                db, SOURCE_TYPE_PAL, str(pal_id)
+            )
+            if not auth_ok or auth_source is None:
+                responses.append(_resp(INTERFERENCE, cbsd_id=cbsd_id))
+                continue
+            auth_expires = auth_source.expires_at or pal_exp
+        else:
+            auth_source = ensure_gaa_authorization(db)
+            auth_ok, _reason, _ = is_authorization_valid(
+                db, SOURCE_TYPE_GAA, GAA_SOURCE_ID
+            )
+            if not auth_ok:
+                responses.append(_resp(INTERFERENCE, cbsd_id=cbsd_id))
+                continue
+            auth_expires = None
 
         # EXZ: CBSD inside / within 50 m of an exclusion zone with overlapping freq → 400.
         lat, lon = _cbsd_location(cbsd)
@@ -336,7 +369,12 @@ def process_grant(
             continue
 
         grant_id = f"grant/{uuid.uuid4().hex}"
-        expire = _grant_expire_time(pal_exp)
+        expire = _grant_expire_time(auth_expires)
+        # Do not issue a grant whose authorization ceiling is already past.
+        if auth_expires is not None and expire <= utc_now():
+            responses.append(_resp(INTERFERENCE, cbsd_id=cbsd_id))
+            continue
+
         from services.federal_db_service import grant_sync_stamp
 
         stamp = grant_sync_stamp(db)
@@ -345,20 +383,22 @@ def process_grant(
         grant_payload["gwbl_gen"] = stamp.get("gwbl", 0)
         grant_payload["exz_gen"] = stamp.get("exz", 0)
         grant_payload["dpa_gen"] = stamp.get("dpa", 0)
-        db.add(
-            Grant(
-                grant_id=grant_id,
-                cbsd_pk=cbsd.id,
-                cbsd_id=cbsd_id,
-                channel_type=channel_type,
-                low_frequency=low,
-                high_frequency=high,
-                max_eirp=max_eirp,
-                grant_expire_time=expire,
-                heartbeat_interval=HEARTBEAT_INTERVAL_SEC,
-                grant_json=json.dumps(grant_payload),
-            )
+        grant = Grant(
+            grant_id=grant_id,
+            cbsd_pk=cbsd.id,
+            cbsd_id=cbsd_id,
+            channel_type=channel_type,
+            low_frequency=low,
+            high_frequency=high,
+            max_eirp=max_eirp,
+            grant_expire_time=expire,
+            heartbeat_interval=HEARTBEAT_INTERVAL_SEC,
+            grant_json=json.dumps(grant_payload),
         )
+        sync_grant_authorization_snapshot(grant, auth_source)
+        if grant.authorization_expires_at is None and auth_expires is not None:
+            grant.authorization_expires_at = auth_expires
+        db.add(grant)
         pending_by_cbsd.setdefault(cbsd_id, []).append((low, high))
         responses.append(
             {

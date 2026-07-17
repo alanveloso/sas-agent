@@ -109,7 +109,8 @@ def _load_injected(db: Session, kind: str) -> list[dict[str, Any]]:
     if kind == "pal":
         from services.pal_service import load_pal_records
 
-        return load_pal_records(db)
+        # Only VALID, non-expired PALs participate in availability.
+        return load_pal_records(db, active_only=True)
     rows = db.query(AdminInjectedData).filter_by(kind=kind).all()
     out: list[dict[str, Any]] = []
     for row in rows:

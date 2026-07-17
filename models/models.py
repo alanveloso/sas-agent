@@ -4,7 +4,17 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
@@ -79,6 +89,13 @@ class Cbsd(Base):
 
 class Grant(Base):
     __tablename__ = "grants"
+    __table_args__ = (
+        Index(
+            "ix_grants_auth_source",
+            "authorization_source_type",
+            "authorization_source_id",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     grant_id: Mapped[str] = mapped_column(String(256), unique=True, index=True)
@@ -94,8 +111,43 @@ class Grant(Base):
     authorized: Mapped[bool] = mapped_column(Boolean, default=False)
     meas_report_requested: Mapped[bool] = mapped_column(Boolean, default=False)
     terminated: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Generic authorization origin (e.g. PAL palId or GAA policy id).
+    authorization_source_id: Mapped[str | None] = mapped_column(
+        String(256), nullable=True, index=True
+    )
+    authorization_source_type: Mapped[str | None] = mapped_column(
+        String(32), nullable=True, index=True
+    )
+    authorization_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime, nullable=True
+    )
+    # Distinguishes auth eviction (Heartbeat 500) from relinquishment (103).
+    termination_reason: Mapped[str | None] = mapped_column(String(64), nullable=True)
     grant_json: Mapped[str] = mapped_column(Text, default="{}")
     cbsd: Mapped[Cbsd] = relationship("Cbsd", back_populates="grants")
+
+
+class AuthorizationSource(Base):
+    """Generic authorization origin that Grants bind to (PAL, GAA policy, …)."""
+
+    __tablename__ = "authorization_sources"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_type", "source_id", name="uq_auth_source_type_id"
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    source_type: Mapped[str] = mapped_column(String(32), index=True)
+    source_id: Mapped[str] = mapped_column(String(256), index=True)
+    # ACTIVE | REVOKED | EXPIRED
+    status: Mapped[str] = mapped_column(String(32), default="ACTIVE", index=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    record_json: Mapped[str] = mapped_column(Text, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
 
 class PalRecord(Base):
