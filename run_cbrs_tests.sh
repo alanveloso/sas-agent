@@ -3,9 +3,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-HARNESS_DIR="$REPO_ROOT/src/harness"
-CERTS_DIR="$HARNESS_DIR/certs"
+HARNESS_IMAGE="sas-harness"
+TEST_DIR=""
+IMAGE_CONTAINER=""
+COMPOSE=(docker compose -f "$SCRIPT_DIR/docker-compose.yml" -f "$SCRIPT_DIR/docker-compose.host.yml")
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -20,41 +21,35 @@ if ! command -v docker >/dev/null 2>&1; then
   exit 1
 fi
 
-if [[ ! -f "$CERTS_DIR/generate_fake_certs.sh" ]]; then
-  fail "Harness não encontrado em $HARNESS_DIR"
-  exit 1
-fi
-
-if [[ ! -f "$CERTS_DIR/server.cert" ]]; then
-  log "Gerando certificados mTLS do harness..."
-  if [[ ! -f "$REPO_ROOT/cert/openssl.cnf" ]]; then
-    fail "Arquivo $REPO_ROOT/cert/openssl.cnf não encontrado."
-    exit 1
+cleanup() {
+  log "Encerrando contêiner sas-agent..."
+  "${COMPOSE[@]}" down --remove-orphans >/dev/null 2>&1 || true
+  if [[ -n "$IMAGE_CONTAINER" ]]; then
+    docker rm "$IMAGE_CONTAINER" >/dev/null 2>&1 || true
   fi
-  (cd "$CERTS_DIR" && bash generate_fake_certs.sh)
-fi
+  if [[ -n "$TEST_DIR" ]]; then
+    rm -rf "$TEST_DIR"
+  fi
+}
+trap cleanup EXIT
 
-PYTHON="${PYTHON:-}"
-if [[ -z "$PYTHON" ]]; then
-  for candidate in \
-    "$REPO_ROOT/.venv/bin/python" \
-    "$SCRIPT_DIR/.venv/bin/python" \
-    python3 \
-    python
-  do
-    if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c "import six" 2>/dev/null; then
-      PYTHON="$candidate"
-      break
-    fi
-  done
-fi
+log "Construindo imagem do harness ($HARNESS_IMAGE)..."
+docker build -f "$SCRIPT_DIR/Dockerfile.harness" -t "$HARNESS_IMAGE" "$SCRIPT_DIR"
 
-if [[ -z "$PYTHON" ]]; then
-  fail "Python com dependência 'six' não encontrado. Crie um venv e instale: pip install six"
-  exit 1
-fi
+TEST_DIR="$(mktemp -d)"
+SAS_CFG_FILE="$TEST_DIR/sas.cfg"
+export HARNESS_CERTS_DIR="$TEST_DIR/certs"
+mkdir -p "$HARNESS_CERTS_DIR"
 
-COMPOSE=(docker compose -f "$SCRIPT_DIR/docker-compose.yml" -f "$SCRIPT_DIR/docker-compose.host.yml")
+log "Extraindo certificados de teste da imagem..."
+IMAGE_CONTAINER="$(docker create "$HARNESS_IMAGE")"
+docker cp "$IMAGE_CONTAINER:/harness/src/harness/certs/." "$HARNESS_CERTS_DIR"
+docker rm "$IMAGE_CONTAINER" >/dev/null
+IMAGE_CONTAINER=""
+
+HARNESS_RUN=(docker run --rm --network host -e HOME=/tmp
+  -v "$SAS_CFG_FILE:/harness/src/harness/sas.cfg:ro"
+  "$HARNESS_IMAGE")
 
 pick_host_ports() {
   HOST_RSA_PORT=9000
@@ -68,13 +63,8 @@ pick_host_ports() {
   export HOST_RSA_PORT HOST_ECC_PORT
 }
 
-write_temp_sas_cfg() {
-  SAS_CFG_BACKUP=""
-  if [[ -f "$HARNESS_DIR/sas.cfg" ]]; then
-    SAS_CFG_BACKUP="$(mktemp)"
-    cp "$HARNESS_DIR/sas.cfg" "$SAS_CFG_BACKUP"
-  fi
-  cat >"$HARNESS_DIR/sas.cfg" <<EOF
+write_sas_cfg() {
+  cat >"$SAS_CFG_FILE" <<EOF
 [SasConfig]
 AdminApiBaseUrl: localhost:${HOST_RSA_PORT}
 CbsdSasRsaBaseUrl: localhost:${HOST_RSA_PORT}
@@ -88,21 +78,8 @@ MaximumBatchSize: 100
 EOF
 }
 
-restore_sas_cfg() {
-  if [[ -n "${SAS_CFG_BACKUP:-}" && -f "$SAS_CFG_BACKUP" ]]; then
-    mv -f "$SAS_CFG_BACKUP" "$HARNESS_DIR/sas.cfg"
-  fi
-}
-
-cleanup() {
-  log "Encerrando contêiner sas-agent..."
-  restore_sas_cfg
-  "${COMPOSE[@]}" down --remove-orphans >/dev/null 2>&1 || true
-}
-trap cleanup EXIT
-
 pick_host_ports
-write_temp_sas_cfg
+write_sas_cfg
 
 log "Subindo sas-agent (faixa CBRS 3550–3700 MHz)..."
 "${COMPOSE[@]}" up -d --build
@@ -125,8 +102,7 @@ if [[ "$ready" -ne 1 ]]; then
   exit 1
 fi
 
-log "Executando suítes de regressão CBRS..."
-cd "$HARNESS_DIR"
+log "Executando suítes de regressão CBRS (no container do harness)..."
 
 FAILED=0
 SUITES=(
@@ -137,7 +113,7 @@ SUITES=(
 for suite in "${SUITES[@]}"; do
   log ""
   log "==> $suite"
-  if "$PYTHON" -m unittest "$suite" -v; then
+  if "${HARNESS_RUN[@]}" python -m unittest "$suite" -v; then
     pass "OK: $suite"
   else
     fail "ERRO: $suite"

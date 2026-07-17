@@ -138,7 +138,7 @@ services:
       - "9101:9001"
     volumes:
       - sas-agent-3700-data:/data
-      - ./src/harness/certs:/app/src/harness/certs:ro
+      - /path/to/winnforum-certs:/app/src/harness/certs:ro
 
 volumes:
   sas-agent-3700-data:
@@ -157,7 +157,7 @@ docker run --rm \
   -e BAND_HIGH=3800000000 \
   -e SAS_DATABASE_PATH=/data/sas_mvp.db \
   -v sas-agent-3700-data:/data \
-  -v "$PWD/src/harness/certs:/app/src/harness/certs:ro" \
+  -v "/path/to/winnforum-certs:/app/src/harness/certs:ro" \
   sas-agent
 ```
 
@@ -250,10 +250,10 @@ operation prevents reliable future PAL use but does not provide immediate
 eviction of an already active grant. Treat immediate revocation as an open
 integration requirement, not as a production guarantee.
 
-## Validation and conformance
+## Executando os Testes de Conformidade (WInnForum)
 
 Protocol behavior is exercised with the
-[WInnForum CBRS SAS Test Harness](https://github.com/Wireless-Innovation-Forum/CBRS-SAS-Test-Harness)
+[WInnForum Spectrum Access System Test Harness](https://github.com/Wireless-Innovation-Forum/Spectrum-Access-System)
 and the WINNF-TS-0061 test suites.
 
 | Suite | Recorded result | Coverage |
@@ -265,23 +265,39 @@ These counts are a recorded regression baseline, not a certification claim.
 Run the suites again after changes to infrastructure, policy, persistence, or
 frequency configuration.
 
-The repository includes a Docker-based regression runner:
+O test harness oficial não é armazenado nem baixado para a árvore deste
+repositório. O `Dockerfile.harness` clona uma revisão validada do projeto
+oficial diretamente durante o build e mantém todo o código de terceiros dentro
+da imagem `sas-harness`. Trate essa imagem como uma caixa preta imutável:
+**nunca altere o código-fonte original dos testes do WInnForum**.
+
+A única dependência da máquina host é o **Docker**. Não é necessário instalar
+Git, Python nem as bibliotecas legadas do harness localmente.
+
+Execute a suíte SIQ/GRA contra o agente local:
 
 ```bash
-./sas-agent/run_cbrs_tests.sh
+./run_cbrs_tests.sh
 ```
 
-To invoke the harness suites directly, start `sas-agent`, configure the harness
-to use ports `9000`/`9001`, and run:
+O runner, sem intervenção manual:
 
-```bash
-cd src/harness
-python -m unittest testcases.WINNF_FT_S_SIQ_testcase -v
-python -m unittest testcases.WINNF_FT_S_GRA_testcase -v
-```
+- constrói a imagem `sas-harness` (Python 3.11 + dependências nativas do
+  harness, com o `GDAL` casado à versão do sistema para evitar o pin
+  incompatível — o `requirements.txt` oficial nunca é editado);
+- clona o harness somente dentro da imagem e gera nela os certificados mTLS;
+- extrai apenas os certificados para um diretório temporário fora do
+  repositório, removido ao final;
+- sobe o `sas-agent` via Docker Compose (`network_mode: host`);
+- roda `WINNF_FT_S_SIQ_testcase` e `WINNF_FT_S_GRA_testcase` dentro do
+  container do harness, com `sas.cfg` apontando para `localhost:9000/9001`;
+- restaura a configuração original e derruba os contêineres ao final.
 
-The harness is a separate project and must have its Python dependencies and
-test certificates installed.
+> **ALERTA: o test harness oficial do WInnForum recomenda Python 3.11 e declara
+> não ser testado no Python 3.12 ou superior. Por isso ele é executado no
+> container `sas-harness` (3.11), e não no Python do host. Bibliotecas legadas e
+> com versões fixas (GDAL, Shapely, pycurl, etc.) podem falhar fora dessa
+> versão; nunca corrija esses problemas editando o código oficial dos testes.**
 
 ## Implementation notes
 

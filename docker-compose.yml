@@ -13,7 +13,7 @@ services:
       SAS_DATABASE_PATH: /data/sas_mvp.db
     volumes:
       - sas-agent-data:/data
-      - ../src/harness/certs:/app/src/harness/certs:ro
+      - ${HARNESS_CERTS_DIR:-./certs}:/app/src/harness/certs:ro
     restart: unless-stopped
     healthcheck:
       test:

@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 sas_mvp.db
 *.db-journal
+mapeamento_paths.log

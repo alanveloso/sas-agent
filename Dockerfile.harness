@@ -1,0 +1,48 @@
+# Test-only image: contains and runs the official WInnForum harness (SIQ/GRA).
+# No harness source is stored or mounted from the sas-agent repository.
+FROM python:3.11-slim
+
+ARG HARNESS_REPOSITORY=https://github.com/Wireless-Innovation-Forum/Spectrum-Access-System.git
+ARG HARNESS_REF=928c3150adf7b31e53a96b695bf1fbdd3284ecb2
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Native toolchain and libraries required by the harness dependencies:
+#   shapely -> libgeos, pykml/lxml -> libxml2/libxslt, pycurl -> libcurl,
+#   pyOpenSSL/cryptography -> libssl, GDAL -> libgdal, cert generation -> openssl.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        git \
+        pkg-config \
+        openssl \
+        xxd \
+        libgeos-dev \
+        libxml2-dev \
+        libxslt1-dev \
+        libcurl4-openssl-dev \
+        libssl-dev \
+        libgdal-dev \
+        gdal-bin \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN git clone --filter=blob:none "$HARNESS_REPOSITORY" /harness \
+    && git -C /harness checkout --detach "$HARNESS_REF" \
+    && rm -rf /harness/.git \
+    && cp /harness/requirements.txt /tmp/harness-requirements.txt
+
+# numpy first (GDAL's build needs it), GDAL pinned to the distro's libgdal version
+# to avoid the unbuildable pin in the official file, then the remaining requirements.
+# The official requirements.txt inside /harness is never modified.
+RUN python -m pip install --upgrade pip \
+    && python -m pip install "numpy==1.26.4" \
+    && python -m pip install "GDAL==$(gdal-config --version)" \
+    && grep -viE '^(gdal|numpy)==' /tmp/harness-requirements.txt > /tmp/rest-requirements.txt \
+    && python -m pip install -r /tmp/rest-requirements.txt \
+    && cd /harness/src/harness/certs \
+    && bash generate_fake_certs.sh
+
+WORKDIR /harness/src/harness
+
+CMD ["python", "--version"]
