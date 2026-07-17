@@ -7,14 +7,17 @@ import threading
 from typing import Callable
 
 from domain.band_profile import (
+    BR_ANATEL_PRIVATIVA_PROFILE_ID,
     CBRS_WINNFORUM_PROFILE_ID,
     BandProfile,
+    br_anatel_privativa_profile,
     cbrs_winnforum_profile,
 )
 
 _DEFAULT_PROFILE_ENV = "BAND_PROFILE"
 _lock = threading.RLock()
 _registry: dict[str, Callable[[], BandProfile]] = {
+    BR_ANATEL_PRIVATIVA_PROFILE_ID: br_anatel_privativa_profile,
     CBRS_WINNFORUM_PROFILE_ID: cbrs_winnforum_profile,
 }
 _active: BandProfile | None = None

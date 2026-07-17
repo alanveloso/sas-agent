@@ -149,6 +149,7 @@ class BandProfile:
 
 
 CBRS_WINNFORUM_PROFILE_ID = "cbrs_winnforum"
+BR_ANATEL_PRIVATIVA_PROFILE_ID = "br_anatel_privativa"
 
 
 def cbrs_winnforum_profile() -> BandProfile:
@@ -178,6 +179,32 @@ def cbrs_winnforum_profile() -> BandProfile:
         grant_duration_sec=900,
         heartbeat_interval_sec=60,
         transmit_expire_sec=60,
+    )
+
+
+def br_anatel_privativa_profile() -> BandProfile:
+    """Anatel SLP profile for Brazilian private networks in 3.7–3.8 GHz."""
+    return BandProfile(
+        profile_id=BR_ANATEL_PRIVATIVA_PROFILE_ID,
+        band_low_hz=3_700_000_000,
+        band_high_hz=3_800_000_000,
+        channel_width_hz=10_000_000,
+        regulatory_rule_id="ANATEL_SLP_ACT_374",
+        category_a_max_eirp_dbm=47.0,
+        category_b_max_eirp_dbm=47.0,
+        eirp_reference_bandwidth_hz=100_000_000,
+        raster_origin_hz=3_700_000_000,
+        fss_exclusion_low_hz=3_700_000_000,
+        protection=ProtectionFlags(
+            pal_gaa=False,
+            fss_gwbl=True,
+            exclusion_zones=True,
+            border_protection=False,
+            dpa=False,
+            esc=False,
+            quiet_zones=False,
+        ),
+        gaa_policy_id="ANATEL_SLP_ACT_374_COEXISTENCE",
     )
 
 

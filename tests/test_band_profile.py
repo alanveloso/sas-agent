@@ -7,9 +7,11 @@ import unittest
 from dataclasses import FrozenInstanceError
 
 from domain.band_profile import (
+    BR_ANATEL_PRIVATIVA_PROFILE_ID,
     CBRS_WINNFORUM_PROFILE_ID,
     BandProfile,
     ProtectionFlags,
+    br_anatel_privativa_profile,
     cbrs_winnforum_profile,
     profile_from_mapping,
 )
@@ -33,6 +35,22 @@ class BandProfileModelTests(unittest.TestCase):
             p.max_allowed_eirp_mhz("A", fcc_max_eirp=47.0, eirp_capability=20.0),
             10.0,
         )
+
+    def test_br_anatel_privativa_profile(self):
+        p = br_anatel_privativa_profile()
+        self.assertEqual(p.profile_id, BR_ANATEL_PRIVATIVA_PROFILE_ID)
+        self.assertEqual(p.band_low_hz, 3_700_000_000)
+        self.assertEqual(p.band_high_hz, 3_800_000_000)
+        self.assertEqual(p.channel_width_hz, 10_000_000)
+        self.assertEqual(p.regulatory_rule_id, "ANATEL_SLP_ACT_374")
+        self.assertEqual(p.channel_count, 10)
+        self.assertEqual(p.category_a_max_eirp_dbm, 47.0)
+        self.assertEqual(p.category_b_max_eirp_dbm, 47.0)
+        self.assertEqual(p.eirp_reference_bandwidth_hz, 100_000_000)
+        self.assertFalse(p.protection.esc)
+        self.assertFalse(p.protection.dpa)
+        self.assertTrue(p.protection.fss_gwbl)
+        self.assertTrue(p.protection.exclusion_zones)
 
     def test_immutable(self):
         p = cbrs_winnforum_profile()
@@ -108,6 +126,16 @@ class ProfileManagerTests(unittest.TestCase):
         os.environ.pop("BAND_PROFILE", None)
         profile = pm.initialize_active_profile(force=True)
         self.assertEqual(profile.profile_id, CBRS_WINNFORUM_PROFILE_ID)
+
+    def test_anatel_profile_selected_from_environment(self):
+        os.environ["BAND_PROFILE"] = BR_ANATEL_PRIVATIVA_PROFILE_ID
+        os.environ.pop("BAND_LOW", None)
+        os.environ.pop("BAND_HIGH", None)
+        profile = pm.initialize_active_profile(force=True)
+        self.assertEqual(profile.profile_id, BR_ANATEL_PRIVATIVA_PROFILE_ID)
+        self.assertEqual(profile.band_low_hz, 3_700_000_000)
+        self.assertEqual(profile.band_high_hz, 3_800_000_000)
+        self.assertIn(BR_ANATEL_PRIVATIVA_PROFILE_ID, pm.list_profile_ids())
 
     def test_unknown_profile_raises(self):
         with self.assertRaises(KeyError):
