@@ -3,13 +3,13 @@ services:
     build:
       context: ..
       dockerfile: sas-agent/Dockerfile
-    container_name: sas-agent
     ports:
       - "${HOST_RSA_PORT:-9000}:9000"
       - "${HOST_ECC_PORT:-9001}:9001"
     environment:
-      BAND_PROFILE: cbrs_winnforum
-      SAS_DATABASE_PATH: /data/sas_mvp.db
+      BAND_PROFILE: ${BAND_PROFILE:-cbrs_winnforum}
+      BAND_PROFILE_FILE: ${BAND_PROFILE_FILE:-}
+      SAS_DATABASE_PATH: ${SAS_DATABASE_PATH:-/data/sas_mvp.db}
     volumes:
       - sas-agent-data:/data
       - ${HARNESS_CERTS_DIR:-./certs}:/app/src/harness/certs:ro

@@ -65,13 +65,31 @@ Alternatively, run the agent in a container:
 
 ```bash
 export HARNESS_CERTS_DIR=/path/to/winnforum-certs
+# Optional; defaults to cbrs_winnforum
+export BAND_PROFILE=br_anatel_privativa
 docker compose up --build
+```
+
+Use separate Compose project names and host ports to run multiple band
+instances. Each project receives its own database volume:
+
+```bash
+# CBRS instance
+BAND_PROFILE=cbrs_winnforum \
+HOST_RSA_PORT=9000 HOST_ECC_PORT=9001 \
+docker compose -p sas-cbrs up --build -d
+
+# Anatel instance
+BAND_PROFILE=br_anatel_privativa \
+HOST_RSA_PORT=9100 HOST_ECC_PORT=9101 \
+docker compose -p sas-anatel up --build -d
 ```
 
 To stop it:
 
 ```bash
-docker compose down
+docker compose -p sas-cbrs down
+docker compose -p sas-anatel down
 ```
 
 ## WInnForum conformance suite
