@@ -40,6 +40,7 @@ from services.mtls_auth import (
     create_mtls_ssl_context,
     patch_uvicorn_for_client_cert,
 )
+from services.profile_manager import initialize_active_profile
 
 HARNESS_CERTS = ROOT.parent / "src" / "harness" / "certs"
 SSL_CERTFILE = HARNESS_CERTS / "server.cert"
@@ -65,6 +66,7 @@ app.include_router(sas_sas_router)
 
 @app.on_event("startup")
 def on_startup():
+    initialize_active_profile()
     init_db()
 
 

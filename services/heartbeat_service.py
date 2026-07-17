@@ -8,6 +8,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from domain.band_profile import BandProfile
 from models.models import AdminInjectedData, BlacklistedFccId, Cbsd, Grant
 from services.authorization_service import (
     AUTH_TERMINATION_REASONS,
@@ -15,7 +16,6 @@ from services.authorization_service import (
     is_authorization_valid,
     utc_now,
 )
-from services.grant_service import DEFAULT_GRANT_DURATION_SEC, HEARTBEAT_INTERVAL_SEC
 from services.meas_report import (
     FLAG_DPA_ACTIVE,
     FLAG_MEAS_HBT,
@@ -24,6 +24,7 @@ from services.meas_report import (
     cbsd_meas_capabilities,
     validate_meas_report,
 )
+from services.profile_manager import resolve_optional
 from services.spectrum_inquiry_service import (
     _load_injected,
     _overlaps,
@@ -40,7 +41,10 @@ SUSPENDED_GRANT = 501
 UNSYNC_OP_PARAM = 502
 
 # Prefer a short window so HBT.5 finishes quickly; must be ≤ 240 s (WINNF).
-TRANSMIT_EXPIRE_SEC = 60
+_boot = resolve_optional(None)
+TRANSMIT_EXPIRE_SEC = _boot.transmit_expire_sec
+HEARTBEAT_INTERVAL_SEC = _boot.heartbeat_interval_sec
+DEFAULT_GRANT_DURATION_SEC = _boot.grant_duration_sec
 
 
 def _fmt(dt: datetime) -> str:
@@ -52,9 +56,13 @@ def _past_tx() -> datetime:
 
 
 def _future_tx(
-    grant_expire: datetime, authorization_expires_at: datetime | None = None
+    grant_expire: datetime,
+    authorization_expires_at: datetime | None = None,
+    *,
+    profile: BandProfile | None = None,
 ) -> datetime:
-    tx = utc_now() + timedelta(seconds=TRANSMIT_EXPIRE_SEC)
+    active = resolve_optional(profile)
+    tx = utc_now() + timedelta(seconds=active.transmit_expire_sec)
     # transmitExpireTime must be ≤ grantExpireTime and ≤ authorization ceiling.
     tx = clamp_datetime(tx, grant_expire)
     tx = clamp_datetime(tx, authorization_expires_at)
@@ -130,8 +138,12 @@ def _authorization_failure_response(
 
 
 def process_heartbeat(
-    db: Session, requests: list[dict[str, Any]]
+    db: Session,
+    requests: list[dict[str, Any]],
+    *,
+    profile: BandProfile | None = None,
 ) -> list[dict[str, Any]]:
+    active = resolve_optional(profile)
     ask_meas = admin_flag_set(db, FLAG_MEAS_HBT)
     responses: list[dict[str, Any]] = []
 
@@ -229,14 +241,15 @@ def process_heartbeat(
 
         # DPA activation → suspend grant (501), do not terminate (GRA.1).
         # HBT.12 also accepts 501; transmitExpireTime stays in the past via _base.
-        if _grant_overlaps_active_dpa(db, grant):
+        if active.protection.dpa and _grant_overlaps_active_dpa(db, grant):
             responses.append(
                 _base(
                     SUSPENDED_GRANT,
                     cbsd_id=cbsd_id,
                     grant_id=grant_id,
                     grant_expire=grant.grant_expire_time,
-                    heartbeat_interval=grant.heartbeat_interval or HEARTBEAT_INTERVAL_SEC,
+                    heartbeat_interval=grant.heartbeat_interval
+                    or active.heartbeat_interval_sec,
                 )
             )
             continue
@@ -278,7 +291,8 @@ def process_heartbeat(
                     cbsd_id=cbsd_id,
                     grant_id=grant_id,
                     grant_expire=grant.grant_expire_time,
-                    heartbeat_interval=grant.heartbeat_interval or HEARTBEAT_INTERVAL_SEC,
+                    heartbeat_interval=grant.heartbeat_interval
+                    or active.heartbeat_interval_sec,
                 )
             )
             continue
@@ -288,7 +302,9 @@ def process_heartbeat(
         # After SAS asked for WITH_GRANT reports, validate subsequent heartbeats.
         if grant.meas_report_requested and MEAS_WITH_GRANT in capabilities:
             meas_err = validate_meas_report(
-                req.get("measReport"), require_full_cbrs=False
+                req.get("measReport"),
+                require_full_cbrs=False,
+                profile=active,
             )
             if meas_err is not None:
                 responses.append(
@@ -297,7 +313,7 @@ def process_heartbeat(
                 continue
 
         if req.get("grantRenew") is True:
-            renewed = utc_now() + timedelta(seconds=DEFAULT_GRANT_DURATION_SEC)
+            renewed = utc_now() + timedelta(seconds=active.grant_duration_sec)
             grant.grant_expire_time = clamp_datetime(renewed, auth_ceiling)
             if grant.grant_expire_time <= now:
                 responses.append(
@@ -307,7 +323,7 @@ def process_heartbeat(
                 )
                 continue
 
-        tx = _future_tx(grant.grant_expire_time, auth_ceiling)
+        tx = _future_tx(grant.grant_expire_time, auth_ceiling, profile=active)
         if tx <= now:
             responses.append(
                 _authorization_failure_response(
@@ -333,7 +349,8 @@ def process_heartbeat(
                 grant_expire=grant.grant_expire_time
                 if req.get("grantRenew") is True
                 else None,
-                heartbeat_interval=grant.heartbeat_interval or HEARTBEAT_INTERVAL_SEC,
+                heartbeat_interval=grant.heartbeat_interval
+                or active.heartbeat_interval_sec,
                 meas_config=meas_config,
             )
         )

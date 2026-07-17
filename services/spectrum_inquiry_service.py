@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import json
-import os
 from typing import Any
 
 from sqlalchemy.orm import Session
 
+from domain.band_profile import BandProfile
 from models.models import AdminInjectedData, BlacklistedFccId, Cbsd
-from services.geometry import haversine_m, point_in_geojson
+from services.profile_manager import resolve_optional
 
 SUCCESS = 0
 BLACKLISTED = 101
@@ -17,31 +17,36 @@ MISSING_PARAM = 102
 INVALID_PARAM = 103
 UNSUPPORTED_SPECTRUM = 300
 
-_DEFAULT_BAND_LOW_HZ = 3_550_000_000
-_DEFAULT_BAND_HIGH_HZ = 3_700_000_000
+
+def _default_profile() -> BandProfile:
+    return resolve_optional(None)
 
 
-def _band_limit_hz(name: str, default: int) -> int:
-    raw = os.environ.get(name)
-    if raw is None or not str(raw).strip():
-        return default
-    return int(raw)
-
-
-CBRS_LOW_HZ = _band_limit_hz("BAND_LOW", _DEFAULT_BAND_LOW_HZ)
-CBRS_HIGH_HZ = _band_limit_hz("BAND_HIGH", _DEFAULT_BAND_HIGH_HZ)
-CHANNEL_HZ = 10_000_000
-FSS_PROTECTION_KM = 150.0
-FSS_EXCLUSION_LOW_HZ = 3_650_000_000
-RULE_APPLIED = "FCC_PART_96"
+# Eager ints for `from ... import CBRS_LOW_HZ` (snapshot at import / active profile).
+# Prefer injecting BandProfile into process_* entry points.
+_boot = _default_profile()
+CBRS_LOW_HZ = _boot.band_low_hz
+CBRS_HIGH_HZ = _boot.band_high_hz
+CHANNEL_HZ = _boot.channel_width_hz
+FSS_PROTECTION_KM = _boot.fss_protection_km
+FSS_EXCLUSION_LOW_HZ = (
+    _boot.fss_exclusion_low_hz
+    if _boot.fss_exclusion_low_hz is not None
+    else _boot.band_low_hz
+)
+RULE_APPLIED = _boot.regulatory_rule_id
 
 
 def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    from services.geometry import haversine_m
+
     return haversine_m(lat1, lon1, lat2, lon2) / 1000.0
 
 
 def _point_in_geojson(lat: float, lon: float, zone: dict[str, Any] | None) -> bool:
     """Backward-compatible alias used by grant_service imports historically."""
+    from services.geometry import point_in_geojson
+
     return point_in_geojson(lat, lon, zone)
 
 
@@ -64,32 +69,9 @@ def _subtract_range(
     return [(lo, hi) for lo, hi in result if hi > lo]
 
 
-def _split_10mhz(low: int, high: int) -> list[tuple[int, int]]:
-    channels: list[tuple[int, int]] = []
-    # Align to CBRS 10 MHz grid starting at 3550 MHz.
-    start = max(low, CBRS_LOW_HZ)
-    end = min(high, CBRS_HIGH_HZ)
-    if end <= start:
-        return channels
-    aligned = ((start + CHANNEL_HZ - 1) // CHANNEL_HZ) * CHANNEL_HZ
-    # If start is already on-grid and within range, keep it.
-    if start % CHANNEL_HZ == 0:
-        aligned = start
-    elif aligned - CHANNEL_HZ >= start and aligned - CHANNEL_HZ >= CBRS_LOW_HZ:
-        aligned = aligned - CHANNEL_HZ
-    # Prefer exact coverage: if start is mid-channel, emit from exact start.
-    if start < aligned:
-        # Keep leftover head as its own channel so contain-checks can match edges.
-        head_end = min(aligned, end)
-        if head_end > start:
-            channels.append((start, head_end))
-    cur = aligned
-    while cur + CHANNEL_HZ <= end:
-        channels.append((cur, cur + CHANNEL_HZ))
-        cur += CHANNEL_HZ
-    if cur < end:
-        channels.append((cur, end))
-    return channels
+def _split_10mhz(low: int, high: int, profile: BandProfile | None = None) -> list[tuple[int, int]]:
+    """Split spectrum using the active profile channel raster (legacy name kept)."""
+    return resolve_optional(profile).split_channels(low, high)
 
 
 def _cbsd_location(cbsd: Cbsd) -> tuple[float | None, float | None]:
@@ -161,30 +143,45 @@ def _fss_location_and_freq(
 
 
 def _build_available_channels(
-    db: Session, cbsd: Cbsd, inquired: list[dict[str, Any]]
+    db: Session,
+    cbsd: Cbsd,
+    inquired: list[dict[str, Any]],
+    profile: BandProfile,
 ) -> list[dict[str, Any]]:
+    from services.geometry import point_in_geojson
+
     lat, lon = _cbsd_location(cbsd)
     wisps = _load_injected(db, "wisp")
     fsses = _load_injected(db, "fss")
     pals = _load_injected(db, "pal")
     zones = _load_injected(db, "zone")
 
-    # Segments requested ∩ CBRS
+    band_low = profile.band_low_hz
+    band_high = profile.band_high_hz
+    rule_applied = profile.regulatory_rule_id
+    fss_excl_low = (
+        profile.fss_exclusion_low_hz
+        if profile.fss_exclusion_low_hz is not None
+        else band_low
+    )
+
+    # Segments requested ∩ band
     segments: list[tuple[int, int]] = []
     for fr in inquired:
         low = int(fr["lowFrequency"])
         high = int(fr["highFrequency"])
-        clipped_low = max(low, CBRS_LOW_HZ)
-        clipped_high = min(high, CBRS_HIGH_HZ)
+        clipped_low = max(low, band_low)
+        clipped_high = min(high, band_high)
         if clipped_high > clipped_low:
             segments.append((clipped_low, clipped_high))
 
     # Exclusions from GWPZ / WISP when CBSD is inside the zone.
     if lat is not None and lon is not None:
-        from services.exclusion_zone_service import exclusion_freq_ranges_at_point
+        if profile.protection.exclusion_zones:
+            from services.exclusion_zone_service import exclusion_freq_ranges_at_point
 
-        for ex_low, ex_high in exclusion_freq_ranges_at_point(db, lat, lon):
-            segments = _subtract_range(segments, ex_low, ex_high)
+            for ex_low, ex_high in exclusion_freq_ranges_at_point(db, lat, lon):
+                segments = _subtract_range(segments, ex_low, ex_high)
 
         for wisp in wisps:
             zone = wisp.get("zone")
@@ -192,59 +189,57 @@ def _build_available_channels(
             if freq and point_in_geojson(lat, lon, zone):
                 segments = _subtract_range(segments, freq[0], freq[1])
 
-        # FSS neighborhood: exclude 3650–3700 MHz within 150 km.
-        for fss in fsses:
-            info = _fss_location_and_freq(fss)
-            if not info:
-                continue
-            f_lat, f_lon, _fl, _fh = info
-            if _haversine_km(lat, lon, f_lat, f_lon) <= FSS_PROTECTION_KM:
-                segments = _subtract_range(
-                    segments, FSS_EXCLUSION_LOW_HZ, CBRS_HIGH_HZ
-                )
+        # FSS neighborhood: exclude fss_exclusion_low–band_high within protection radius.
+        if profile.protection.fss_gwbl:
+            for fss in fsses:
+                info = _fss_location_and_freq(fss)
+                if not info:
+                    continue
+                f_lat, f_lon, _fl, _fh = info
+                if _haversine_km(lat, lon, f_lat, f_lon) <= profile.fss_protection_km:
+                    segments = _subtract_range(segments, fss_excl_low, band_high)
 
     # PAL / PPA handling.
-    pal_by_id = {p.get("palId"): p for p in pals if p.get("palId")}
     pal_channels: list[tuple[int, int]] = []
-    user_pal_ids = {
-        p.get("palId")
-        for p in pals
-        if p.get("userId") == cbsd.user_id and p.get("palId")
-    }
+    if profile.protection.pal_gaa:
+        pal_by_id = {p.get("palId"): p for p in pals if p.get("palId")}
+        user_pal_ids = {
+            p.get("palId")
+            for p in pals
+            if p.get("userId") == cbsd.user_id and p.get("palId")
+        }
 
-    for zone_payload in zones:
-        record = zone_payload.get("record") or zone_payload
-        if record.get("usage") != "PPA" and "ppaInfo" not in record:
-            continue
-        ppa_info = record.get("ppaInfo") or {}
-        cluster = set(ppa_info.get("cbsdReferenceId") or [])
-        in_cluster = cbsd.cbsd_id in cluster
-        in_ppa = False
-        if lat is not None and lon is not None:
-            in_ppa = point_in_geojson(lat, lon, record.get("zone"))
-
-        for pal_id in ppa_info.get("palId") or []:
-            pal = pal_by_id.get(pal_id)
-            if not pal:
+        for zone_payload in zones:
+            record = zone_payload.get("record") or zone_payload
+            if record.get("usage") != "PPA" and "ppaInfo" not in record:
                 continue
-            pf = _pal_freq(pal)
-            if not pf:
-                continue
-            owned_by_cbsd = pal_id in user_pal_ids
-            if in_cluster and owned_by_cbsd:
-                # Cluster CBSD operated by PAL licensee may use PAL.
-                if any(_overlaps(s[0], s[1], pf[0], pf[1]) for s in segments):
-                    pal_channels.append(pf)
-                segments = _subtract_range(segments, pf[0], pf[1])
-            elif in_cluster:
-                # Cluster member without matching userId: protect PAL only.
-                segments = _subtract_range(segments, pf[0], pf[1])
-            elif in_ppa:
-                # Inside PPA but not in cluster → protect PAL (SIQ.5 / SIQ.2-like).
-                segments = _subtract_range(segments, pf[0], pf[1])
-            # Outside PPA: PAL freqs remain GAA (no special handling).
+            ppa_info = record.get("ppaInfo") or {}
+            cluster = set(ppa_info.get("cbsdReferenceId") or [])
+            in_cluster = cbsd.cbsd_id in cluster
+            in_ppa = False
+            if lat is not None and lon is not None:
+                in_ppa = point_in_geojson(lat, lon, record.get("zone"))
 
-    # Also handle PAL records with no linked zone: no extra exclusion.
+            for pal_id in ppa_info.get("palId") or []:
+                pal = pal_by_id.get(pal_id)
+                if not pal:
+                    continue
+                pf = _pal_freq(pal)
+                if not pf:
+                    continue
+                owned_by_cbsd = pal_id in user_pal_ids
+                if in_cluster and owned_by_cbsd:
+                    # Cluster CBSD operated by PAL licensee may use PAL.
+                    if any(_overlaps(s[0], s[1], pf[0], pf[1]) for s in segments):
+                        pal_channels.append(pf)
+                    segments = _subtract_range(segments, pf[0], pf[1])
+                elif in_cluster:
+                    # Cluster member without matching userId: protect PAL only.
+                    segments = _subtract_range(segments, pf[0], pf[1])
+                elif in_ppa:
+                    # Inside PPA but not in cluster → protect PAL (SIQ.5 / SIQ.2-like).
+                    segments = _subtract_range(segments, pf[0], pf[1])
+                # Outside PPA: PAL freqs remain GAA (no special handling).
 
     channels: list[dict[str, Any]] = []
     for plow, phigh in pal_channels:
@@ -255,12 +250,12 @@ def _build_available_channels(
                     "highFrequency": phigh,
                 },
                 "channelType": "PAL",
-                "ruleApplied": RULE_APPLIED,
+                "ruleApplied": rule_applied,
             }
         )
 
     for low, high in segments:
-        for clow, chigh in _split_10mhz(low, high):
+        for clow, chigh in profile.split_channels(low, high):
             channels.append(
                 {
                     "frequencyRange": {
@@ -268,7 +263,7 @@ def _build_available_channels(
                         "highFrequency": chigh,
                     },
                     "channelType": "GAA",
-                    "ruleApplied": RULE_APPLIED,
+                    "ruleApplied": rule_applied,
                 }
             )
 
@@ -283,12 +278,16 @@ def _build_available_channels(
 
 def _validate_inquired(
     inquired: list[dict[str, Any]] | None,
+    profile: BandProfile,
 ) -> tuple[int | None, list[dict[str, Any]] | None]:
     """Return (error_code, inquired) — error_code None means OK."""
     if inquired is None:
         return MISSING_PARAM, None
     if not isinstance(inquired, list) or len(inquired) == 0:
         return MISSING_PARAM, None
+
+    band_low = profile.band_low_hz
+    band_high = profile.band_high_hz
 
     for fr in inquired:
         if not isinstance(fr, dict):
@@ -305,8 +304,8 @@ def _validate_inquired(
             return INVALID_PARAM, None
         if high_i <= low_i:
             return INVALID_PARAM, None
-        # Fully or partially outside CBRS → unsupported spectrum (SIQ.11).
-        if low_i < CBRS_LOW_HZ or high_i > CBRS_HIGH_HZ:
+        # Fully or partially outside band → unsupported spectrum (SIQ.11).
+        if low_i < band_low or high_i > band_high:
             return UNSUPPORTED_SPECTRUM, None
 
     return None, inquired
@@ -327,6 +326,7 @@ def process_spectrum_inquiry(
     requests: list[dict[str, Any]],
     *,
     certificate_hash: str | None = None,
+    profile: BandProfile | None = None,
 ) -> list[dict[str, Any]]:
     from services.meas_report import (
         FLAG_MEAS_REG,
@@ -336,6 +336,7 @@ def process_spectrum_inquiry(
         validate_meas_report,
     )
 
+    active = resolve_optional(profile)
     ask_meas = admin_flag_set(db, FLAG_MEAS_REG)
     responses: list[dict[str, Any]] = []
     for req in requests:
@@ -367,7 +368,9 @@ def process_spectrum_inquiry(
         caps = cbsd_meas_capabilities(cbsd.registration_json)
         if ask_meas and MEAS_WITHOUT_GRANT in caps:
             meas_err = validate_meas_report(
-                req.get("measReport"), require_full_cbrs=True
+                req.get("measReport"),
+                require_full_cbrs=True,
+                profile=active,
             )
             if meas_err is not None:
                 responses.append(
@@ -378,7 +381,7 @@ def process_spectrum_inquiry(
                 )
                 continue
 
-        err, inquired = _validate_inquired(req.get("inquiredSpectrum"))
+        err, inquired = _validate_inquired(req.get("inquiredSpectrum"), active)
         if err is not None:
             responses.append(
                 {
@@ -389,7 +392,7 @@ def process_spectrum_inquiry(
             continue
 
         assert inquired is not None
-        available = _build_available_channels(db, cbsd, inquired)
+        available = _build_available_channels(db, cbsd, inquired, active)
         responses.append(
             {
                 "cbsdId": cbsd_id,

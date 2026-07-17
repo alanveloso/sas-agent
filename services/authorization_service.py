@@ -8,7 +8,9 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from domain.band_profile import BandProfile
 from models.models import AuthorizationSource, Grant
+from services.profile_manager import resolve_optional
 
 SOURCE_TYPE_PAL = "PAL"
 SOURCE_TYPE_GAA = "GAA"
@@ -55,8 +57,12 @@ def utc_now() -> datetime:
     return datetime.utcnow().replace(microsecond=0)
 
 
-def ensure_gaa_authorization(db: Session) -> AuthorizationSource:
+def ensure_gaa_authorization(
+    db: Session, *, profile: BandProfile | None = None
+) -> AuthorizationSource:
     """Ensure the global GAA policy source exists and is ACTIVE."""
+    active = resolve_optional(profile)
+    policy_id = active.gaa_policy_id or f"{active.regulatory_rule_id}_GAA"
     row = (
         db.query(AuthorizationSource)
         .filter_by(source_type=SOURCE_TYPE_GAA, source_id=GAA_SOURCE_ID)
@@ -68,7 +74,7 @@ def ensure_gaa_authorization(db: Session) -> AuthorizationSource:
             source_id=GAA_SOURCE_ID,
             status=STATUS_ACTIVE,
             expires_at=None,
-            record_json=json.dumps({"policy": "FCC_PART_96_GAA"}),
+            record_json=json.dumps({"policy": policy_id}),
         )
         db.add(row)
         db.flush()

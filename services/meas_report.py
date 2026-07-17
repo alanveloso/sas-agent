@@ -6,8 +6,9 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from domain.band_profile import BandProfile
 from models.models import AdminInjectedData
-from services.spectrum_inquiry_service import CBRS_HIGH_HZ, CBRS_LOW_HZ
+from services.profile_manager import resolve_optional
 
 MISSING_PARAM = 102
 INVALID_PARAM = 103
@@ -18,9 +19,15 @@ FLAG_MEAS_REG = "meas_report_registration"
 FLAG_MEAS_HBT = "meas_report_heartbeat"
 FLAG_DPA_ACTIVE = "dpa_active"
 
-# Full CBRS coverage for WITHOUT_GRANT: 15×10 MHz channels (3550–3700 MHz).
-MIN_WITHOUT_GRANT_REPORTS = 15
-EXPECTED_BANDWIDTH_HZ = 10_000_000
+
+def _boot_profile() -> BandProfile:
+    return resolve_optional(None)
+
+
+# Legacy aliases (CBRS defaults / active profile snapshot).
+_boot = _boot_profile()
+MIN_WITHOUT_GRANT_REPORTS = _boot.min_without_grant_reports
+EXPECTED_BANDWIDTH_HZ = _boot.channel_width_hz
 
 
 def admin_flag_set(db: Session, kind: str) -> bool:
@@ -59,11 +66,13 @@ def validate_meas_report(
     meas_report: Any | None,
     *,
     require_full_cbrs: bool = False,
+    profile: BandProfile | None = None,
 ) -> int | None:
     """
     Validate a CBSD measReport object.
     Returns responseCode on failure, or None if OK.
     """
+    active = resolve_optional(profile)
     if meas_report is None:
         return MISSING_PARAM
     if not isinstance(meas_report, dict):
@@ -73,8 +82,12 @@ def validate_meas_report(
     reports = meas_report.get("rcvdPowerMeasReports")
     if not isinstance(reports, list) or len(reports) == 0:
         return MISSING_PARAM
-    if require_full_cbrs and len(reports) < MIN_WITHOUT_GRANT_REPORTS:
+    if require_full_cbrs and len(reports) < active.min_without_grant_reports:
         return MISSING_PARAM
+
+    expected_bw = active.channel_width_hz
+    band_low = active.band_low_hz
+    band_high = active.band_high_hz
 
     for item in reports:
         if not isinstance(item, dict):
@@ -90,9 +103,9 @@ def validate_meas_report(
             bw = int(item["measBandwidth"])
         except (TypeError, ValueError):
             return INVALID_PARAM
-        if bw != EXPECTED_BANDWIDTH_HZ:
+        if bw != expected_bw:
             return INVALID_PARAM
-        # Frequency must fall within CBRS band.
-        if freq < CBRS_LOW_HZ or freq >= CBRS_HIGH_HZ:
+        # Frequency must fall within the active band.
+        if freq < band_low or freq >= band_high:
             return INVALID_PARAM
     return None

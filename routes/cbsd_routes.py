@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from database import get_db
+from domain.band_profile import BandProfile
 from schemas.deregistration import DeregistrationBatchRequest
 from schemas.grant import GrantBatchRequest
 from schemas.heartbeat import HeartbeatBatchRequest
@@ -17,6 +18,7 @@ from services.deregistration_service import process_deregistration
 from services.grant_service import process_grant
 from services.heartbeat_service import process_heartbeat
 from services.mtls_auth import load_client_certificate, sha1_fingerprint_colon
+from services.profile_manager import get_active_band_profile
 from services.registration_service import process_registration
 from services.relinquishment_service import process_relinquishment
 from services.spectrum_inquiry_service import process_spectrum_inquiry
@@ -36,26 +38,40 @@ def registration(
     request: Request,
     body: RegistrationBatchRequest,
     db: Session = Depends(get_db),
+    profile: BandProfile = Depends(get_active_band_profile),
 ):
     responses = process_registration(
-        db, body.registrationRequest, certificate_hash=_client_cert_hash(request)
+        db,
+        body.registrationRequest,
+        certificate_hash=_client_cert_hash(request),
+        profile=profile,
     )
     return JSONResponse({"registrationResponse": responses})
 
 
 @router.post("/grant")
 def grant(
-    request: Request, body: GrantBatchRequest, db: Session = Depends(get_db)
+    request: Request,
+    body: GrantBatchRequest,
+    db: Session = Depends(get_db),
+    profile: BandProfile = Depends(get_active_band_profile),
 ):
     responses = process_grant(
-        db, body.grantRequest, certificate_hash=_client_cert_hash(request)
+        db,
+        body.grantRequest,
+        certificate_hash=_client_cert_hash(request),
+        profile=profile,
     )
     return JSONResponse({"grantResponse": responses})
 
 
 @router.post("/heartbeat")
-def heartbeat(body: HeartbeatBatchRequest, db: Session = Depends(get_db)):
-    responses = process_heartbeat(db, body.heartbeatRequest)
+def heartbeat(
+    body: HeartbeatBatchRequest,
+    db: Session = Depends(get_db),
+    profile: BandProfile = Depends(get_active_band_profile),
+):
+    responses = process_heartbeat(db, body.heartbeatRequest, profile=profile)
     return JSONResponse({"heartbeatResponse": responses})
 
 
@@ -64,11 +80,13 @@ def spectrum_inquiry(
     request: Request,
     body: SpectrumInquiryBatchRequest,
     db: Session = Depends(get_db),
+    profile: BandProfile = Depends(get_active_band_profile),
 ):
     responses = process_spectrum_inquiry(
         db,
         body.spectrumInquiryRequest,
         certificate_hash=_client_cert_hash(request),
+        profile=profile,
     )
     return JSONResponse({"spectrumInquiryResponse": responses})
 

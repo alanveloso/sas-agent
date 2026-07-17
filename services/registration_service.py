@@ -9,6 +9,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from domain.band_profile import BandProfile
 from models.models import (
     BlacklistedFccId,
     Cbsd,
@@ -18,6 +19,7 @@ from models.models import (
     Grant,
     UserIdRecord,
 )
+from services.profile_manager import resolve_optional
 
 # WINNF response codes
 SUCCESS = 0
@@ -184,7 +186,10 @@ def _has_pending_params(merged: dict[str, Any]) -> bool:
 
 
 def _validate_params(
-    request: dict[str, Any], merged: dict[str, Any], db: Session
+    request: dict[str, Any],
+    merged: dict[str, Any],
+    db: Session,
+    profile: BandProfile,
 ) -> int | None:
     """Return INVALID_PARAM code if validation fails, else None."""
     fcc_id = merged.get("fccId") or ""
@@ -230,10 +235,14 @@ def _validate_params(
 
     eirp = installation.get("eirpCapability")
     if eirp is not None:
-        max_eirp = fcc_row.fcc_max_eirp if fcc_row else 47.0
+        max_eirp = (
+            fcc_row.fcc_max_eirp
+            if fcc_row
+            else profile.category_b_max_eirp_dbm
+        )
         if eirp > max_eirp:
             return INVALID_PARAM
-        if category == "A" and eirp > 30:
+        if category == "A" and eirp > profile.category_a_max_eirp_dbm:
             return INVALID_PARAM
 
     # Cat A outdoor: HAAT must be ≤ 6 m (47 CFR § 96.43 / WINNF REG.7 CBSD#8).
@@ -302,7 +311,9 @@ def process_registration(
     registration_requests: list[dict[str, Any]],
     *,
     certificate_hash: str | None = None,
+    profile: BandProfile | None = None,
 ) -> list[dict[str, Any]]:
+    active = resolve_optional(profile)
     responses: list[dict[str, Any]] = []
 
     for raw in registration_requests:
@@ -330,7 +341,7 @@ def process_registration(
         # Category B registering with clear installationParam + no CPI is invalid
         # (checked in _validate_params). Pending checked before invalid where appropriate.
 
-        invalid = _validate_params(request, merged, db)
+        invalid = _validate_params(request, merged, db, active)
         if invalid is not None:
             responses.append({"response": {"responseCode": invalid}})
             continue
@@ -340,12 +351,13 @@ def process_registration(
             continue
 
         # QPR.2 / QPR.6: reject CBSDs inside NRAO/NRRO or within 2.4 km of FCC offices.
-        from services.quiet_zone_service import registration_blocked_by_quiet_zone
-
         installation = merged.get("installationParam") or {}
-        if registration_blocked_by_quiet_zone(installation):
-            responses.append({"response": {"responseCode": INVALID_PARAM}})
-            continue
+        if active.protection.quiet_zones:
+            from services.quiet_zone_service import registration_blocked_by_quiet_zone
+
+            if registration_blocked_by_quiet_zone(installation):
+                responses.append({"response": {"responseCode": INVALID_PARAM}})
+                continue
 
         cbsd_id = _make_cbsd_id(fcc_id, serial)
         existing = db.query(Cbsd).filter_by(cbsd_id=cbsd_id).first()

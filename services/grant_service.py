@@ -9,6 +9,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from domain.band_profile import BandProfile
 from models.models import BlacklistedFccId, Cbsd, FccIdRecord, Grant
 from services.authorization_service import (
     GAA_SOURCE_ID,
@@ -22,9 +23,8 @@ from services.authorization_service import (
     utc_now,
 )
 from services.geometry import point_in_geojson
+from services.profile_manager import resolve_optional
 from services.spectrum_inquiry_service import (
-    CBRS_HIGH_HZ,
-    CBRS_LOW_HZ,
     _load_injected,
     _overlaps,
     _pal_freq,
@@ -38,11 +38,18 @@ UNSUPPORTED_SPECTRUM = 300
 INTERFERENCE = 400
 GRANT_CONFLICT = 401
 
-HEARTBEAT_INTERVAL_SEC = 60
+
+def _boot_profile() -> BandProfile:
+    return resolve_optional(None)
+
+
+# Legacy aliases derived from the active / default profile.
+_boot = _boot_profile()
+HEARTBEAT_INTERVAL_SEC = _boot.heartbeat_interval_sec
 # Long enough for HBT.12 (sleep 240s + optional 300s) yet < 24h for HBT.6.
-DEFAULT_GRANT_DURATION_SEC = 900
-CAT_A_MAX_EIRP_10MHZ = 30.0
-CAT_B_MAX_EIRP_10MHZ = 47.0
+DEFAULT_GRANT_DURATION_SEC = _boot.grant_duration_sec
+CAT_A_MAX_EIRP_10MHZ = _boot.category_a_max_eirp_dbm
+CAT_B_MAX_EIRP_10MHZ = _boot.category_b_max_eirp_dbm
 
 
 def _resp(code: int, *, cbsd_id: str | None = None) -> dict[str, Any]:
@@ -67,20 +74,23 @@ def _cbsd_location(cbsd: Cbsd) -> tuple[float | None, float | None]:
     return float(lat), float(lon)
 
 
-def _max_allowed_eirp_mhz(cbsd: Cbsd, fcc_max_eirp: float) -> float:
-    """WINNF: maxEirp is dBm/MHz; category limits are dBm/10 MHz."""
+def _max_allowed_eirp_mhz(
+    cbsd: Cbsd, fcc_max_eirp: float, profile: BandProfile
+) -> float:
+    """WINNF: maxEirp is dBm/MHz; category limits are dBm/(reference bandwidth)."""
     reg = _cbsd_reg(cbsd)
     cat = (reg.get("cbsdCategory") or cbsd.cbsd_category or "A").upper()
-    default = CAT_A_MAX_EIRP_10MHZ if cat == "A" else CAT_B_MAX_EIRP_10MHZ
-    caps = [default, float(fcc_max_eirp)]
     eirp_cap = (reg.get("installationParam") or {}).get("eirpCapability")
-    if eirp_cap is not None:
-        caps.append(float(eirp_cap))
-    return min(caps) - 10.0
+    return profile.max_allowed_eirp_mhz(
+        cat,
+        fcc_max_eirp=fcc_max_eirp,
+        eirp_capability=float(eirp_cap) if eirp_cap is not None else None,
+    )
 
 
 def _parse_freq(
     op: dict[str, Any] | None,
+    profile: BandProfile,
 ) -> tuple[int | None, int | None, int | None]:
     """Return (error_code, low, high). error_code set on failure."""
     if op is None:
@@ -99,8 +109,8 @@ def _parse_freq(
         return INVALID_PARAM, None, None
     if high_i <= low_i:
         return INVALID_PARAM, None, None
-    # Fully or partially outside CBRS → 300.
-    if low_i < CBRS_LOW_HZ or high_i > CBRS_HIGH_HZ:
+    # Fully or partially outside band → 300.
+    if low_i < profile.band_low_hz or high_i > profile.band_high_hz:
         return UNSUPPORTED_SPECTRUM, None, None
     return None, low_i, high_i
 
@@ -215,8 +225,10 @@ def _resolve_channel(
     return None, SOURCE_TYPE_GAA, None, None
 
 
-def _grant_expire_time(auth_expires_at: datetime | None) -> datetime:
-    default = utc_now() + timedelta(seconds=DEFAULT_GRANT_DURATION_SEC)
+def _grant_expire_time(
+    auth_expires_at: datetime | None, profile: BandProfile
+) -> datetime:
+    default = utc_now() + timedelta(seconds=profile.grant_duration_sec)
     # Must be ≤ authorization expiration when present (GRA.13 / PAL license).
     return clamp_datetime(default, auth_expires_at)
 
@@ -226,6 +238,7 @@ def process_grant(
     requests: list[dict[str, Any]],
     *,
     certificate_hash: str | None = None,
+    profile: BandProfile | None = None,
 ) -> list[dict[str, Any]]:
     from services.meas_report import (
         FLAG_MEAS_REG,
@@ -236,11 +249,12 @@ def process_grant(
     )
     from services.spectrum_inquiry_service import _cert_mismatch
 
+    active = resolve_optional(profile)
     ask_meas = admin_flag_set(db, FLAG_MEAS_REG)
     responses: list[dict[str, Any]] = []
     # Frequencies approved earlier in this same batch (conflict within batch).
     pending_by_cbsd: dict[str, list[tuple[int, int]]] = {}
-    ensure_gaa_authorization(db)
+    ensure_gaa_authorization(db, profile=active)
 
     for req in requests:
         cbsd_id = req.get("cbsdId")
@@ -266,7 +280,9 @@ def process_grant(
         caps = cbsd_meas_capabilities(cbsd.registration_json)
         if ask_meas and MEAS_WITHOUT_GRANT in caps:
             meas_err = validate_meas_report(
-                req.get("measReport"), require_full_cbrs=True
+                req.get("measReport"),
+                require_full_cbrs=True,
+                profile=active,
             )
             if meas_err is not None:
                 responses.append(_resp(meas_err, cbsd_id=cbsd_id))
@@ -280,7 +296,7 @@ def process_grant(
             responses.append(_resp(MISSING_PARAM, cbsd_id=cbsd_id))
             continue
 
-        freq_err, low, high = _parse_freq(op)
+        freq_err, low, high = _parse_freq(op, active)
         if freq_err is not None:
             responses.append(_resp(freq_err, cbsd_id=cbsd_id))
             continue
@@ -293,18 +309,25 @@ def process_grant(
             continue
 
         fcc = db.query(FccIdRecord).filter_by(fcc_id=cbsd.fcc_id).first()
-        fcc_max = float(fcc.fcc_max_eirp) if fcc else CAT_B_MAX_EIRP_10MHZ
-        if max_eirp > _max_allowed_eirp_mhz(cbsd, fcc_max):
+        fcc_max = (
+            float(fcc.fcc_max_eirp)
+            if fcc
+            else active.category_b_max_eirp_dbm
+        )
+        if max_eirp > _max_allowed_eirp_mhz(cbsd, fcc_max, active):
             responses.append(_resp(INVALID_PARAM, cbsd_id=cbsd_id))
             continue
 
-        contexts = _ppa_pal_context(db, cbsd)
-        ch_err, channel_type, pal_exp, pal_id = _resolve_channel(
-            contexts, low, high, cbsd_user_id=cbsd.user_id
-        )
-        if ch_err is not None:
-            responses.append(_resp(ch_err, cbsd_id=cbsd_id))
-            continue
+        if active.protection.pal_gaa:
+            contexts = _ppa_pal_context(db, cbsd)
+            ch_err, channel_type, pal_exp, pal_id = _resolve_channel(
+                contexts, low, high, cbsd_user_id=cbsd.user_id
+            )
+            if ch_err is not None:
+                responses.append(_resp(ch_err, cbsd_id=cbsd_id))
+                continue
+        else:
+            channel_type, pal_exp, pal_id = SOURCE_TYPE_GAA, None, None
         assert channel_type is not None
 
         # Resolve and re-validate the authorization source immediately before persist.
@@ -320,7 +343,7 @@ def process_grant(
                 continue
             auth_expires = auth_source.expires_at or pal_exp
         else:
-            auth_source = ensure_gaa_authorization(db)
+            auth_source = ensure_gaa_authorization(db, profile=active)
             auth_ok, _reason, _ = is_authorization_valid(
                 db, SOURCE_TYPE_GAA, GAA_SOURCE_ID
             )
@@ -332,23 +355,25 @@ def process_grant(
         # EXZ: CBSD inside / within 50 m of an exclusion zone with overlapping freq → 400.
         lat, lon = _cbsd_location(cbsd)
         if lat is not None and lon is not None:
-            from services.exclusion_zone_service import point_hits_exclusion_zone
+            if active.protection.exclusion_zones:
+                from services.exclusion_zone_service import point_hits_exclusion_zone
 
-            if point_hits_exclusion_zone(db, lat, lon, low, high):
-                responses.append(_resp(INTERFERENCE, cbsd_id=cbsd_id))
-                continue
+                if point_hits_exclusion_zone(db, lat, lon, low, high):
+                    responses.append(_resp(INTERFERENCE, cbsd_id=cbsd_id))
+                    continue
 
-            # FDB.6: FSS with neighboring GWBL within 150 km → 400 on 3650–3700 MHz.
-            from services.federal_db_service import grant_blocked_by_fss_gwbl
+            # FDB.6: FSS with neighboring GWBL within 150 km → 400 on protected band.
+            if active.protection.fss_gwbl:
+                from services.federal_db_service import grant_blocked_by_fss_gwbl
 
-            if grant_blocked_by_fss_gwbl(db, lat, lon, low, high):
-                responses.append(_resp(INTERFERENCE, cbsd_id=cbsd_id))
-                continue
+                if grant_blocked_by_fss_gwbl(db, lat, lon, low, high):
+                    responses.append(_resp(INTERFERENCE, cbsd_id=cbsd_id))
+                    continue
 
         # BPR: Canadian Border Sharing Zone PFD > -80 dBm/m²/MHz → 400.
         reg = _cbsd_reg(cbsd)
         installation = reg.get("installationParam") or {}
-        if installation:
+        if installation and active.protection.border_protection:
             from services.border_protection import violates_canadian_border_pfd
 
             if violates_canadian_border_pfd(installation, max_eirp, low, high):
@@ -369,7 +394,7 @@ def process_grant(
             continue
 
         grant_id = f"grant/{uuid.uuid4().hex}"
-        expire = _grant_expire_time(auth_expires)
+        expire = _grant_expire_time(auth_expires, active)
         # Do not issue a grant whose authorization ceiling is already past.
         if auth_expires is not None and expire <= utc_now():
             responses.append(_resp(INTERFERENCE, cbsd_id=cbsd_id))
@@ -392,7 +417,7 @@ def process_grant(
             high_frequency=high,
             max_eirp=max_eirp,
             grant_expire_time=expire,
-            heartbeat_interval=HEARTBEAT_INTERVAL_SEC,
+            heartbeat_interval=active.heartbeat_interval_sec,
             grant_json=json.dumps(grant_payload),
         )
         sync_grant_authorization_snapshot(grant, auth_source)
@@ -405,7 +430,7 @@ def process_grant(
                 "cbsdId": cbsd_id,
                 "grantId": grant_id,
                 "grantExpireTime": expire.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "heartbeatInterval": HEARTBEAT_INTERVAL_SEC,
+                "heartbeatInterval": active.heartbeat_interval_sec,
                 "channelType": channel_type,
                 "response": {"responseCode": SUCCESS},
             }

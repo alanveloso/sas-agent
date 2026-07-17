@@ -24,12 +24,17 @@ def _fresh_db_env():
             "database",
             "models",
             "models.models",
+            "domain",
+            "domain.band_profile",
             "services.authorization_service",
             "services.pal_service",
             "services.grant_service",
             "services.heartbeat_service",
             "services.spectrum_inquiry_service",
-        } or mod.startswith("models.") or mod.startswith("services."):
+            "services.profile_manager",
+            "services.meas_report",
+            "services.registration_service",
+        } or mod.startswith("models.") or mod.startswith("services.") or mod.startswith("domain."):
             del sys.modules[mod]
 
     import database

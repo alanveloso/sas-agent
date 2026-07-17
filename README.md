@@ -107,10 +107,19 @@ global policy belongs to the control plane.
 
 | Variable | Default | Purpose |
 |---|---:|---|
-| `BAND_LOW` | `3550000000` | Lower Spectrum Inquiry boundary, in Hz |
-| `BAND_HIGH` | `3700000000` | Upper Spectrum Inquiry boundary, in Hz |
+| `BAND_PROFILE` | `cbrs_winnforum` | Named RF / regulatory package loaded at startup |
+| `BAND_LOW` | `3550000000` | Optional override of the active profile lower edge, in Hz |
+| `BAND_HIGH` | `3700000000` | Optional override of the active profile upper edge, in Hz |
 | `SAS_DATABASE_PATH` | `/data/sas_mvp.db` in Docker | SQLite persistence path |
 | `CONTROL_PLANE_API_KEY` | unset | Optional credential for an external gateway or service mesh |
+
+`BAND_PROFILE` selects an immutable `BandProfile` (channelization, EIRP caps,
+regulatory rule id, and protection flags). The built-in profile
+`cbrs_winnforum` reproduces the historical CBRS / FCC Part 96 behaviour:
+3550–3700 MHz, 10 MHz channels, category A/B EIRP limits, and PAL/GAA plus
+incumbent protections. `BAND_LOW` / `BAND_HIGH` remain supported as narrow
+compatibility overrides of the active profile's band edges; they do **not**
+redefine channel width, power policy, or protection rules.
 
 `CONTROL_PLANE_API_KEY` is an optional deployment hint for ingress/gateway
 protection and is not currently evaluated by the FastAPI application.
@@ -307,6 +316,10 @@ O runner, sem intervenção manual:
 ## Implementation notes
 
 - FastAPI provides the HTTP interfaces.
+- An immutable `BandProfile` (`domain/band_profile.py`) carries band edges,
+  channelization, EIRP policy, and protection flags; `services/profile_manager.py`
+  loads the active profile (default `cbrs_winnforum`) at startup and injects it
+  into Registration, Spectrum Inquiry, Grant, and Heartbeat.
 - SQLAlchemy and SQLite persist CBSD, grant, PAL, authorization sources, peer
   SAS, and injected regulatory state.
 - Grants bind to a generic authorization origin (`authorization_source_type` /
