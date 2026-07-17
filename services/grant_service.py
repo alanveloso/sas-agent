@@ -12,7 +12,6 @@ from sqlalchemy.orm import Session
 from domain.band_profile import BandProfile
 from models.models import BlacklistedFccId, Cbsd, FccIdRecord, Grant
 from services.authorization_service import (
-    GAA_SOURCE_ID,
     SOURCE_TYPE_GAA,
     SOURCE_TYPE_PAL,
     clamp_datetime,
@@ -345,7 +344,7 @@ def process_grant(
         else:
             auth_source = ensure_gaa_authorization(db, profile=active)
             auth_ok, _reason, _ = is_authorization_valid(
-                db, SOURCE_TYPE_GAA, GAA_SOURCE_ID
+                db, SOURCE_TYPE_GAA, auth_source.source_id
             )
             if not auth_ok:
                 responses.append(_resp(INTERFERENCE, cbsd_id=cbsd_id))
@@ -358,25 +357,31 @@ def process_grant(
             if active.protection.exclusion_zones:
                 from services.exclusion_zone_service import point_hits_exclusion_zone
 
-                if point_hits_exclusion_zone(db, lat, lon, low, high):
+                if point_hits_exclusion_zone(
+                    db, lat, lon, low, high, profile=active
+                ):
                     responses.append(_resp(INTERFERENCE, cbsd_id=cbsd_id))
                     continue
 
-            # FDB.6: FSS with neighboring GWBL within 150 km → 400 on protected band.
+            # FDB.6: FSS with neighboring GWBL within profile radius → 400.
             if active.protection.fss_gwbl:
                 from services.federal_db_service import grant_blocked_by_fss_gwbl
 
-                if grant_blocked_by_fss_gwbl(db, lat, lon, low, high):
+                if grant_blocked_by_fss_gwbl(
+                    db, lat, lon, low, high, profile=active
+                ):
                     responses.append(_resp(INTERFERENCE, cbsd_id=cbsd_id))
                     continue
 
-        # BPR: Canadian Border Sharing Zone PFD > -80 dBm/m²/MHz → 400.
+        # BPR: Border Sharing Zone PFD above profile limit → 400.
         reg = _cbsd_reg(cbsd)
         installation = reg.get("installationParam") or {}
         if installation and active.protection.border_protection:
             from services.border_protection import violates_canadian_border_pfd
 
-            if violates_canadian_border_pfd(installation, max_eirp, low, high):
+            if violates_canadian_border_pfd(
+                installation, max_eirp, low, high, profile=active
+            ):
                 responses.append(_resp(INTERFERENCE, cbsd_id=cbsd_id))
                 continue
 

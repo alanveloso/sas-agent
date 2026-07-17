@@ -22,5 +22,29 @@
   "gaa_policy_id": "FCC_PART_96_GAA",
   "grant_duration_sec": 900,
   "heartbeat_interval_sec": 60,
-  "transmit_expire_sec": 60
+  "transmit_expire_sec": 60,
+  "esc_policy": {
+    "low_hz": 3550000000,
+    "high_hz": 3700000000,
+    "protection_m": 40000.0
+  },
+  "fss_gwbl_policy": {
+    "low_hz": 3650000000,
+    "high_hz": 3700000000
+  },
+  "ntia_exclusion_policy": {
+    "low_hz": 3550000000,
+    "high_hz": 3650000000
+  },
+  "dpa_policy": {
+    "low_hz": 3500000000,
+    "high_hz": 3700000000
+  },
+  "border_policy": {
+    "low_hz": 3650000000,
+    "high_hz": 3700000000,
+    "pfd_limit_dbm_m2_mhz": -80.0,
+    "rx_height_m": 1.5,
+    "itm_freq_mhz": 3625.0
+  }
 }

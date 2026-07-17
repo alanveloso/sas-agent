@@ -8,13 +8,12 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from domain.band_profile import BandProfile
+from domain.band_profile import LEGACY_GAA_SOURCE_ID, BandProfile
 from models.models import AuthorizationSource, Grant
 from services.profile_manager import resolve_optional
 
 SOURCE_TYPE_PAL = "PAL"
 SOURCE_TYPE_GAA = "GAA"
-GAA_SOURCE_ID = "CBRS"
 
 STATUS_ACTIVE = "ACTIVE"
 STATUS_REVOKED = "REVOKED"
@@ -60,18 +59,42 @@ def utc_now() -> datetime:
 def ensure_gaa_authorization(
     db: Session, *, profile: BandProfile | None = None
 ) -> AuthorizationSource:
-    """Ensure the global GAA policy source exists and is ACTIVE."""
+    """Ensure the profile's GAA policy source exists and is ACTIVE."""
     active = resolve_optional(profile)
-    policy_id = active.gaa_policy_id or f"{active.regulatory_rule_id}_GAA"
+    policy_id = active.gaa_source_id()
     row = (
         db.query(AuthorizationSource)
-        .filter_by(source_type=SOURCE_TYPE_GAA, source_id=GAA_SOURCE_ID)
+        .filter_by(source_type=SOURCE_TYPE_GAA, source_id=policy_id)
         .first()
     )
+    if row is None and policy_id != LEGACY_GAA_SOURCE_ID:
+        # Migrate legacy global "CBRS" GAA row onto the profile-derived id.
+        legacy = (
+            db.query(AuthorizationSource)
+            .filter_by(source_type=SOURCE_TYPE_GAA, source_id=LEGACY_GAA_SOURCE_ID)
+            .first()
+        )
+        if legacy is not None:
+            legacy.source_id = policy_id
+            legacy.status = STATUS_ACTIVE
+            legacy.expires_at = None
+            legacy.record_json = json.dumps({"policy": policy_id})
+            legacy.updated_at = utc_now()
+            for grant in (
+                db.query(Grant)
+                .filter_by(
+                    authorization_source_type=SOURCE_TYPE_GAA,
+                    authorization_source_id=LEGACY_GAA_SOURCE_ID,
+                )
+                .all()
+            ):
+                grant.authorization_source_id = policy_id
+            db.flush()
+            return legacy
     if row is None:
         row = AuthorizationSource(
             source_type=SOURCE_TYPE_GAA,
-            source_id=GAA_SOURCE_ID,
+            source_id=policy_id,
             status=STATUS_ACTIVE,
             expires_at=None,
             record_json=json.dumps({"policy": policy_id}),
@@ -81,6 +104,7 @@ def ensure_gaa_authorization(
         return row
     row.status = STATUS_ACTIVE
     row.expires_at = None
+    row.record_json = json.dumps({"policy": policy_id})
     row.updated_at = utc_now()
     return row
 

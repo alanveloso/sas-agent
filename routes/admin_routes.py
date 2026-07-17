@@ -221,10 +221,11 @@ async def inject_exclusion_zone(request: Request, db: Session = Depends(get_db))
 
 @router.post("/trigger/enable_ntia_15_517")
 def trigger_enable_ntia_15_517(db: Session = Depends(get_db)):
-    """Enable NTIA TR 15-517 coastal exclusion zones (EXZ_2)."""
+    """Enable NTIA coastal exclusion zones using the active band profile."""
     from services.exclusion_zone_service import enable_ntia_exclusion_zones
+    from services.profile_manager import get_active_band_profile
 
-    enable_ntia_exclusion_zones(db)
+    enable_ntia_exclusion_zones(db, profile=get_active_band_profile())
     return _empty_ok()
 
 

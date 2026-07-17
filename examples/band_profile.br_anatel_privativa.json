@@ -21,5 +21,13 @@
   "gaa_policy_id": "ANATEL_SLP_ACT_374_COEXISTENCE",
   "grant_duration_sec": 900,
   "heartbeat_interval_sec": 60,
-  "transmit_expire_sec": 60
+  "transmit_expire_sec": 60,
+  "fss_gwbl_policy": {
+    "low_hz": 3700000000,
+    "high_hz": 3800000000
+  },
+  "ntia_exclusion_policy": {
+    "low_hz": 3700000000,
+    "high_hz": 3800000000
+  }
 }

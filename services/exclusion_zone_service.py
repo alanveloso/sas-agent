@@ -35,9 +35,7 @@ def _load_injected(db: Session, kind: str) -> list[dict[str, Any]]:
 # WINNF EXZ: CBSD inside zone or within 50 m of boundary → interference.
 EXZ_BUFFER_M = 50.0
 
-# NTIA TR 15-517 coastal combined contours protect GBS band 3550–3650 MHz.
-NTIA_GBS_LOW_HZ = 3_550_000_000
-NTIA_GBS_HIGH_HZ = 3_650_000_000
+# NTIA coastal combined contour placemark names (geometry only; freqs come from profile).
 NTIA_COASTAL_NAMES = ("West Combined Contour", "East-Gulf Combined Contour")
 
 
@@ -112,8 +110,17 @@ def persist_exclusion_zone(db: Session, payload: dict[str, Any]) -> None:
     db.commit()
 
 
-def enable_ntia_exclusion_zones(db: Session) -> None:
-    """Activate NTIA TR 15-517 coastal exclusion zones and cache their geometry."""
+def enable_ntia_exclusion_zones(db: Session, *, profile=None) -> None:
+    """Activate NTIA coastal exclusion zones using the active profile frequency envelope."""
+    from services.profile_manager import resolve_optional
+
+    active = resolve_optional(profile)
+    if not active.protection.exclusion_zones:
+        return
+    policy = active.ntia_exclusion_policy
+    if policy is None:
+        return
+
     set_admin_flag(db, FLAG_NTIA_15_517)
     geojson = load_ntia_coastal_geojson()
     existing = db.query(AdminInjectedData).filter_by(kind=KIND_NTIA_ZONES).first()
@@ -121,7 +128,7 @@ def enable_ntia_exclusion_zones(db: Session) -> None:
         {
             "zone": geojson,
             "frequencyRanges": [
-                {"lowFrequency": NTIA_GBS_LOW_HZ, "highFrequency": NTIA_GBS_HIGH_HZ}
+                {"lowFrequency": policy.low_hz, "highFrequency": policy.high_hz}
             ],
         }
     )
@@ -132,7 +139,7 @@ def enable_ntia_exclusion_zones(db: Session) -> None:
     db.commit()
 
 
-def _zone_records(db: Session) -> list[dict[str, Any]]:
+def _zone_records(db: Session, *, profile=None) -> list[dict[str, Any]]:
     records = list(_load_injected(db, KIND_EXCLUSION_ZONE))
     if admin_flag_set(db, FLAG_NTIA_15_517):
         ntia = _load_injected(db, KIND_NTIA_ZONES)
@@ -140,7 +147,7 @@ def _zone_records(db: Session) -> list[dict[str, Any]]:
             records.extend(ntia)
         else:
             # Flag set but cache missing (e.g. after partial reset) — rebuild.
-            enable_ntia_exclusion_zones(db)
+            enable_ntia_exclusion_zones(db, profile=profile)
             records.extend(_load_injected(db, KIND_NTIA_ZONES))
     return records
 
@@ -166,12 +173,14 @@ def point_hits_exclusion_zone(
     lon: float,
     low_hz: int | None = None,
     high_hz: int | None = None,
+    *,
+    profile=None,
 ) -> bool:
     """True if (lat, lon) is inside/near an active EXZ overlapping [low_hz, high_hz].
 
     When low/high are None, any overlapping frequency check is skipped (location only).
     """
-    for record in _zone_records(db):
+    for record in _zone_records(db, profile=profile):
         zone = record.get("zone")
         if not within_geojson_buffer_m(lat, lon, zone, EXZ_BUFFER_M):
             continue
@@ -187,11 +196,11 @@ def point_hits_exclusion_zone(
 
 
 def exclusion_freq_ranges_at_point(
-    db: Session, lat: float, lon: float
+    db: Session, lat: float, lon: float, *, profile=None
 ) -> list[tuple[int, int]]:
     """Frequency ranges protected by EXZs covering this point (incl. 50 m buffer)."""
     out: list[tuple[int, int]] = []
-    for record in _zone_records(db):
+    for record in _zone_records(db, profile=profile):
         zone = record.get("zone")
         if not within_geojson_buffer_m(lat, lon, zone, EXZ_BUFFER_M):
             continue

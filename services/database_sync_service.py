@@ -55,8 +55,11 @@ def _store_injection(db: Session, kind: str, payload: Any) -> None:
     )
 
 
-def sync_injected_database_urls(db: Session) -> None:
+def sync_injected_database_urls(db: Session, *, profile=None) -> None:
     """Fetch every injected database_url during CPAS / daily activities."""
+    from services.profile_manager import resolve_optional
+
+    active = resolve_optional(profile)
     rows = list(db.query(AdminInjectedData).filter_by(kind="database_url").all())
     for row in rows:
         try:
@@ -69,13 +72,19 @@ def sync_injected_database_urls(db: Session) -> None:
             continue
         try:
             if db_type == "PAL":
+                if not active.protection.pal_gaa:
+                    continue
                 _sync_pal(db, url)
             elif db_type == "CPI":
                 _sync_cpi(db, url)
             elif db_type == "EXCLUSION_ZONE":
+                if not active.protection.exclusion_zones:
+                    continue
                 body = _http_get(url, auth=False)
-                _apply_exclusion_zone_kml(db, body)
+                _apply_exclusion_zone_kml(db, body, profile=active)
             elif db_type == "SCHEDULED_DPA":
+                if not active.protection.dpa:
+                    continue
                 body = _http_get(url, auth=False)
                 db.query(AdminInjectedData).filter_by(kind="scheduled_dpa").delete()
                 _store_injection(
@@ -87,12 +96,16 @@ def sync_injected_database_urls(db: Session) -> None:
 
                 bump_sync_meta(db, "dpa")
             elif db_type == "FSS":
+                if not active.protection.fss_gwbl:
+                    continue
                 body = _http_get(url, auth=True)
                 payload = json.loads(body.decode("utf-8"))
                 from services.federal_db_service import replace_fss_from_federal_payload
 
                 replace_fss_from_federal_payload(db, payload)
             elif db_type == "GWBL":
+                if not active.protection.fss_gwbl:
+                    continue
                 body = _http_get(url, auth=False)
                 from services.federal_db_service import replace_gwbl_from_zip
 
@@ -139,14 +152,32 @@ def _parse_kml_ring(text: str | None) -> list[list[float]]:
     return ring
 
 
-def _apply_exclusion_zone_kml(db: Session, body: bytes) -> None:
+def _apply_exclusion_zone_kml(db: Session, body: bytes, *, profile=None) -> None:
     """Replace exclusion_zone records with polygons parsed from federal EXZ KML."""
     from services.exclusion_zone_service import KIND_EXCLUSION_ZONE
     from services.federal_db_service import bump_sync_meta
+    from services.profile_manager import resolve_optional
 
+    active = resolve_optional(profile)
     text = body.decode("utf-8", errors="replace")
     root = ET.fromstring(text)
     db.query(AdminInjectedData).filter_by(kind=KIND_EXCLUSION_ZONE).delete()
+
+    fallback_ranges: list[dict[str, int]] = []
+    if active.ntia_exclusion_policy is not None:
+        fallback_ranges = [
+            {
+                "lowFrequency": active.ntia_exclusion_policy.low_hz,
+                "highFrequency": active.ntia_exclusion_policy.high_hz,
+            }
+        ]
+    else:
+        fallback_ranges = [
+            {
+                "lowFrequency": active.band_low_hz,
+                "highFrequency": active.band_high_hz,
+            }
+        ]
 
     for pm in root.iter("{http://www.opengis.net/kml/2.2}Placemark"):
         coords_el = pm.find(
@@ -165,9 +196,7 @@ def _apply_exclusion_zone_kml(db: Session, body: bytes) -> None:
                     freq_text = val.text
         freq_ranges = _parse_freq_range_mhz(freq_text)
         if not freq_ranges:
-            freq_ranges = [
-                {"lowFrequency": 3_550_000_000, "highFrequency": 3_650_000_000}
-            ]
+            freq_ranges = list(fallback_ranges)
         payload = {
             "zone": {
                 "type": "FeatureCollection",

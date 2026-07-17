@@ -63,10 +63,12 @@ def _run_cpas_worker() -> None:
     db = SessionLocal()
     try:
         from services.database_sync_service import sync_injected_database_urls
+        from services.profile_manager import get_active_band_profile
 
-        sync_injected_database_urls(db)
+        profile = get_active_band_profile()
+        sync_injected_database_urls(db, profile=profile)
         run_peer_fad_sync(db)
-        apply_peer_conflict_to_local_grants(db)
+        apply_peer_conflict_to_local_grants(db, profile=profile)
     except Exception:
         logger.exception("CPAS peer FAD sync failed")
     finally:
@@ -224,12 +226,6 @@ def peer_has_grant_for_cbsd(db: Session, cbsd: Cbsd) -> bool:
     return False
 
 
-# FAD_2: peer ESC neighborhood used by the harness (~40 km).
-_ESC_PROTECTION_M = 40_000.0
-_ESC_LOW_HZ = 3_550_000_000
-_ESC_HIGH_HZ = 3_700_000_000
-
-
 def _peer_records_of_type(db: Session, record_type: str) -> list[dict[str, Any]]:
     rows = db.query(PeerFadRecord).filter_by(record_type=record_type).all()
     out: list[dict[str, Any]] = []
@@ -300,12 +296,21 @@ def _grant_conflicts_peer_ppa(db: Session, cbsd: Cbsd, grant: Grant) -> bool:
     return False
 
 
-def _grant_conflicts_peer_esc(db: Session, cbsd: Cbsd, grant: Grant) -> bool:
+def _grant_conflicts_peer_esc(
+    db: Session,
+    cbsd: Cbsd,
+    grant: Grant,
+    *,
+    profile,
+) -> bool:
     """True when CBSD is within ESC protection distance of a peer ESC sensor."""
     from services.geometry import haversine_m
 
+    if not profile.protection.esc or profile.esc_policy is None:
+        return False
+    esc = profile.esc_policy
     if not _freq_overlaps(
-        grant.low_frequency, grant.high_frequency, _ESC_LOW_HZ, _ESC_HIGH_HZ
+        grant.low_frequency, grant.high_frequency, esc.low_hz, esc.high_hz
     ):
         return False
     lat, lon = _cbsd_lat_lon(cbsd)
@@ -316,18 +321,21 @@ def _grant_conflicts_peer_esc(db: Session, cbsd: Cbsd, grant: Grant) -> bool:
         esc_lat, esc_lon = inst.get("latitude"), inst.get("longitude")
         if esc_lat is None or esc_lon is None:
             continue
-        if haversine_m(lat, lon, float(esc_lat), float(esc_lon)) <= _ESC_PROTECTION_M:
+        if haversine_m(lat, lon, float(esc_lat), float(esc_lon)) <= esc.protection_m:
             return True
     return False
 
 
-def apply_peer_conflict_to_local_grants(db: Session) -> None:
+def apply_peer_conflict_to_local_grants(db: Session, *, profile=None) -> None:
     """Terminate local grants that conflict with peer FAD (same CBSD, PPA, or ESC).
 
     - Same-CBSD active peer grant → GRA_5 / GRA_6.
     - Inside peer PPA + frequency overlap with linked PAL → FAD_2 (G4).
-    - Near peer ESC sensor + CBRS overlap → FAD_2 (G2).
+    - Near peer ESC sensor + protected-band overlap → FAD_2 (G2).
     """
+    from services.profile_manager import resolve_optional
+
+    active = resolve_optional(profile)
     changed = False
     for cbsd in db.query(Cbsd).all():
         grants = (
@@ -339,9 +347,12 @@ def apply_peer_conflict_to_local_grants(db: Session) -> None:
             continue
         same_cbsd = peer_has_grant_for_cbsd(db, cbsd)
         for grant in grants:
-            if same_cbsd or _grant_conflicts_peer_ppa(db, cbsd, grant) or _grant_conflicts_peer_esc(
-                db, cbsd, grant
-            ):
+            ppa_hit = (
+                active.protection.pal_gaa
+                and _grant_conflicts_peer_ppa(db, cbsd, grant)
+            )
+            esc_hit = _grant_conflicts_peer_esc(db, cbsd, grant, profile=active)
+            if same_cbsd or ppa_hit or esc_hit:
                 grant.terminated = True
                 changed = True
     if changed:

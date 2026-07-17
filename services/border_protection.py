@@ -1,8 +1,8 @@
-"""Canadian border (Arrangement R) PFD protection for Grant.
+"""Canadian border PFD protection for Grant.
 
-Mirrors WINNF_FT_S_BPR_testcase logic: CBSDs in the Border Sharing Zone whose
-requested EIRP would produce PFD > -80 dBm/m²/MHz at the closest border point
-must be rejected with responseCode 400.
+Uses the active BandProfile.border_policy (Arrangement R parameters for CBRS).
+CBSDs in the Border Sharing Zone whose requested EIRP would produce PFD above
+the profile limit at the closest border point must be rejected with responseCode 400.
 """
 
 from __future__ import annotations
@@ -11,21 +11,20 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from domain.band_profile import BandProfile, BorderProtectionPolicy
+from services.profile_manager import resolve_optional
+
 # Harness reference models (ITM, Canadian border geometry, antenna gains).
 _HARNESS = Path(__file__).resolve().parents[2] / "src" / "harness"
 if _HARNESS.is_dir() and str(_HARNESS) not in sys.path:
     sys.path.insert(0, str(_HARNESS))
 
-# Arrangement R: grants overlapping above 3650 MHz are subject to border PFD.
-ARRANGEMENT_R_LOW_HZ = 3_650_000_000
-PFD_LIMIT_DBM_M2_MHZ = -80.0
-BORDER_RX_HEIGHT_M = 1.5
-ITM_FREQ_MHZ = 3625.0
 
-
-def _overlaps_arrangement_r(low_hz: int, high_hz: int) -> bool:
-    # Same gate as BPR harness: highFrequency > 3650 MHz.
-    return high_hz > ARRANGEMENT_R_LOW_HZ and low_hz < 3_700_000_000
+def _overlaps_border_band(
+    low_hz: int, high_hz: int, policy: BorderProtectionPolicy
+) -> bool:
+    # Same gate style as BPR harness: highFrequency > policy.low_hz and overlaps.
+    return high_hz > policy.low_hz and low_hz < policy.high_hz
 
 
 def violates_canadian_border_pfd(
@@ -33,9 +32,15 @@ def violates_canadian_border_pfd(
     max_eirp: float,
     low_hz: int,
     high_hz: int,
+    *,
+    profile: BandProfile | None = None,
 ) -> bool:
     """Return True if the grant must be rejected (responseCode 400)."""
-    if not _overlaps_arrangement_r(low_hz, high_hz):
+    active = resolve_optional(profile)
+    if not active.protection.border_protection or active.border_policy is None:
+        return False
+    policy = active.border_policy
+    if not _overlaps_border_band(low_hz, high_hz, policy):
         return False
 
     try:
@@ -78,10 +83,10 @@ def violates_canadian_border_pfd(
             height,
             border_lat,
             border_lon,
-            BORDER_RX_HEIGHT_M,
+            policy.rx_height_m,
             reliability=0.5,
             cbsd_indoor=indoor,
-            freq_mhz=ITM_FREQ_MHZ,
+            freq_mhz=policy.itm_freq_mhz,
             is_height_cbsd_amsl=(height_type == "AMSL"),
         )
         pl = propagation.db_loss
@@ -96,4 +101,4 @@ def violates_canadian_border_pfd(
 
     # PFD = requested_eirp - maxAntGain + effectiveGain - PL + 32.6
     pfd = max_eirp - max_ant_gain + ant_gain - pl + 32.6
-    return pfd > PFD_LIMIT_DBM_M2_MHZ
+    return pfd > policy.pfd_limit_dbm_m2_mhz

@@ -8,8 +8,7 @@ services:
       - "${HOST_RSA_PORT:-9000}:9000"
       - "${HOST_ECC_PORT:-9001}:9001"
     environment:
-      BAND_LOW: "3550000000"
-      BAND_HIGH: "3700000000"
+      BAND_PROFILE: cbrs_winnforum
       SAS_DATABASE_PATH: /data/sas_mvp.db
     volumes:
       - sas-agent-data:/data

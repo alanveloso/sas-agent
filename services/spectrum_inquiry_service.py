@@ -180,7 +180,9 @@ def _build_available_channels(
         if profile.protection.exclusion_zones:
             from services.exclusion_zone_service import exclusion_freq_ranges_at_point
 
-            for ex_low, ex_high in exclusion_freq_ranges_at_point(db, lat, lon):
+            for ex_low, ex_high in exclusion_freq_ranges_at_point(
+                db, lat, lon, profile=profile
+            ):
                 segments = _subtract_range(segments, ex_low, ex_high)
 
         for wisp in wisps:

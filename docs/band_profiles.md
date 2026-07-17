@@ -85,10 +85,15 @@ Optional RF and timing parameters:
 | `raster_origin_hz` | `band_low_hz` | Frequency from which channel boundaries are aligned. |
 | `fss_exclusion_low_hz` | `band_low_hz` | Lower frequency at which the FSS exclusion policy begins to apply. |
 | `fss_protection_km` | `150.0` | FSS protection radius in kilometers. |
-| `gaa_policy_id` | `<regulatory_rule_id>_GAA` | Policy identifier used for GAA/coexistence authorization. |
+| `gaa_policy_id` | `<regulatory_rule_id>_GAA` | Policy identifier used as `AuthorizationSource.source_id` for GAA/coexistence. |
 | `grant_duration_sec` | `900` | Nominal maximum lifetime of a grant. An authorization may impose an earlier expiration. |
 | `heartbeat_interval_sec` | `60` | Heartbeat interval returned to a CBSD. |
 | `transmit_expire_sec` | `60` | Maximum transmission window granted by a successful Heartbeat. |
+| `esc_policy` | band edges when `esc` | `{low_hz, high_hz, protection_m}` for peer ESC neighborhood checks. |
+| `fss_gwbl_policy` | `fss_exclusion_low_hz`–`band_high_hz` when `fss_gwbl` | Coexistence / GWBL-protected sub-band. |
+| `ntia_exclusion_policy` | band edges when `exclusion_zones` | Default frequency envelope for NTIA / federal EXZ contours. |
+| `dpa_policy` | band edges when `dpa` | Scheduled / portal DPA frequency envelope. |
+| `border_policy` | band edges when `border_protection` | `{low_hz, high_hz, pfd_limit_dbm_m2_mhz, rx_height_m, itm_freq_mhz}`. |
 
 The nested `protection` object controls which regulatory checks are active.
 Every omitted flag defaults to `true`:

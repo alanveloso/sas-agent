@@ -199,7 +199,7 @@ class AuthorizationLifecycleTests(unittest.TestCase):
     def test_gaa_grant_binds_global_policy(self):
         grant = self._issue_gaa_grant()
         self.assertEqual(grant.authorization_source_type, "GAA")
-        self.assertEqual(grant.authorization_source_id, "CBRS")
+        self.assertEqual(grant.authorization_source_id, "FCC_PART_96_GAA")
 
     def test_revocation_cascade_terminates_derived_grants(self):
         grant = self._issue_pal_grant()

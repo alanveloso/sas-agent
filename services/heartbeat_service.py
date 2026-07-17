@@ -277,7 +277,7 @@ def process_heartbeat(
         # Federal DB (EXZ / FSS / GWBL / DPA) — 500 for stale grants, 501 for current.
         from services.federal_db_service import heartbeat_federal_code
 
-        federal_code = heartbeat_federal_code(db, cbsd, grant)
+        federal_code = heartbeat_federal_code(db, cbsd, grant, profile=active)
         if federal_code == TERMINATED_GRANT:
             grant.terminated = True
             responses.append(

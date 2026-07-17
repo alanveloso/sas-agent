@@ -9,13 +9,12 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from domain.band_profile import BandProfile
 from models.models import AdminInjectedData, Cbsd, Grant
 from services.geometry import haversine_m
+from services.profile_manager import resolve_optional
 
 KIND_META = "federal_sync_meta"
-FSS_PROTECTION_KM = 150.0
-FSS_GWBL_LOW_HZ = 3_650_000_000
-FSS_GWBL_HIGH_HZ = 3_700_000_000
 
 
 def _overlaps(a_low: int, a_high: int, b_low: int, b_high: int) -> bool:
@@ -199,55 +198,81 @@ def _grant_meta(grant: Grant) -> dict[str, Any]:
 
 
 def fss_sites_near(
-    db: Session, lat: float, lon: float, *, max_km: float = FSS_PROTECTION_KM
+    db: Session,
+    lat: float,
+    lon: float,
+    *,
+    profile: BandProfile | None = None,
+    max_km: float | None = None,
 ) -> list[dict[str, Any]]:
+    active = resolve_optional(profile)
+    radius_km = active.fss_protection_km if max_km is None else max_km
     near: list[dict[str, Any]] = []
     for fss in _load_kind(db, "fss"):
         info = _fss_lat_lon_freq(fss)
         if not info:
             continue
         f_lat, f_lon, _low, _high = info
-        if haversine_m(lat, lon, f_lat, f_lon) <= max_km * 1000.0:
+        if haversine_m(lat, lon, f_lat, f_lon) <= radius_km * 1000.0:
             near.append(fss)
     return near
 
 
-def fss_has_neighboring_gwbl(db: Session, fss: dict[str, Any]) -> bool:
+def fss_has_neighboring_gwbl(
+    db: Session, fss: dict[str, Any], *, profile: BandProfile | None = None
+) -> bool:
+    active = resolve_optional(profile)
     info = _fss_lat_lon_freq(fss)
     if not info:
         return False
     f_lat, f_lon, _low, _high = info
+    radius_m = active.fss_protection_km * 1000.0
     for gwbl in _load_kind(db, "gwbl"):
         try:
             g_lat = float(gwbl["latitude"])
             g_lon = float(gwbl["longitude"])
         except (KeyError, TypeError, ValueError):
             continue
-        if haversine_m(f_lat, f_lon, g_lat, g_lon) <= FSS_PROTECTION_KM * 1000.0:
+        if haversine_m(f_lat, f_lon, g_lat, g_lon) <= radius_m:
             return True
     return False
 
 
 def grant_blocked_by_fss_gwbl(
-    db: Session, lat: float, lon: float, low_hz: int, high_hz: int
+    db: Session,
+    lat: float,
+    lon: float,
+    low_hz: int,
+    high_hz: int,
+    *,
+    profile: BandProfile | None = None,
 ) -> bool:
-    """True when CBSD near an FSS that has a GWBL within 150 km (FDB.6)."""
-    if not _overlaps(low_hz, high_hz, FSS_GWBL_LOW_HZ, FSS_GWBL_HIGH_HZ):
+    """True when CBSD near an FSS that has a GWBL within the profile radius."""
+    active = resolve_optional(profile)
+    if not active.protection.fss_gwbl or active.fss_gwbl_policy is None:
+        return False
+    policy = active.fss_gwbl_policy
+    if not _overlaps(low_hz, high_hz, policy.low_hz, policy.high_hz):
         return False
     if not _load_kind(db, "gwbl"):
         return False
-    for fss in fss_sites_near(db, lat, lon):
-        if fss_has_neighboring_gwbl(db, fss):
+    for fss in fss_sites_near(db, lat, lon, profile=active):
+        if fss_has_neighboring_gwbl(db, fss, profile=active):
             return True
     return False
 
 
 def heartbeat_federal_code(
-    db: Session, cbsd: Cbsd | None, grant: Grant
+    db: Session,
+    cbsd: Cbsd | None,
+    grant: Grant,
+    *,
+    profile: BandProfile | None = None,
 ) -> int | None:
     """Return 500/501 when federal DB protection applies, else None."""
     from services.exclusion_zone_service import point_hits_exclusion_zone
 
+    active = resolve_optional(profile)
     loc = _cbsd_lat_lon(cbsd)
     if loc is None:
         return None
@@ -257,28 +282,41 @@ def heartbeat_federal_code(
     low, high = grant.low_frequency, grant.high_frequency
 
     # Exclusion zones from federal EXZ KML.
-    if meta.get("exz", 0) > 0 and point_hits_exclusion_zone(db, lat, lon, low, high):
+    if (
+        active.protection.exclusion_zones
+        and meta.get("exz", 0) > 0
+        and point_hits_exclusion_zone(db, lat, lon, low, high, profile=active)
+    ):
         grant_exz = int(gmeta.get("exz_gen") or 0)
         return 500 if grant_exz < meta["exz"] else 501
 
-    # Scheduled portal DPAs (MVP: any DPA sync conflicts CBRS overlapping grants).
-    if meta.get("dpa", 0) > 0 and _overlaps(low, high, 3_500_000_000, 3_700_000_000):
+    # Scheduled portal DPAs.
+    dpa = active.dpa_policy
+    if (
+        active.protection.dpa
+        and dpa is not None
+        and meta.get("dpa", 0) > 0
+        and _overlaps(low, high, dpa.low_hz, dpa.high_hz)
+    ):
         grant_dpa = int(gmeta.get("dpa_gen") or 0)
         return 500 if grant_dpa < meta["dpa"] else 501
 
-    # FSS neighborhood: 3650–3700 MHz within 150 km.
-    near = fss_sites_near(db, lat, lon)
+    if not active.protection.fss_gwbl:
+        return None
+
+    # FSS neighborhood using the profile coexistence sub-band / site freqs.
+    near = fss_sites_near(db, lat, lon, profile=active)
     if not near:
         return None
 
+    policy = active.fss_gwbl_policy
     protects = False
     for fss in near:
         info = _fss_lat_lon_freq(fss)
         if not info:
             continue
         _fla, _flo, f_low, f_high = info
-        # Coexistence band always protected near FSS.
-        if _overlaps(low, high, FSS_GWBL_LOW_HZ, FSS_GWBL_HIGH_HZ):
+        if policy is not None and _overlaps(low, high, policy.low_hz, policy.high_hz):
             protects = True
             break
         if _overlaps(low, high, f_low, f_high):
@@ -290,7 +328,7 @@ def heartbeat_federal_code(
     # FDB.5: adding GWBL near FSS terminates existing grants (500).
     if meta.get("gwbl", 0) > 0:
         for fss in near:
-            if fss_has_neighboring_gwbl(db, fss):
+            if fss_has_neighboring_gwbl(db, fss, profile=active):
                 grant_combo = max(
                     int(gmeta.get("fss_gen") or 0), int(gmeta.get("gwbl_gen") or 0)
                 )

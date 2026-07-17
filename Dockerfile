@@ -9,8 +9,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY sas-agent/ .
 
-ENV BAND_LOW=3550000000 \
-    BAND_HIGH=3700000000 \
+ENV BAND_PROFILE=cbrs_winnforum \
     SAS_DATABASE_PATH=/data/sas_mvp.db
 
 RUN mkdir -p /data

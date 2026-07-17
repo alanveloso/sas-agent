@@ -10,6 +10,8 @@ from domain.band_profile import (
     BR_ANATEL_PRIVATIVA_PROFILE_ID,
     CBRS_WINNFORUM_PROFILE_ID,
     BandProfile,
+    EscPolicy,
+    FssGwblPolicy,
     ProtectionFlags,
     br_anatel_privativa_profile,
     cbrs_winnforum_profile,
@@ -27,6 +29,7 @@ class BandProfileModelTests(unittest.TestCase):
         self.assertEqual(p.channel_width_hz, 10_000_000)
         self.assertEqual(p.regulatory_rule_id, "FCC_PART_96")
         self.assertEqual(p.gaa_policy_id, "FCC_PART_96_GAA")
+        self.assertEqual(p.gaa_source_id(), "FCC_PART_96_GAA")
         self.assertEqual(p.channel_count, 15)
         self.assertEqual(p.min_without_grant_reports, 15)
         self.assertEqual(p.max_allowed_eirp_mhz("A", fcc_max_eirp=47.0), 20.0)
@@ -35,6 +38,21 @@ class BandProfileModelTests(unittest.TestCase):
             p.max_allowed_eirp_mhz("A", fcc_max_eirp=47.0, eirp_capability=20.0),
             10.0,
         )
+        self.assertIsNotNone(p.esc_policy)
+        assert p.esc_policy is not None
+        self.assertEqual(p.esc_policy.low_hz, 3_550_000_000)
+        self.assertEqual(p.esc_policy.high_hz, 3_700_000_000)
+        self.assertEqual(p.esc_policy.protection_m, 40_000.0)
+        assert p.fss_gwbl_policy is not None
+        self.assertEqual(p.fss_gwbl_policy.low_hz, 3_650_000_000)
+        self.assertEqual(p.fss_gwbl_policy.high_hz, 3_700_000_000)
+        assert p.ntia_exclusion_policy is not None
+        self.assertEqual(p.ntia_exclusion_policy.low_hz, 3_550_000_000)
+        self.assertEqual(p.ntia_exclusion_policy.high_hz, 3_650_000_000)
+        assert p.dpa_policy is not None
+        self.assertEqual(p.dpa_policy.low_hz, 3_500_000_000)
+        assert p.border_policy is not None
+        self.assertEqual(p.border_policy.itm_freq_mhz, 3625.0)
 
     def test_br_anatel_privativa_profile(self):
         p = br_anatel_privativa_profile()
@@ -43,14 +61,22 @@ class BandProfileModelTests(unittest.TestCase):
         self.assertEqual(p.band_high_hz, 3_800_000_000)
         self.assertEqual(p.channel_width_hz, 10_000_000)
         self.assertEqual(p.regulatory_rule_id, "ANATEL_SLP_ACT_374")
+        self.assertEqual(p.gaa_source_id(), "ANATEL_SLP_ACT_374_COEXISTENCE")
         self.assertEqual(p.channel_count, 10)
         self.assertEqual(p.category_a_max_eirp_dbm, 47.0)
         self.assertEqual(p.category_b_max_eirp_dbm, 47.0)
         self.assertEqual(p.eirp_reference_bandwidth_hz, 100_000_000)
         self.assertFalse(p.protection.esc)
         self.assertFalse(p.protection.dpa)
+        self.assertFalse(p.protection.border_protection)
         self.assertTrue(p.protection.fss_gwbl)
         self.assertTrue(p.protection.exclusion_zones)
+        self.assertIsNone(p.esc_policy)
+        self.assertIsNone(p.dpa_policy)
+        self.assertIsNone(p.border_policy)
+        assert p.fss_gwbl_policy is not None
+        self.assertEqual(p.fss_gwbl_policy.low_hz, 3_700_000_000)
+        self.assertEqual(p.fss_gwbl_policy.high_hz, 3_800_000_000)
 
     def test_immutable(self):
         p = cbrs_winnforum_profile()
@@ -105,6 +131,34 @@ class BandProfileModelTests(unittest.TestCase):
         self.assertEqual(p.profile_id, "custom")
         self.assertFalse(p.protection.pal_gaa)
         self.assertEqual(p.gaa_policy_id, "CUSTOM_GAA")
+        self.assertIsNone(p.fss_gwbl_policy)
+
+    def test_profile_from_mapping_with_policies(self):
+        p = profile_from_mapping(
+            {
+                "profile_id": "custom_esc",
+                "band_low_hz": 3_500_000_000,
+                "band_high_hz": 3_600_000_000,
+                "channel_width_hz": 10_000_000,
+                "regulatory_rule_id": "CUSTOM",
+                "protection": {"esc": True, "fss_gwbl": True},
+                "esc_policy": {
+                    "low_hz": 3_500_000_000,
+                    "high_hz": 3_560_000_000,
+                    "protection_m": 25_000.0,
+                },
+                "fss_gwbl_policy": {
+                    "low_hz": 3_550_000_000,
+                    "high_hz": 3_600_000_000,
+                },
+            }
+        )
+        self.assertIsInstance(p.esc_policy, EscPolicy)
+        assert p.esc_policy is not None
+        self.assertEqual(p.esc_policy.protection_m, 25_000.0)
+        self.assertIsInstance(p.fss_gwbl_policy, FssGwblPolicy)
+        assert p.fss_gwbl_policy is not None
+        self.assertEqual(p.fss_gwbl_policy.low_hz, 3_550_000_000)
 
 
 class ProfileManagerTests(unittest.TestCase):

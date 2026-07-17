@@ -87,7 +87,6 @@ def migrate_schema() -> None:
 def _backfill_authorization_bindings() -> None:
     """Bind or fail-closed legacy grants after schema upgrade."""
     from services.authorization_service import (
-        GAA_SOURCE_ID,
         SOURCE_TYPE_GAA,
         SOURCE_TYPE_PAL,
         STATUS_ACTIVE,
@@ -104,7 +103,7 @@ def _backfill_authorization_bindings() -> None:
 
     db = SessionLocal()
     try:
-        ensure_gaa_authorization(db)
+        gaa = ensure_gaa_authorization(db)
 
         # Mirror existing PAL rows into AuthorizationSource so Grants can revalidate.
         now = utc_now()
@@ -129,7 +128,7 @@ def _backfill_authorization_bindings() -> None:
                 record=rec,
             )
 
-        # Legacy GAA grants without an explicit source bind to the global policy.
+        # Legacy GAA grants without an explicit source bind to the active policy.
         legacy_gaa = (
             db.query(Grant)
             .filter(
@@ -141,7 +140,7 @@ def _backfill_authorization_bindings() -> None:
         )
         for grant in legacy_gaa:
             grant.authorization_source_type = SOURCE_TYPE_GAA
-            grant.authorization_source_id = GAA_SOURCE_ID
+            grant.authorization_source_id = gaa.source_id
             grant.authorization_expires_at = None
 
         # Legacy PAL grants cannot recover palId → fail-closed terminate.
