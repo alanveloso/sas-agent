@@ -1,0 +1,3 @@
+phase,n_profiles,latency_mean_across_profiles_ms,latency_min_ms,latency_max_ms,latency_cv_pct,memory_peak_mean_mb,memory_peak_cv_pct,profiles
+cold_start,8,260.6757,258.86,262.4819,0.5438,48.7485,0.0304,"br_anatel_privativa,cbrs_winnforum,lab_custom_3p8,synth_narrow_5mhz,synth_protections_all_off,synth_protections_all_on,synth_short_timers,synth_wide_20mhz"
+grant_hot,8,4.6233,4.4215,5.1567,4.9667,74.7792,0.1395,"br_anatel_privativa,cbrs_winnforum,lab_custom_3p8,synth_narrow_5mhz,synth_protections_all_off,synth_protections_all_on,synth_short_timers,synth_wide_20mhz"

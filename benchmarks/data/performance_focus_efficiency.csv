@@ -1,0 +1,9 @@
+comparison_scenario,profile,instance_type,phase,latency_mean_ms,latency_p95_ms,memory_idle_mb,memory_peak_mb,n_samples
+architectural_isolation,cbrs_winnforum,core,cold_start,260.5912,271.1124,48.7589,48.7589,30
+architectural_isolation,cbrs_winnforum,core,grant_hot,4.7459,6.3361,74.7961,74.8104,30
+architectural_isolation,cbrs_winnforum,monolithic,cold_start,508.7589,524.1427,79.4039,79.4039,30
+architectural_isolation,cbrs_winnforum,monolithic,grant_hot,7.9652,9.6842,81.3969,81.4176,30
+profile_agnosticism,br_anatel_privativa,core,cold_start,257.6633,262.6448,48.7315,48.7315,30
+profile_agnosticism,br_anatel_privativa,core,grant_hot,4.4776,5.894,74.7945,74.8074,30
+profile_agnosticism,cbrs_winnforum,core,cold_start,258.113,264.5328,48.7375,48.7375,30
+profile_agnosticism,cbrs_winnforum,core,grant_hot,5.5219,16.551,74.7793,74.7938,30

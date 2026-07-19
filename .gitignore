@@ -2,5 +2,16 @@
 __pycache__/
 *.pyc
 sas_mvp.db
+.coverage
 *.db-journal
 mapeamento_paths.log
+metrics_sandbox/
+
+# Benchmarks: version scripts, profiles and generated data, but not the
+# local venv, per-run logs or transient temp DBs.
+benchmarks/.venv/
+benchmarks/logs/
+benchmarks/**/*.db
+benchmarks/**/*.db-journal
+benchmarks/**/*.db-wal
+benchmarks/**/*.db-shm

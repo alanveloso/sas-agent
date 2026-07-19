@@ -1,0 +1,16 @@
+{
+  "timestamp_utc": "2026-07-18T13:35:42.838395+00:00",
+  "python_version": "3.12.3",
+  "platform": "Linux-6.17.0-1028-oem-x86_64-with-glibc2.39",
+  "machine": "x86_64",
+  "seed": 42,
+  "n": 30,
+  "warmup": 3,
+  "scenarios": 8,
+  "focus": "cold_start + grant_hot; no CBRS terms, Radon, CPAS or coverage",
+  "cpu_model": "AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics",
+  "meminfo_total": "MemTotal:       28368720 kB",
+  "n_runs": 264,
+  "n_groups": 8,
+  "non_warmup_failures": 0
+}

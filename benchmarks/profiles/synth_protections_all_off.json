@@ -1,0 +1,24 @@
+{
+  "category_a_max_eirp_dbm": 30.0,
+  "category_b_max_eirp_dbm": 47.0,
+  "eirp_reference_bandwidth_hz": 10000000,
+  "grant_duration_sec": 900,
+  "heartbeat_interval_sec": 60,
+  "transmit_expire_sec": 60,
+  "profile_id": "synth_protections_all_off",
+  "band_low_hz": 3800000000,
+  "band_high_hz": 3900000000,
+  "channel_width_hz": 10000000,
+  "raster_origin_hz": 3800000000,
+  "regulatory_rule_id": "SYNTH_ALL_OFF",
+  "gaa_policy_id": "SYNTH_ALL_OFF_COEXISTENCE",
+  "protection": {
+    "pal_gaa": false,
+    "fss_gwbl": false,
+    "exclusion_zones": false,
+    "border_protection": false,
+    "dpa": false,
+    "esc": false,
+    "quiet_zones": false
+  }
+}
