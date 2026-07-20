@@ -1,0 +1,63 @@
+{
+  "timestamp_utc": "2026-07-19T16:54:17Z",
+  "python_version": "3.12.3",
+  "platform": "Linux-6.17.0-1028-oem-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "machine": "x86_64",
+  "node": "alanveloso-ThinkPad-P14s-Gen-5-AMD",
+  "seed": 42,
+  "n": 5,
+  "warmup": 0,
+  "packages": {
+    "httpx": "0.28.1",
+    "psutil": "7.2.2",
+    "fastapi": "0.139.2",
+    "uvicorn": "0.51.0",
+    "sqlalchemy": "2.0.51"
+  },
+  "docker_version": "29.6.1",
+  "script_hashes": {
+    "mtls_stress_test.py": "8158736117a9427023fd2762ea7e0c1a509ab273a658a5c8694686979cbb5a9e",
+    "common.py": "a8a2c592de047145b7668d504028d008312043093abdb8ce9d1041bb0e21e4b5"
+  },
+  "lscpu": "Arquitetura:                               x86_64\nModo(s) operacional da CPU:                32-bit, 64-bit\nTamanhos de endereço:                      48 bits physical, 48 bits virtual\nOrdem dos bytes:                           Little Endian\nCPU(s):                                    16\nLista de CPU(s) on-line:                   0-15\nID de fornecedor:                          AuthenticAMD\nNome do modelo:                            AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics\nFamília da CPU:                            25\nModelo:                                    117\nThread(s) per núcleo:                      2\nNúcleo(s) por soquete:                     8\nSoquete(s):                                1\nStep:                                      2\nAumento de frequência:                     habilitado\nCPU(s) MHz de escala:                      63%\nCPU MHz máx.:                              5134,8892\nCPU MHz mín.:                              419,1750\nBogoMIPS:                                  6587,22\nOpções:                                    fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good amd_lbr_v2 nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpuid_fault cpb cat_l3 cdp_l3 hw_pstate ssbd mba perfmon_v2 ibrs ibpb stibp ibrs_enhanced vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk avx512_bf16 clzero irperf xsaveerptr rdpru wbnoinvd cppc arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold vgif x2avic v_spec_ctrl vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid overflow_recov succor smca fsrm flush_l1d amd_lbr_pmc_freeze\nVirtualização:                             AMD-V\ncache de L1d:                              256 KiB (8 instâncias)\ncache de L1i:                              256 KiB (8 instâncias)\ncache de L2:                               8 MiB (8 instâncias)\ncache de L3:                               16 MiB (1 instância)\nNó(s) de NUMA:                             1\nCPU(s) de nó0 NUMA:                        0-15\nVulnerabilidade Gather data sampling:      Not affected\nVulnerabilidade Ghostwrite:                Not affected\nVulnerabilidade Indirect target selection: Not affected\nVulnerabilidade Itlb multihit:             Not affected\nVulnerabilidade L1tf:                      Not affected\nVulnerabilidade Mds:                       Not affected\nVulnerabilidade Meltdown:                  Not affected\nVulnerabilidade Mmio stale data:           Not affected\nVulnerabilidade Old microcode:             Not affected\nVulnerabilidade Reg file data sampling:    Not affected\nVulnerabilidade Retbleed:                  Not affected\nVulnerabilidade Spec rstack overflow:      Mitigation; Safe RET\nVulnerabilidade Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerabilidade Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerabilidade Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; STIBP always-on; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerabilidade Srbds:                     Not affected\nVulnerabilidade Tsa:                       Mitigation; Clear CPU buffers\nVulnerabilidade Tsx async abort:           Not affected\nVulnerabilidade Vmscape:                   Mitigation; IBPB before exit to userspace\n",
+  "cpu_count": "16",
+  "meminfo_total": "MemTotal:       28368712 kB",
+  "certs_dir": "/home/alanveloso/Código/Spectrum-Access-System/src/harness/certs",
+  "certs_fingerprint": "8a9a0f76fc4824e77b83a62153bb09ffdb223c0f5a2bacedeea009749de66041",
+  "experiment": "mtls_stress",
+  "target": "both",
+  "load_levels": [
+    10,
+    100,
+    500,
+    1000
+  ],
+  "repeats": 5,
+  "max_in_flight": 100,
+  "batch_max": 100,
+  "stats_interval_sec": 0.1,
+  "base_urls": {
+    "monolithic": "https://127.0.0.1:19000",
+    "core": "https://127.0.0.1:19001"
+  },
+  "containers": {
+    "monolithic": "sas-stress-monolithic",
+    "core": "sas-stress-core"
+  },
+  "images": {
+    "monolithic": {
+      "tag": "sas-agent:monolithic",
+      "digest": "sas-agent@sha256:86a3faeae584c435e2ca73465030ffa5ebc20162a10236080facd94eb1f4121e"
+    },
+    "core": {
+      "tag": "sas-agent:core",
+      "digest": "sas-agent@sha256:a27f22f06496ccca06b5cd6bed95d4a686fad63449281bf71f1dbed77e179262"
+    }
+  },
+  "non_warmup_failures": 0,
+  "outputs": {
+    "raw_csv": "/home/alanveloso/Código/sas-agent/benchmarks/data/mtls_stress_results_raw.csv",
+    "long_csv": "/home/alanveloso/Código/sas-agent/benchmarks/data/mtls_stress_results.csv"
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "timestamp_utc": "2026-07-20T14:33:58Z",
+  "python_version": "3.12.3",
+  "platform": "Linux-6.17.0-1028-oem-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "machine": "x86_64",
+  "node": "alanveloso-ThinkPad-P14s-Gen-5-AMD",
+  "seed": 42,
+  "n": 30,
+  "warmup": 3,
+  "packages": {
+    "httpx": "0.28.1",
+    "psutil": "7.2.2",
+    "fastapi": "0.139.2",
+    "uvicorn": "0.51.0",
+    "sqlalchemy": "2.0.51"
+  },
+  "docker_version": "29.6.1",
+  "git": {
+    "commit": "9f9dacad47744604c3a0497471cfaf0466d2275a",
+    "dirty": true,
+    "dirty_file_count": 44
+  },
+  "host_load": {
+    "loadavg_1m": 2.5078125,
+    "loadavg_5m": 2.1826171875,
+    "loadavg_15m": 1.8955078125,
+    "cpu_percent_prior": 11.2,
+    "memory_used_percent_prior": 42.9,
+    "temperatures_c": {
+      "ath11k_hwmon:ath11k_hwmon_0": 65.0,
+      "acpitz:acpitz_0": 70.0,
+      "nvme:Composite": 41.85,
+      "nvme:Sensor 1": 50.85,
+      "nvme:Sensor 2": 41.85,
+      "k10temp:Tctl": 72.875,
+      "spd5118:spd5118_0": 62.5,
+      "thinkpad:CPU": 70.0,
+      "thinkpad:thinkpad_1": 70.0,
+      "thinkpad:thinkpad_2": 0.0,
+      "thinkpad:thinkpad_3": 70.0,
+      "thinkpad:thinkpad_4": 70.0,
+      "amdgpu:edge": 63.0
+    },
+    "temperature_max_c": 72.875
+  },
+  "script_hashes": {
+    "slicing_benchmark.py": "180ad50542c7278691ea06aa746dc6b02bdb2ec298c37b690cc600497342d9c8",
+    "common.py": "058a7c25939daf247cf2dceb7e7cd70b0328ca8107ae7877b0c289d5754722a9"
+  },
+  "lscpu": "Arquitetura:                               x86_64\nModo(s) operacional da CPU:                32-bit, 64-bit\nTamanhos de endereço:                      48 bits physical, 48 bits virtual\nOrdem dos bytes:                           Little Endian\nCPU(s):                                    16\nLista de CPU(s) on-line:                   0-15\nID de fornecedor:                          AuthenticAMD\nNome do modelo:                            AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics\nFamília da CPU:                            25\nModelo:                                    117\nThread(s) per núcleo:                      2\nNúcleo(s) por soquete:                     8\nSoquete(s):                                1\nStep:                                      2\nAumento de frequência:                     habilitado\nCPU(s) MHz de escala:                      69%\nCPU MHz máx.:                              5134,8892\nCPU MHz mín.:                              419,1750\nBogoMIPS:                                  6587,43\nOpções:                                    fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good amd_lbr_v2 nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpuid_fault cpb cat_l3 cdp_l3 hw_pstate ssbd mba perfmon_v2 ibrs ibpb stibp ibrs_enhanced vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk avx512_bf16 clzero irperf xsaveerptr rdpru wbnoinvd cppc arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold vgif x2avic v_spec_ctrl vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid overflow_recov succor smca fsrm flush_l1d amd_lbr_pmc_freeze\nVirtualização:                             AMD-V\ncache de L1d:                              256 KiB (8 instâncias)\ncache de L1i:                              256 KiB (8 instâncias)\ncache de L2:                               8 MiB (8 instâncias)\ncache de L3:                               16 MiB (1 instância)\nNó(s) de NUMA:                             1\nCPU(s) de nó0 NUMA:                        0-15\nVulnerabilidade Gather data sampling:      Not affected\nVulnerabilidade Ghostwrite:                Not affected\nVulnerabilidade Indirect target selection: Not affected\nVulnerabilidade Itlb multihit:             Not affected\nVulnerabilidade L1tf:                      Not affected\nVulnerabilidade Mds:                       Not affected\nVulnerabilidade Meltdown:                  Not affected\nVulnerabilidade Mmio stale data:           Not affected\nVulnerabilidade Old microcode:             Not affected\nVulnerabilidade Reg file data sampling:    Not affected\nVulnerabilidade Retbleed:                  Not affected\nVulnerabilidade Spec rstack overflow:      Mitigation; Safe RET\nVulnerabilidade Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerabilidade Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerabilidade Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; STIBP always-on; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerabilidade Srbds:                     Not affected\nVulnerabilidade Tsa:                       Mitigation; Clear CPU buffers\nVulnerabilidade Tsx async abort:           Not affected\nVulnerabilidade Vmscape:                   Mitigation; IBPB before exit to userspace\n",
+  "cpu_count": "16",
+  "meminfo_total": "MemTotal:       28368716 kB",
+  "certs_dir": "/home/alanveloso/Código/Spectrum-Access-System/src/harness/certs",
+  "certs_fingerprint": "8a9a0f76fc4824e77b83a62153bb09ffdb223c0f5a2bacedeea009749de66041",
+  "experiment": "spectrum_slicing",
+  "image": {
+    "tag": "sas-agent:monolithic",
+    "digest": "sas-agent@sha256:86a3faeae584c435e2ca73465030ffa5ebc20162a10236080facd94eb1f4121e"
+  },
+  "port": 19020,
+  "slice_hz": [
+    3550000000,
+    3570000000
+  ],
+  "national_band_hz": [
+    3550000000,
+    3700000000
+  ],
+  "population_national": 1000,
+  "population_sliced": 133,
+  "failures": 0,
+  "outputs": {
+    "raw_csv": "/home/alanveloso/Código/sas-agent/benchmarks/data/slicing_results_raw.csv",
+    "summary_csv": "/home/alanveloso/Código/sas-agent/benchmarks/data/slicing_results.csv"
+  }
+}

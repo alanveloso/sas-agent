@@ -5,7 +5,8 @@ sas_mvp.db
 .coverage
 *.db-journal
 mapeamento_paths.log
-metrics_sandbox/
+# Legacy sandbox at repo root only; benchmarks/metrics_sandbox/ is versioned.
+/metrics_sandbox/
 
 # Benchmarks: version scripts, profiles and generated data, but not the
 # local venv, per-run logs or transient temp DBs.

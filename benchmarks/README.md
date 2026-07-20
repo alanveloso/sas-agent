@@ -19,6 +19,8 @@ band profile, so runs never contaminate each other.
 | `performance_focus.py` | Performance-only slice: cold start + hot grant, monolithic vs. core, profile-agnostic check | `performance_focus_*.csv/json` |
 | `agnosticism_benchmark.py` | Architecture isolation + 8-profile agnosticism (cold start + hot grant) | `agnosticism_*.csv/json` |
 | `lifecycle_benchmark.py` | **Full CBSD–SAS lifecycle** (registration → spectrum inquiry → grant → heartbeat → relinquishment → deregistration), per endpoint and end-to-end, monolithic vs. core and across 8 profiles | `lifecycle_*.csv/json` |
+| `load/container_coldstart.py` | **Real container cold start** (`docker run` → first mTLS `GET /ready` 200), paired monolithic vs core images | `container_coldstart*.csv/json` |
+| `load/mtls_stress_test.py` | **Async mTLS stress** (Registration + Grant batches) with RPS, tail latencies and CPU/RSS sampling | `mtls_stress_results*.csv/json` |
 
 Workers (invoked as subprocesses, not run directly):
 
@@ -49,6 +51,41 @@ python3 -m venv .venv
 ```
 
 All datasets land in `data/`. Per-run logs land in `logs/` (git-ignored).
+
+## Load benchmarks (Docker + mTLS)
+
+These scripts compare deployable surfaces:
+
+- `sas-agent:monolithic` — full `main.py` (CBSD + admin + SAS–SAS, RSA+ECC)
+- `sas-agent:core` — lightweight `main_core.py` (CBSD + admin, RSA only)
+
+```bash
+# Build both images (from sas-agent/, uses monorepo parent as context)
+./load/build_images.sh
+
+# Export harness certs (same layout as docker-compose / run_cbrs_tests.sh)
+export HARNESS_CERTS_DIR=/path/to/src/harness/certs
+
+# Smoke cold start (N=2)
+.venv/bin/python load/container_coldstart.py --n 2 --warmup 0
+
+# Full paired cold start (N=30, warmup=3)
+.venv/bin/python load/container_coldstart.py
+
+# mTLS stress against both architectures (manages containers by default)
+.venv/bin/python load/mtls_stress_test.py --target=both --repeats 1 \
+  --load-levels 10 100
+
+# Or point at already-running instances
+.venv/bin/python load/mtls_stress_test.py --target=both --no-manage-containers \
+  --base-url-monolithic https://127.0.0.1:19000 \
+  --base-url-core https://127.0.0.1:19001 \
+  --container-monolithic sas-stress-monolithic \
+  --container-core sas-stress-core
+```
+
+Long-format CSVs use columns `architecture,load_level,metric,value` for
+hypothesis tests (e.g. Mann–Whitney) and plotting.
 
 ## Reproducibility
 

@@ -104,23 +104,42 @@ fi
 
 log "Executando suítes de regressão CBRS (no container do harness)..."
 
+# Evidence logs for the evaluation report (Fase 1 do plano de avaliação).
+EVIDENCE_DIR="$SCRIPT_DIR/benchmarks/data"
+mkdir -p "$EVIDENCE_DIR"
+
 FAILED=0
+# Full CBSD lifecycle order: REG -> SIQ -> GRA -> HBT -> RLQ -> DRG.
 SUITES=(
+  testcases.WINNF_FT_S_REG_testcase
   testcases.WINNF_FT_S_SIQ_testcase
   testcases.WINNF_FT_S_GRA_testcase
   testcases.WINNF_FT_S_HBT_testcase
+  testcases.WINNF_FT_S_RLQ_testcase
+  testcases.WINNF_FT_S_DRG_testcase
 )
 
 for suite in "${SUITES[@]}"; do
   log ""
   log "==> $suite"
-  if "${HARNESS_RUN[@]}" python -m unittest "$suite" -v; then
+  suite_log="$EVIDENCE_DIR/winnforum_${suite##*.}.log"
+  if "${HARNESS_RUN[@]}" python -m unittest "$suite" -v 2>&1 | tee "$suite_log"; then
     pass "OK: $suite"
   else
     fail "ERRO: $suite"
     FAILED=1
   fi
 done
+
+log ""
+log "Consolidando evidências em CSV..."
+if python3 "$SCRIPT_DIR/benchmarks/parse_winnforum_logs.py" \
+  --logs-dir "$EVIDENCE_DIR" \
+  --out "$EVIDENCE_DIR/lifecycle_validation.csv"; then
+  pass "Evidências: $EVIDENCE_DIR/lifecycle_validation.csv"
+else
+  fail "Falha ao consolidar evidências (logs preservados em $EVIDENCE_DIR)."
+fi
 
 log ""
 if [[ "$FAILED" -eq 0 ]]; then
