@@ -37,8 +37,9 @@ artifacts/raw/
 artifacts/tables/
 artifacts/figures/
 artifacts/manifests/
+artifacts/processed/
 !artifacts/README.md
 
 # Dados/logs locais de bench (saída antiga)
-benchmarks/data/**
+benchmarks/data/*
 !benchmarks/data/README.md
