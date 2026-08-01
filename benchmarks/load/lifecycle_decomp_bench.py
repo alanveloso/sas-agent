@@ -1,13 +1,14 @@
-"""Experimento A — decomposição do lifecycle (REG/SIQ/GRA/HBT).
+"""Experimento A — decomposição do lifecycle CBSD completo.
 
-Por operação (conexão mTLS persistente, ``SAS_TIMING=1``):
+Operações: REG → SIQ → GRA → HBT → RLQ → DRG
+(conexão mTLS persistente, ``SAS_TIMING=1``).
 
   client_ms ≈ application_total_ms + external_ms
   application_total_ms ≈ sum(stage_*)
   application_non_db_ms = application_total_ms − database_ms
 
-Estágios exclusivos (empilháveis): stage_{auth,validation,policy,database,
-serialization,other}_ms. Campos nested_* são diagnósticos e podem sobrepor.
+Estágios exclusivos empilháveis: stage_{handler,database,serialization,other}_ms.
+Campos nested_* são diagnósticos e podem sobrepor.
 
 Saídas: lifecycle_decomp_{raw,summary,manifest}.*
 """
@@ -51,7 +52,14 @@ from common import (  # noqa: E402
     write_manifest,
 )
 
-OPS = ("registration", "spectrumInquiry", "grant", "heartbeat")
+OPS = (
+    "registration",
+    "spectrumInquiry",
+    "grant",
+    "heartbeat",
+    "relinquishment",
+    "deregistration",
+)
 STAGE_FIELDS = (
     "stage_handler_ms",
     "stage_database_ms",
@@ -119,12 +127,16 @@ def _post(
         "spectrumInquiry": "spectrumInquiryRequest",
         "grant": "grantRequest",
         "heartbeat": "heartbeatRequest",
+        "relinquishment": "relinquishmentRequest",
+        "deregistration": "deregistrationRequest",
     }[op]
     resp_key = {
         "registration": "registrationResponse",
         "spectrumInquiry": "spectrumInquiryResponse",
         "grant": "grantResponse",
         "heartbeat": "heartbeatResponse",
+        "relinquishment": "relinquishmentResponse",
+        "deregistration": "deregistrationResponse",
     }[op]
     t0 = time.perf_counter()
     resp = client.post(f"{base}/v1.2/{op}", json={key: [item]})
@@ -267,6 +279,14 @@ def _run_cycle(
     one(
         "heartbeat",
         {"cbsdId": cbsd_id, "grantId": grant_id, "operationState": "GRANTED"},
+    )
+    one(
+        "relinquishment",
+        {"cbsdId": cbsd_id, "grantId": grant_id},
+    )
+    one(
+        "deregistration",
+        {"cbsdId": cbsd_id},
     )
 
     life_ms = (time.perf_counter() - t_life) * 1000.0
@@ -457,6 +477,7 @@ def main() -> int:
             certs_dir=certs,
             extra={
                 "experiment": "lifecycle_decomp",
+                "operations": list(OPS),
                 "model": (
                     "client ≈ application_total + external; "
                     "application_total ≈ sum(stage_*); "

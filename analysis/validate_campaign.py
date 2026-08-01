@@ -84,7 +84,12 @@ def validate_lifecycle(raw_csv: Path, checks: list[Check], *, tol_ms: float = 0.
         if str(r.get("warmup")) in ("0", "False")
         and r.get("exit_code") in ("0", 0)
         and r.get("operation") in (
-            "registration", "spectrumInquiry", "grant", "heartbeat",
+            "registration",
+            "spectrumInquiry",
+            "grant",
+            "heartbeat",
+            "relinquishment",
+            "deregistration",
         )
     ]
     _add(checks, "lifecycle.has_measured_rows", bool(measured), f"n={len(measured)}", rel)

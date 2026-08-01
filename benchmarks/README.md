@@ -12,7 +12,7 @@
 
 ## Escopo congelado do artigo (4 experimentos)
 
-1. **Lifecycle decomposition** — REG/SIQ/GRA/HBT + `X-SAS-Timing`
+1. **Lifecycle decomposition** — REG/SIQ/GRA/HBT/RLQ/DRG + `X-SAS-Timing`
 2. **mTLS** — matriz de certificados + overhead TLS vs mTLS
 3. **Persistência** — SQLite commit / batch / memory (+ Postgres opcional)
 4. **Cold start instrumentado** — marcos internos + polls
