@@ -16,3 +16,29 @@ benchmarks/**/*.db
 benchmarks/**/*.db-journal
 benchmarks/**/*.db-wal
 benchmarks/**/*.db-shm
+
+# Secrets / local junk
+*.key
+certs/private/
+scratch/
+tmp/
+*.pid
+.pytest_cache/
+dist/
+build/
+
+# Artifacts: keep structure + manifests/tables; ignore huge local dumps if any
+artifacts/**/*.db
+artifacts/**/*.log
+artifacts/raw/**/scratch/
+
+# Campanhas locais (gerar de novo; não versionar raw/smoke)
+artifacts/raw/
+artifacts/tables/
+artifacts/figures/
+artifacts/manifests/
+!artifacts/README.md
+
+# Dados/logs locais de bench (saída antiga)
+benchmarks/data/**
+!benchmarks/data/README.md

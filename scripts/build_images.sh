@@ -1,0 +1,1 @@
+../benchmarks/load/build_images.sh

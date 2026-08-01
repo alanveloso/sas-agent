@@ -1,4 +1,4 @@
-"""SQLite database setup for the SAS MVP."""
+"""Database setup for the SAS MVP (SQLite by default; PostgreSQL via DATABASE_URL)."""
 
 from __future__ import annotations
 
@@ -12,13 +12,33 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 _default_db = Path(__file__).resolve().parent / "sas_mvp.db"
 _db_override = os.environ.get("SAS_DATABASE_PATH", "").strip()
+_url_override = os.environ.get("DATABASE_URL", "").strip()
 DB_PATH = Path(_db_override) if _db_override else _default_db
-DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-DATABASE_URL = f"sqlite:///{DB_PATH}"
+if not _url_override and str(DB_PATH):
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+if _url_override:
+    DATABASE_URL = _url_override
+else:
+    DATABASE_URL = f"sqlite:///{DB_PATH}"
+
+_IS_SQLITE = DATABASE_URL.startswith("sqlite")
+_connect_args: dict = {}
+_engine_kwargs: dict = {"pool_pre_ping": not _IS_SQLITE}
+if _IS_SQLITE:
+    _connect_args = {"check_same_thread": False}
+    if ":memory:" in DATABASE_URL:
+        from sqlalchemy.pool import StaticPool
+
+        # Shared in-memory DB across SessionLocal connections in one process.
+        _engine_kwargs["poolclass"] = StaticPool
+        if "cache=shared" not in DATABASE_URL:
+            DATABASE_URL = "sqlite:///:memory:?cache=shared"
 
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False},
+    connect_args=_connect_args,
+    **_engine_kwargs,
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -57,16 +77,17 @@ def _ensure_index(name: str, ddl: str) -> None:
 
 
 def migrate_schema() -> None:
-    """Idempotent SQLite schema upgrades for authorization lifecycle fields."""
+    """Idempotent schema upgrades for authorization lifecycle fields."""
     from models import models  # noqa: F401
 
     # create_all adds missing tables (authorization_sources) but not columns.
     Base.metadata.create_all(bind=engine)
 
+    col_type = "TIMESTAMP" if not _IS_SQLITE else "DATETIME"
     if "grants" in inspect(engine).get_table_names():
         _ensure_column("grants", "authorization_source_id", "VARCHAR(256)")
         _ensure_column("grants", "authorization_source_type", "VARCHAR(32)")
-        _ensure_column("grants", "authorization_expires_at", "DATETIME")
+        _ensure_column("grants", "authorization_expires_at", col_type)
         _ensure_column("grants", "termination_reason", "VARCHAR(64)")
         _ensure_index(
             "ix_grants_auth_source",

@@ -1,0 +1,24 @@
+{
+  "category_a_max_eirp_dbm": 30.0,
+  "category_b_max_eirp_dbm": 47.0,
+  "eirp_reference_bandwidth_hz": 10000000,
+  "grant_duration_sec": 60,
+  "heartbeat_interval_sec": 5,
+  "transmit_expire_sec": 5,
+  "profile_id": "synth_short_timers",
+  "band_low_hz": 3600000000,
+  "band_high_hz": 3700000000,
+  "channel_width_hz": 10000000,
+  "raster_origin_hz": 3600000000,
+  "regulatory_rule_id": "SYNTH_SHORT_TIMERS",
+  "gaa_policy_id": "SYNTH_SHORT_TIMERS_COEXISTENCE",
+  "protection": {
+    "pal_gaa": false,
+    "fss_gwbl": true,
+    "exclusion_zones": true,
+    "border_protection": false,
+    "dpa": false,
+    "esc": false,
+    "quiet_zones": false
+  }
+}

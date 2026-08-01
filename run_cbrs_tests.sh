@@ -133,12 +133,17 @@ done
 
 log ""
 log "Consolidando evidências em CSV..."
-if python3 "$SCRIPT_DIR/benchmarks/parse_winnforum_logs.py" \
-  --logs-dir "$EVIDENCE_DIR" \
-  --out "$EVIDENCE_DIR/lifecycle_validation.csv"; then
-  pass "Evidências: $EVIDENCE_DIR/lifecycle_validation.csv"
+PARSE_SCRIPT="$SCRIPT_DIR/benchmarks/parse_winnforum_logs.py"
+if [[ -f "$PARSE_SCRIPT" ]]; then
+  if python3 "$PARSE_SCRIPT" \
+    --logs-dir "$EVIDENCE_DIR" \
+    --out "$EVIDENCE_DIR/lifecycle_validation.csv"; then
+    pass "Evidências: $EVIDENCE_DIR/lifecycle_validation.csv"
+  else
+    fail "Falha ao consolidar evidências (logs preservados em $EVIDENCE_DIR)."
+  fi
 else
-  fail "Falha ao consolidar evidências (logs preservados em $EVIDENCE_DIR)."
+  log "Parser ausente ($PARSE_SCRIPT); logs brutos em $EVIDENCE_DIR."
 fi
 
 log ""

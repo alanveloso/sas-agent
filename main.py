@@ -41,6 +41,14 @@ from services.mtls_auth import (
     patch_uvicorn_for_client_cert,
 )
 from services.profile_manager import initialize_active_profile
+from services.request_timing import (
+    mark_startup,
+    startup_snapshot_ms,
+    startup_span,
+    timing_enabled,
+)
+
+mark_startup("imports_done")
 
 HARNESS_CERTS = ROOT.parent / "src" / "harness" / "certs"
 SSL_CERTFILE = HARNESS_CERTS / "server.cert"
@@ -57,6 +65,7 @@ ECC_PORT = 9001
 patch_uvicorn_for_client_cert()
 
 app = FastAPI(title="SAS MVP Core", version="0.1.0")
+mark_startup("app_created")
 app.add_exception_handler(RequestValidationError, request_validation_exception_handler)
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.include_router(admin_router)
@@ -66,8 +75,27 @@ app.include_router(sas_sas_router)
 
 @app.on_event("startup")
 def on_startup():
-    initialize_active_profile()
-    init_db()
+    with startup_span("profile_load"):
+        initialize_active_profile()
+    mark_startup("profile_loaded")
+    with startup_span("database_init"):
+        init_db()
+    mark_startup("database_ready")
+    if timing_enabled():
+        from database import engine
+        from services.request_timing import install_sqlalchemy_timing
+
+        install_sqlalchemy_timing(engine)
+
+
+@app.get("/ready")
+def ready():
+    """Readiness probe for cold-start / orchestration benchmarks."""
+    mark_startup("first_ready")
+    body: dict = {"status": "ok"}
+    if timing_enabled():
+        body["startup"] = startup_snapshot_ms()
+    return body
 
 
 @app.post("/{version}/registration")
@@ -104,29 +132,47 @@ async def heartbeat_unsupported_version(version: str, request: Request):
 
 def _rsa_ssl_context_factory(config, default_factory):
     del config, default_factory
-    return create_mtls_ssl_context(
-        certfile=SSL_CERTFILE,
-        keyfile=SSL_KEYFILE,
-        ca_certs=SSL_CA_CERTS,
-        crl_dir=SSL_CRL_DIR,
-        ciphers=RSA_CIPHERS,
-    )
+    from services.request_timing import mark_startup, startup_span
+
+    with startup_span("tls_init"):
+        ctx = create_mtls_ssl_context(
+            certfile=SSL_CERTFILE,
+            keyfile=SSL_KEYFILE,
+            ca_certs=SSL_CA_CERTS,
+            crl_dir=SSL_CRL_DIR,
+            ciphers=RSA_CIPHERS,
+        )
+    mark_startup("tls_context_ready")
+    return ctx
 
 
 def _ecc_ssl_context_factory(config, default_factory):
     del config, default_factory
-    return create_mtls_ssl_context(
-        certfile=SSL_ECC_CERTFILE,
-        keyfile=SSL_ECC_KEYFILE,
-        ca_certs=SSL_CA_CERTS,
-        crl_dir=SSL_CRL_DIR,
-        ciphers=ECC_CIPHERS,
-    )
+    from services.request_timing import startup_span
+
+    with startup_span("tls_init_ecc"):
+        return create_mtls_ssl_context(
+            certfile=SSL_ECC_CERTFILE,
+            keyfile=SSL_ECC_KEYFILE,
+            ca_certs=SSL_CA_CERTS,
+            crl_dir=SSL_CRL_DIR,
+            ciphers=ECC_CIPHERS,
+        )
 
 
 def _run_uvicorn(port: int, certfile: Path, keyfile: Path, ssl_factory) -> None:
+    import os
+
     import uvicorn
 
+    from services.mtls_auth import _client_auth_verify_mode
+    from services.request_timing import mark_startup
+
+    cert_reqs = _client_auth_verify_mode(os.environ.get("SAS_TLS_CLIENT_AUTH"))
+    # Point mark immediately before uvicorn takes the listening socket.
+    # Do NOT chain this against profile/database/tls — those run inside uvicorn
+    # callbacks and may interleave; use intervals_ms / stages_ms instead.
+    mark_startup("server_bind")
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
@@ -134,7 +180,7 @@ def _run_uvicorn(port: int, certfile: Path, keyfile: Path, ssl_factory) -> None:
         ssl_certfile=str(certfile),
         ssl_keyfile=str(keyfile),
         ssl_ca_certs=str(SSL_CA_CERTS),
-        ssl_cert_reqs=ssl.CERT_REQUIRED,
+        ssl_cert_reqs=cert_reqs,
         ssl_context_factory=ssl_factory,
         reload=False,
         log_level="info",

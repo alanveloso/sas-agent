@@ -8,11 +8,17 @@ MONOREPO_ROOT="$(cd "${SAS_AGENT_DIR}/.." && pwd)"
 
 cd "${MONOREPO_ROOT}"
 
+NO_CACHE_ARGS=()
+if [[ "${DOCKER_NO_CACHE:-}" == "1" ]] || [[ "${1:-}" == "--no-cache" ]]; then
+  NO_CACHE_ARGS+=(--no-cache)
+  echo "Building with --no-cache ..."
+fi
+
 echo "Building sas-agent:monolithic from ${MONOREPO_ROOT} ..."
-docker build -f sas-agent/Dockerfile -t sas-agent:monolithic .
+docker build "${NO_CACHE_ARGS[@]}" -f sas-agent/Dockerfile -t sas-agent:monolithic .
 
 echo "Building sas-agent:core from ${MONOREPO_ROOT} ..."
-docker build -f sas-agent/Dockerfile.core -t sas-agent:core .
+docker build "${NO_CACHE_ARGS[@]}" -f sas-agent/Dockerfile.core -t sas-agent:core .
 
 echo "Done."
 docker images 'sas-agent:*' --format 'table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}'

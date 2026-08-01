@@ -1,0 +1,50 @@
+{
+  "category_a_max_eirp_dbm": 30.0,
+  "category_b_max_eirp_dbm": 47.0,
+  "eirp_reference_bandwidth_hz": 10000000,
+  "grant_duration_sec": 900,
+  "heartbeat_interval_sec": 60,
+  "transmit_expire_sec": 60,
+  "profile_id": "synth_protections_all_on",
+  "band_low_hz": 3800000000,
+  "band_high_hz": 3900000000,
+  "channel_width_hz": 10000000,
+  "raster_origin_hz": 3800000000,
+  "regulatory_rule_id": "SYNTH_ALL_ON",
+  "gaa_policy_id": "SYNTH_ALL_ON_COEXISTENCE",
+  "fss_exclusion_low_hz": 3850000000,
+  "fss_protection_km": 150.0,
+  "protection": {
+    "pal_gaa": true,
+    "fss_gwbl": true,
+    "exclusion_zones": true,
+    "border_protection": true,
+    "dpa": true,
+    "esc": true,
+    "quiet_zones": true
+  },
+  "esc_policy": {
+    "low_hz": 3800000000,
+    "high_hz": 3900000000,
+    "protection_m": 40000.0
+  },
+  "fss_gwbl_policy": {
+    "low_hz": 3850000000,
+    "high_hz": 3900000000
+  },
+  "ntia_exclusion_policy": {
+    "low_hz": 3800000000,
+    "high_hz": 3850000000
+  },
+  "dpa_policy": {
+    "low_hz": 3800000000,
+    "high_hz": 3900000000
+  },
+  "border_policy": {
+    "low_hz": 3850000000,
+    "high_hz": 3900000000,
+    "pfd_limit_dbm_m2_mhz": -80.0,
+    "rx_height_m": 1.5,
+    "itm_freq_mhz": 3850.0
+  }
+}

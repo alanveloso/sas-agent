@@ -1,108 +1,63 @@
-# `sas-agent` Benchmarks
+# Benchmarks — `sas-agent`
 
-Self-contained, reproducible measurement harness for the `sas-agent` SAS
-(Spectrum Access System). The scripts here produce **raw and aggregated data
-only** (CSV + JSON manifests); they do not generate prose reports.
+## Fronteiras
 
-Everything runs against the project source **read-only**: no file under the
-main application or the official WInnForum tests is modified. Each measurement
-runs in a fresh subprocess with a throwaway SQLite database and an explicit
-band profile, so runs never contaminate each other.
-
-## Dimensions
-
-| Script | What it measures | Main outputs (`data/`) |
-|---|---|---|
-| `dimension_a_quality.py` | Cyclomatic complexity (Radon) and CBRS-term coupling in `services/` and `domain/` | `dimension_a_quality.csv`, `dimension_a_terms_raw.csv` |
-| `dimension_b_efficiency.py` | A/B micro-benchmarks: monolithic vs. core, and profile parameterization weight | `dimension_b_runs_raw.csv`, `dimension_b_efficiency.csv` |
-| `dimension_c_coverage.py` | Unit-suite pass/fail and code coverage | `dimension_c_coverage.csv`, `dimension_c_passfail.json`, `coverage_raw.json` |
-| `performance_focus.py` | Performance-only slice: cold start + hot grant, monolithic vs. core, profile-agnostic check | `performance_focus_*.csv/json` |
-| `agnosticism_benchmark.py` | Architecture isolation + 8-profile agnosticism (cold start + hot grant) | `agnosticism_*.csv/json` |
-| `lifecycle_benchmark.py` | **Full CBSD–SAS lifecycle** (registration → spectrum inquiry → grant → heartbeat → relinquishment → deregistration), per endpoint and end-to-end, monolithic vs. core and across 8 profiles | `lifecycle_*.csv/json` |
-| `load/container_coldstart.py` | **Real container cold start** (`docker run` → first mTLS `GET /ready` 200), paired monolithic vs core images | `container_coldstart*.csv/json` |
-| `load/mtls_stress_test.py` | **Async mTLS stress** (Registration + Grant batches) with RPS, tail latencies and CPU/RSS sampling | `mtls_stress_results*.csv/json` |
-
-Workers (invoked as subprocesses, not run directly):
-
-- `phase_worker.py` — single phase (cold start / hot grant / CPAS / profile resolution).
-- `lifecycle_worker.py` — one full lifecycle, timing every endpoint.
-
-`run_all.py` orchestrates dimensions A, B and C and writes `data/execution_manifest.json`.
-
-## Setup
-
-```bash
-python3 -m venv .venv
-.venv/bin/pip install -r ../requirements.txt      # main app deps
-.venv/bin/pip install -r requirements.txt         # benchmark-only deps
-```
-
-## Running
-
-```bash
-# From the benchmarks/ directory, using the venv interpreter:
-.venv/bin/python dimension_a_quality.py
-.venv/bin/python dimension_b_efficiency.py
-.venv/bin/python dimension_c_coverage.py
-.venv/bin/python performance_focus.py
-.venv/bin/python agnosticism_benchmark.py
-.venv/bin/python lifecycle_benchmark.py
-.venv/bin/python run_all.py            # dimensions A + B + C + manifest
-```
-
-All datasets land in `data/`. Per-run logs land in `logs/` (git-ignored).
-
-## Load benchmarks (Docker + mTLS)
-
-These scripts compare deployable surfaces:
-
-- `sas-agent:monolithic` — full `main.py` (CBSD + admin + SAS–SAS, RSA+ECC)
-- `sas-agent:core` — lightweight `main_core.py` (CBSD + admin, RSA only)
-
-```bash
-# Build both images (from sas-agent/, uses monorepo parent as context)
-./load/build_images.sh
-
-# Export harness certs (same layout as docker-compose / run_cbrs_tests.sh)
-export HARNESS_CERTS_DIR=/path/to/src/harness/certs
-
-# Smoke cold start (N=2)
-.venv/bin/python load/container_coldstart.py --n 2 --warmup 0
-
-# Full paired cold start (N=30, warmup=3)
-.venv/bin/python load/container_coldstart.py
-
-# mTLS stress against both architectures (manages containers by default)
-.venv/bin/python load/mtls_stress_test.py --target=both --repeats 1 \
-  --load-levels 10 100
-
-# Or point at already-running instances
-.venv/bin/python load/mtls_stress_test.py --target=both --no-manage-containers \
-  --base-url-monolithic https://127.0.0.1:19000 \
-  --base-url-core https://127.0.0.1:19001 \
-  --container-monolithic sas-stress-monolithic \
-  --container-core sas-stress-core
-```
-
-Long-format CSVs use columns `architecture,load_level,metric,value` for
-hypothesis tests (e.g. Mann–Whitney) and plotting.
-
-## Reproducibility
-
-- Fixed RNG seed (`SEED = 42`) and shuffled schedule.
-- `N` valid samples per scenario plus `WARMUP` discarded warmups.
-- Every profile is loaded through the same path (`BAND_PROFILE_FILE`, JSON).
-- Each manifest captures CPU, RAM, OS, Python version, seed and parameters.
-
-## Band profiles (`profiles/`)
-
-| Profile | Experimental role |
+| Pasta | Papel |
 |---|---|
-| `cbrs_winnforum` | Rich regulatory package (protections on) |
-| `br_anatel_privativa` | Lean national package |
-| `lab_custom_3p8` | Lab band 3.8–3.9 GHz |
-| `synth_narrow_5mhz` | Narrow raster (5 MHz) |
-| `synth_wide_20mhz` | Wide raster (20 MHz) |
-| `synth_protections_all_on` | All protection flags enabled |
-| `synth_protections_all_off` | All protection flags disabled |
-| `synth_short_timers` | Short grant/heartbeat timers |
+| `benchmarks/load/` | Implementação dos experimentos (pode evoluir) |
+| `benchmarks/{lifecycle,mtls,persistence,cold_start}/` | Entradas estáveis do **artigo** (wrappers) |
+| `benchmarks/benchkit/` | Schema + I/O de campanha + reexport de helpers |
+| `artifacts/raw/` | Dados brutos imutáveis por `campaign_id` |
+| `analysis/` | Só lê raw → tabelas/figuras (nunca sobe o SAS) |
+
+## Escopo congelado do artigo (4 experimentos)
+
+1. **Lifecycle decomposition** — REG/SIQ/GRA/HBT + `X-SAS-Timing`
+2. **mTLS** — matriz de certificados + overhead TLS vs mTLS
+3. **Persistência** — SQLite commit / batch / memory (+ Postgres opcional)
+4. **Cold start instrumentado** — marcos internos + polls
+
+Não repetir agora: WInnForum (salvo regressão), concorrência antiga, fatorial de faixa, boundary (salvo mudança de lógica).
+
+## Campanha oficial
+
+```bash
+export HARNESS_CERTS_DIR=/path/to/Spectrum-Access-System/src/harness/certs
+bash benchmarks/load/build_images.sh   # ou scripts/build_images.sh
+
+# Smoke (sujo ok)
+.venv/bin/python benchmarks/run_article_campaign.py --smoke
+
+# Oficial: tree limpa recomendada
+.venv/bin/python benchmarks/run_article_campaign.py
+.venv/bin/python benchmarks/run_article_campaign.py --allow-dirty   # override
+```
+
+Saídas:
+
+```text
+artifacts/raw/<campaign_id>/lifecycle_decomposition/
+artifacts/raw/<campaign_id>/mtls_correctness_overhead/
+artifacts/raw/<campaign_id>/persistence_decomposition/
+artifacts/raw/<campaign_id>/instrumented_cold_start/
+artifacts/manifests/<campaign_id>.json
+artifacts/tables/<campaign_id>/tables.md
+```
+
+## Executores individuais
+
+```bash
+.venv/bin/python benchmarks/lifecycle/run.py --campaign-id 2026-08-01_article-eval
+.venv/bin/python benchmarks/mtls/run.py --campaign-id ...
+.venv/bin/python benchmarks/persistence/run.py --campaign-id ...
+.venv/bin/python benchmarks/cold_start/run.py --campaign-id ...
+.venv/bin/python analysis/generate_tables.py --campaign-id ...
+```
+
+## `load/` (só o que a campanha usa)
+
+`lifecycle_decomp_bench`, `cert_matrix_bench`, `tls_mtls_overhead_bench`,
+`persistence_modes_bench`, `unified_coldstart`, mais `common.py` e
+`build_images.sh`.
+
+Instrumentação de latência: `SAS_TIMING=1` (desligada por padrão na app).

@@ -118,9 +118,9 @@ class SqlAlchemyGrantStore:
         low: int,
         high: int,
     ) -> bool:
-        from services.border_protection import violates_canadian_border_pfd
+        from services.border_protection import violates_border_pfd
 
-        return violates_canadian_border_pfd(
+        return violates_border_pfd(
             installation, max_eirp, low, high, profile=self._profile
         )
 

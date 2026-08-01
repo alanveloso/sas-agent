@@ -1,5 +1,5 @@
 # Build from monorepo root:
-#   docker build -f sas-agent/Dockerfile -t sas-agent .
+#   docker build -f sas-agent/Dockerfile -t sas-agent:monolithic .
 FROM python:3.11-slim
 
 WORKDIR /app/sas-agent

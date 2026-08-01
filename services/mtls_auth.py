@@ -212,6 +212,23 @@ def _load_crl_pems(crl_dir: Path, ctx: ssl.SSLContext) -> None:
         logger.info("Loaded %d CRL PEM file(s) from %s", loaded, crl_dir)
 
 
+def _client_auth_verify_mode(mode: str | None = None) -> ssl.VerifyMode:
+    """Map ``SAS_TLS_CLIENT_AUTH`` to ssl verify mode.
+
+    - ``required`` (default): mTLS — client certificate mandatory
+    - ``optional``: request client cert but allow anonymous TLS
+    - ``none``: TLS with server auth only (no client certificate)
+    """
+    import os
+
+    raw = (mode if mode is not None else os.environ.get("SAS_TLS_CLIENT_AUTH", "required")).strip().lower()
+    if raw in ("none", "off", "disabled"):
+        return ssl.CERT_NONE
+    if raw in ("optional", "request"):
+        return ssl.CERT_OPTIONAL
+    return ssl.CERT_REQUIRED
+
+
 def create_mtls_ssl_context(
     *,
     certfile: Path,
@@ -219,19 +236,23 @@ def create_mtls_ssl_context(
     ca_certs: Path,
     crl_dir: Path | None = None,
     ciphers: list[str] | None = None,
+    client_auth: str | None = None,
 ) -> ssl.SSLContext:
     """
-    Build a TLS 1.2+ server context with client-certificate verification (mTLS).
+    Build a TLS 1.2+ server context (mTLS by default).
 
     Mirrors Fake SAS: CERT_REQUIRED, WInnForum CA, restricted cipher list.
+    Override client auth via ``client_auth`` or env ``SAS_TLS_CLIENT_AUTH``.
     """
+    verify_mode = _client_auth_verify_mode(client_auth)
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     ctx.minimum_version = ssl.TLSVersion.TLSv1_2
     ctx.maximum_version = ssl.TLSVersion.TLSv1_2
-    ctx.verify_mode = ssl.CERT_REQUIRED
-    ctx.load_verify_locations(cafile=str(ca_certs))
-    if crl_dir is not None:
-        _load_crl_pems(crl_dir, ctx)
+    ctx.verify_mode = verify_mode
+    if verify_mode != ssl.CERT_NONE:
+        ctx.load_verify_locations(cafile=str(ca_certs))
+        if crl_dir is not None:
+            _load_crl_pems(crl_dir, ctx)
     ctx.load_cert_chain(certfile=str(certfile), keyfile=str(keyfile))
     ctx.set_ciphers(":".join(ciphers or RSA_CIPHERS))
     return ctx

@@ -159,8 +159,8 @@ def git_snapshot(repo_dir: Path | None = None) -> dict[str, Any]:
 def host_load_snapshot() -> dict[str, Any]:
     """Load average, prior CPU usage and temperatures right before a run.
 
-    Proves in the raw data that the benchmark started on an idle, thermally
-    sane host (Fase 4D of the evaluation plan).
+    Primary thermal sensor for gates is ``k10temp:Tctl`` when present; other
+    sensors are recorded for diagnostics but are not the gate metric.
     """
     info: dict[str, Any] = {}
     try:
@@ -188,11 +188,127 @@ def host_load_snapshot() -> dict[str, Any]:
         if readings:
             info["temperatures_c"] = readings
             info["temperature_max_c"] = max(readings.values())
+            tctl = readings.get("k10temp:Tctl")
+            if tctl is None:
+                # fallback: any k10temp reading labeled Tctl / Tdie
+                for k, v in readings.items():
+                    if k.startswith("k10temp:") and ("Tctl" in k or k.endswith(":Tctl")):
+                        tctl = v
+                        break
+            if tctl is not None:
+                info["temperature_tctl_c"] = float(tctl)
     except ImportError:
         info["psutil_error"] = "psutil not installed"
     except Exception as exc:  # noqa: BLE001 — sensors are best-effort
         info["sensors_error"] = str(exc)
     return info
+
+
+def cpu_freq_snapshot() -> dict[str, Any]:
+    """Current CPU frequency policy / readings (best-effort)."""
+    info: dict[str, Any] = {}
+    try:
+        import psutil
+
+        freq = psutil.cpu_freq(percpu=True)
+        if freq:
+            currents = [f.current for f in freq if f and f.current]
+            if currents:
+                info["freq_mhz_mean"] = float(sum(currents) / len(currents))
+                info["freq_mhz_min"] = float(min(currents))
+                info["freq_mhz_max"] = float(max(currents))
+                info["freq_mhz_per_cpu"] = [float(f.current) for f in freq if f]
+        gov_path = Path("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor")
+        if gov_path.is_file():
+            info["governor"] = gov_path.read_text(encoding="utf-8").strip()
+    except Exception as exc:  # noqa: BLE001
+        info["error"] = str(exc)
+    return info
+
+
+def thermal_throttling_hints() -> dict[str, Any]:
+    """Best-effort hints of thermal pressure (RAPL / sysfs / journal)."""
+    hints: dict[str, Any] = {"sources": []}
+    # AMD/Intel powercap energy counters presence only (not a throttle flag).
+    powercap = Path("/sys/class/powercap")
+    if powercap.is_dir():
+        hints["powercap_zones"] = sorted(p.name for p in powercap.iterdir())[:12]
+        hints["sources"].append("powercap")
+    # Some kernels expose package throttle counts under thermal zones.
+    thermal = Path("/sys/class/thermal")
+    if thermal.is_dir():
+        trips = []
+        for zone in sorted(thermal.glob("thermal_zone*"))[:8]:
+            typ = (zone / "type").read_text(encoding="utf-8").strip() if (zone / "type").is_file() else ""
+            temp_f = zone / "temp"
+            try:
+                milli = int(temp_f.read_text(encoding="utf-8").strip()) if temp_f.is_file() else None
+            except ValueError:
+                milli = None
+            trips.append({"zone": zone.name, "type": typ, "temp_c": milli / 1000.0 if milli else None})
+        hints["thermal_zones"] = trips
+        hints["sources"].append("sysfs_thermal")
+    return hints
+
+
+def wait_thermal_gate(
+    *,
+    max_tctl_c: float = 65.0,
+    max_load1: float = 1.0,
+    max_cpu_pct: float = 10.0,
+    poll_sec: float = 5.0,
+    timeout_sec: float = 600.0,
+    out_path: Path | None = None,
+    label: str = "thermal_gate",
+) -> dict[str, Any]:
+    """Block until host is cool/idle enough, or timeout; always write a snapshot.
+
+    Gate metric is ``k10temp:Tctl`` (not max-of-all-sensors). Falls back to
+    ``temperature_max_c`` only if Tctl is unavailable.
+    """
+    import time as _time
+
+    t0 = _time.perf_counter()
+    samples: list[dict[str, Any]] = []
+    passed = False
+    while True:
+        snap = host_load_snapshot()
+        snap["cpu_freq"] = cpu_freq_snapshot()
+        snap["throttling_hints"] = thermal_throttling_hints()
+        snap["elapsed_wait_sec"] = round(_time.perf_counter() - t0, 2)
+        samples.append(snap)
+        temp = snap.get("temperature_tctl_c")
+        if temp is None:
+            temp = snap.get("temperature_max_c")
+        load1 = snap.get("loadavg_1m")
+        cpu = snap.get("cpu_percent_prior")
+        temp_ok = temp is None or float(temp) <= max_tctl_c
+        load_ok = load1 is None or float(load1) <= max_load1
+        cpu_ok = cpu is None or float(cpu) <= max_cpu_pct
+        if temp_ok and load_ok and cpu_ok:
+            passed = True
+            break
+        if _time.perf_counter() - t0 >= timeout_sec:
+            break
+        _time.sleep(poll_sec)
+
+    record: dict[str, Any] = {
+        "label": label,
+        "timestamp_utc": utc_now_iso(),
+        "passed": passed,
+        "timed_out": not passed,
+        "sensor": "k10temp:Tctl",
+        "max_tctl_c_threshold": max_tctl_c,
+        "max_load1_threshold": max_load1,
+        "max_cpu_pct_threshold": max_cpu_pct,
+        "wait_sec": round(_time.perf_counter() - t0, 2),
+        "final": samples[-1] if samples else {},
+        "n_samples": len(samples),
+        "git": git_snapshot(),
+    }
+    if out_path is not None:
+        write_manifest(out_path, record)
+    return record
 
 
 def docker_version() -> str | None:
@@ -332,6 +448,8 @@ class DockerRunSpec:
     # Optional slice overrides (Hz) exported as BAND_LOW / BAND_HIGH.
     band_low_hz: int | None = None
     band_high_hz: int | None = None
+    # Extra container environment variables (e.g. SAS_TLS_CLIENT_AUTH=none).
+    extra_env: Mapping[str, str] | None = None
 
 
 def docker_rm(name: str) -> None:
@@ -375,6 +493,9 @@ def docker_run(spec: DockerRunSpec) -> str:
         cmd += ["-e", f"BAND_LOW={spec.band_low_hz}"]
     if spec.band_high_hz is not None:
         cmd += ["-e", f"BAND_HIGH={spec.band_high_hz}"]
+    if spec.extra_env:
+        for key, value in spec.extra_env.items():
+            cmd += ["-e", f"{key}={value}"]
     cmd.append(spec.image)
     proc = subprocess.run(
         cmd,

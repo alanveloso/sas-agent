@@ -22,6 +22,15 @@ from services.mtls_auth import require_peer_sas
 router = APIRouter(prefix=f"/{SAS_SAS_VERSION}", tags=["sas-sas"])
 
 
+@router.get("/status")
+def peer_status(_peer_hash: str = Depends(require_peer_sas)):
+    """Deterministic HTTP 200 after successful SAS↔SAS authorization.
+
+    Used by the certificate matrix positive case (handshake + auth + app).
+    """
+    return {"status": "ok", "peerCertificateHash": _peer_hash}
+
+
 @router.get("/dump")
 def get_full_activity_dump(
     db: Session = Depends(get_db),
