@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
-"""Frozen article evaluation campaign (4 experiments only).
+"""Benchmark campaign runner.
 
-Writes under ``artifacts/raw/<campaign_id>/…`` and a master manifest in
-``artifacts/manifests/``. Does not re-run WInnForum, concurrency, or factorial
-unless you opt in later.
+Writes under ``artifacts/raw/<campaign_id>/`` and a master manifest in
+``artifacts/manifests/``. WInnForum stays out (separate harness).
 
 Usage:
   export HARNESS_CERTS_DIR=/path/to/harness/certs
-  .venv/bin/python benchmarks/run_article_campaign.py --smoke
-  .venv/bin/python benchmarks/run_article_campaign.py
-  .venv/bin/python benchmarks/run_article_campaign.py --with-postgres
+  .venv/bin/python benchmarks/run_campaign.py --smoke
+  .venv/bin/python benchmarks/run_campaign.py
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
+import shutil
 import subprocess
 import sys
 import time
@@ -42,6 +42,12 @@ EXPERIMENT_DIRS = {
     "mtls": "mtls_correctness_overhead",
     "persistence": "persistence_decomposition",
     "cold_start": "instrumented_cold_start",
+    "boundary": "boundary_enforcement",
+    "isolation": "agent_isolation",
+    "factorial": "factorial_provisioning",
+    "concurrent_process": "concurrent_slicing_v2",
+    "concurrent_docker": "container_concurrency",
+    "profile_robustness": "band_profile_robustness",
 }
 
 
@@ -73,6 +79,12 @@ def _experiment_entry(campaign: str, label: str, exit_code: int) -> dict:
         "mtls": ("cert_matrix_results.csv", "tls_mtls_overhead_summary.csv", "cert_matrix_manifest.json"),
         "persistence": ("persistence_modes_runs.csv", "persistence_modes_summary.csv", "persistence_modes_manifest.json"),
         "cold_start": ("unified_coldstart_runs.csv", "unified_coldstart_summary.csv", "unified_coldstart_manifest.json"),
+        "boundary": ("boundary_enforcement.csv", "boundary_enforcement.csv", "boundary_enforcement_manifest.json"),
+        "isolation": ("agent_isolation_results.csv", "agent_isolation_results.csv", "agent_isolation_manifest.json"),
+        "factorial": ("factorial_provisioning_runs.csv", "factorial_provisioning_summary.csv", "factorial_provisioning_manifest.json"),
+        "concurrent_process": ("concurrent_slicing_v2_runs.csv", "concurrent_slicing_v2_summary.csv", "concurrent_slicing_v2_manifest.json"),
+        "concurrent_docker": ("container_concurrency_runs.csv", "container_concurrency_summary.csv", "container_concurrency_manifest.json"),
+        "profile_robustness": ("band_profile_robustness.csv", "band_profile_robustness.csv", "band_profile_robustness.csv"),
     }
     names = mapping.get(label)
     if names:
@@ -85,15 +97,28 @@ def _experiment_entry(campaign: str, label: str, exit_code: int) -> dict:
     return entry
 
 
+def _exp_dir(campaign: str, name: str) -> Path:
+    path = ROOT / "artifacts" / "raw" / campaign / name
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--campaign-id", default=None)
     p.add_argument("--smoke", action="store_true")
     p.add_argument("--with-postgres", action="store_true")
+    p.add_argument("--image", default="sas-agent:article")
     p.add_argument("--skip-lifecycle", action="store_true")
     p.add_argument("--skip-mtls", action="store_true")
     p.add_argument("--skip-persist", action="store_true")
     p.add_argument("--skip-cold", action="store_true")
+    p.add_argument("--skip-boundary", action="store_true")
+    p.add_argument("--skip-isolation", action="store_true")
+    p.add_argument("--skip-factorial", action="store_true")
+    p.add_argument("--skip-concurrent", action="store_true")
+    p.add_argument("--skip-docker", action="store_true")
+    p.add_argument("--skip-profile-robustness", action="store_true")
     p.add_argument("--skip-analyze", action="store_true")
     p.add_argument("--allow-dirty", action="store_true")
     args = p.parse_args()
@@ -101,7 +126,7 @@ def main() -> int:
     git = git_snapshot()
     if git.get("dirty") and not args.allow_dirty and not args.smoke:
         warnings.warn(
-            "git working tree is DIRTY — official article runs should use a clean "
+            "git working tree is DIRTY — official runs should use a clean "
             "commit (pass --allow-dirty to override).",
             stacklevel=1,
         )
@@ -113,7 +138,7 @@ def main() -> int:
         return 2
 
     campaign = args.campaign_id or new_campaign_id(
-        "article-smoke" if args.smoke else "article-eval"
+        "eval-smoke" if args.smoke else "eval"
     )
     smoke = ["--smoke"] if args.smoke else []
     started = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -145,6 +170,71 @@ def main() -> int:
             [PY, str(BENCH / "cold_start" / "run.py"), "--campaign-id", campaign, *smoke],
             600 if args.smoke else 10800,
         ))
+
+    if not args.skip_boundary:
+        out = _exp_dir(campaign, "boundary_enforcement")
+        steps.append((
+            "boundary",
+            [PY, str(BENCH / "load" / "boundary_enforcement_bench.py"), "--out-dir", str(out)],
+            900,
+        ))
+    if not args.skip_isolation:
+        out = _exp_dir(campaign, "agent_isolation")
+        steps.append((
+            "isolation",
+            [PY, str(BENCH / "load" / "agent_isolation_bench.py"), "--out-dir", str(out)],
+            300,
+        ))
+    if not args.skip_factorial:
+        out = _exp_dir(campaign, "factorial_provisioning")
+        fact = [
+            PY, str(BENCH / "load" / "factorial_provisioning_bench.py"),
+            "--out-dir", str(out),
+        ]
+        if args.smoke:
+            fact += ["--repeats", "1", "--probe-n", "3", "--cooldown-sec", "0.2"]
+        else:
+            fact += ["--repeats", "5", "--probe-n", "10", "--cooldown-sec", "0.5"]
+        steps.append(("factorial", fact, 600 if args.smoke else 3600))
+    if not args.skip_concurrent:
+        out = _exp_dir(campaign, "concurrent_slicing_v2")
+        conc = [
+            PY, str(BENCH / "metrics_sandbox" / "concurrent_slicing_bench.py"),
+            "--v2-prefix", "--out-dir", str(out),
+        ]
+        if args.smoke:
+            conc += ["--repeats", "1", "--k-values", "1", "3", "--devices", "60", "--cooldown-sec", "0.2"]
+        else:
+            conc += ["--repeats", "5", "--k-values", "1", "2", "3", "5", "10", "15",
+                     "--devices", "1500", "--cooldown-sec", "2"]
+        steps.append(("concurrent_process", conc, 300 if args.smoke else 7200))
+    if not args.skip_docker:
+        out = _exp_dir(campaign, "container_concurrency")
+        certs = os.environ.get(
+            "HARNESS_CERTS_DIR",
+            str(ROOT.parent / "Spectrum-Access-System" / "src" / "harness" / "certs"),
+        )
+        dock = [
+            PY, str(BENCH / "load" / "container_concurrency_bench.py"),
+            "--image", args.image,
+            "--certs-dir", certs,
+            "--skip-thermal-gate",
+            "--out-dir", str(out),
+        ]
+        if args.smoke:
+            dock += ["--repeats", "1", "--k-values", "1", "2", "--devices", "60",
+                     "--cooldown-sec", "1", "--scenarios", "A"]
+        else:
+            dock += ["--repeats", "5", "--k-values", "1", "2", "3", "5", "10", "15",
+                     "--devices", "1500", "--cooldown-sec", "5", "--scenarios", "A", "B"]
+        steps.append(("concurrent_docker", dock, 600 if args.smoke else 14400))
+    if not args.skip_profile_robustness:
+        steps.append((
+            "profile_robustness",
+            [PY, "-m", "unittest", "tests.test_band_profile_robustness", "-v"],
+            120,
+        ))
+
     if not args.skip_analyze:
         steps.append((
             "analyze",
@@ -161,6 +251,11 @@ def main() -> int:
         except subprocess.TimeoutExpired:
             info = {"label": label, "cmd": cmd, "exit_code": 124, "wall_sec": timeout}
         results.append(info)
+        if label == "profile_robustness":
+            src = ROOT / "benchmarks" / "data" / "band_profile_robustness.csv"
+            dest = _exp_dir(campaign, "band_profile_robustness") / "band_profile_robustness.csv"
+            if src.is_file():
+                shutil.copy2(src, dest)
         if info["exit_code"] != 0:
             failures += 1
             fail_labels.append(label)
@@ -172,10 +267,13 @@ def main() -> int:
         if info["label"] in EXPERIMENT_DIRS
     }
 
+    campaign_type = "evaluation-smoke" if args.smoke else "evaluation"
+    scope = list(EXPERIMENT_DIRS.values())
+
     master = {
         "schema_version": "1.0",
         "campaign_id": campaign,
-        "campaign_type": "article-smoke" if args.smoke else "article-evaluation",
+        "campaign_type": campaign_type,
         "git_commit": git.get("commit"),
         "git_dirty": bool(git.get("dirty")),
         "git_dirty_file_count": git.get("dirty_file_count"),
@@ -184,17 +282,12 @@ def main() -> int:
         "experiments": experiments,
         "failures": fail_labels,
         "steps": results,
-        "scope": [
-            "lifecycle_decomposition",
-            "mtls_correctness_overhead",
-            "persistence_decomposition",
-            "instrumented_cold_start",
-        ],
+        "scope": scope,
         "host_capture": capture_manifest(
             seed=42,
             n=0,
             warmup=0,
-            script_paths=[BENCH / "run_article_campaign.py"],
+            script_paths=[BENCH / "run_campaign.py"],
         ),
     }
     path = campaign_manifest_path(campaign)

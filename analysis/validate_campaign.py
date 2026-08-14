@@ -246,12 +246,12 @@ def validate_manifest(root: Path, checks: list[Check]) -> None:
     _add(checks, "manifest.exists", True, file=rel)
     data = json.loads(man.read_text(encoding="utf-8"))
     _add(checks, "manifest.has_experiments", "experiments" in data, file=rel)
-    if data.get("campaign_type") == "article-evaluation" and data.get("git_dirty"):
+    if data.get("campaign_type") == "evaluation" and data.get("git_dirty"):
         _add(
             checks,
             "manifest.official_requires_clean_git",
             False,
-            "git_dirty=true on article-evaluation",
+            "git_dirty=true on official evaluation",
             rel,
         )
     else:
