@@ -1,0 +1,13 @@
+config_id,band_width_mhz,devices,n_repeats,metric,median,iqr,min,max,mean
+A,20.0,133,20,profile_load_ms,70.9155,8.098,68.782,103.834,74.9098
+A,20.0,133,20,device_population_wall_sec,0.841,0.013,0.827,0.86,0.8425
+A,20.0,133,20,probe_grant_mean_ms,3.127,0.055,3.053,3.216,3.1256
+B,20.0,1000,20,profile_load_ms,71.0715,1.918,68.239,80.126,71.3631
+B,20.0,1000,20,device_population_wall_sec,5.381,0.039,5.322,5.429,5.3769
+B,20.0,1000,20,probe_grant_mean_ms,3.1955,0.051,3.138,3.279,3.1986
+C,150.0,133,20,profile_load_ms,71.314,4.365,67.268,109.065,75.4599
+C,150.0,133,20,device_population_wall_sec,0.8495,0.009,0.829,0.87,0.8495
+C,150.0,133,20,probe_grant_mean_ms,3.0965,0.026,3.025,3.365,3.1155
+D,150.0,1000,20,profile_load_ms,70.609,2.814,68.156,78.845,71.6043
+D,150.0,1000,20,device_population_wall_sec,5.4325,0.035,5.365,5.657,5.4392
+D,150.0,1000,20,probe_grant_mean_ms,3.1865,0.063,3.095,3.313,3.1956

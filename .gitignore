@@ -33,7 +33,9 @@ artifacts/**/*.log
 artifacts/raw/**/scratch/
 
 # Campanhas locais (gerar de novo; não versionar raw/smoke)
-artifacts/raw/
+artifacts/raw/*
+!artifacts/raw/tnsm-factorial/
+!artifacts/raw/tnsm-factorial/**
 artifacts/tables/
 artifacts/figures/
 artifacts/manifests/
