@@ -36,6 +36,10 @@ RSA_CIPHERS = (
     "AES256-GCM-SHA384:"
     "ECDHE-RSA-AES128-GCM-SHA256"
 )
+ECDSA_CIPHERS = (
+    "ECDHE-ECDSA-AES128-GCM-SHA256:"
+    "ECDHE-ECDSA-AES256-GCM-SHA384"
+)
 
 
 def utc_now_iso() -> str:
@@ -50,7 +54,7 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
-def build_mtls_context(certs_dir: Path) -> ssl.SSLContext:
+def build_mtls_context(certs_dir: Path, ciphers: str = RSA_CIPHERS) -> ssl.SSLContext:
     """Build a TLS 1.2 client context matching the WInnForum harness handshake."""
     certs_dir = certs_dir.expanduser().resolve()
     ca = certs_dir / "ca.cert"
@@ -69,7 +73,7 @@ def build_mtls_context(certs_dir: Path) -> ssl.SSLContext:
     ctx.verify_mode = ssl.CERT_REQUIRED
     ctx.load_verify_locations(cafile=str(ca))
     ctx.load_cert_chain(certfile=str(cert), keyfile=str(key))
-    ctx.set_ciphers(RSA_CIPHERS)
+    ctx.set_ciphers(ciphers)
     return ctx
 
 
@@ -517,24 +521,51 @@ def wait_http_200(
     timeout_sec: float,
     *,
     poll_interval_sec: float = POLL_INTERVAL_SEC,
+    trace: dict[str, Any] | None = None,
 ) -> tuple[bool, int, str | None]:
     """Poll ``url`` until HTTP 200 or timeout.
 
-    Returns ``(ok, poll_count, error)``.
+    Each attempt is a blocking GET (2 s timeout) followed, on failure, by a
+    ``poll_interval_sec`` sleep, so the effective period is attempt + sleep.
+
+    Returns ``(ok, poll_count, error)``. If ``trace`` is given it receives
+    ``perf_counter`` instants ``last_failed_start``, ``success_start`` and
+    ``success_end`` (None when absent), ``last_failed_error`` and the JSON
+    ``body`` of the first 200.
     """
+    if trace is not None:
+        trace.update(
+            poll_interval_sec=poll_interval_sec,
+            last_failed_start=None,
+            last_failed_error=None,
+            success_start=None,
+            success_end=None,
+            body=None,
+        )
     deadline = time.perf_counter() + timeout_sec
     polls = 0
     last_error: str | None = None
     with httpx.Client(verify=ctx, timeout=2.0) as client:
         while time.perf_counter() < deadline:
             polls += 1
+            t_attempt = time.perf_counter()
             try:
                 resp = client.get(url)
                 if resp.status_code == 200:
+                    if trace is not None:
+                        trace["success_start"] = t_attempt
+                        trace["success_end"] = time.perf_counter()
+                        try:
+                            trace["body"] = resp.json()
+                        except ValueError:
+                            pass
                     return True, polls, None
                 last_error = f"HTTP {resp.status_code}"
             except Exception as exc:  # noqa: BLE001 — poll until ready
                 last_error = str(exc)
+            if trace is not None:
+                trace["last_failed_start"] = t_attempt
+                trace["last_failed_error"] = last_error
             time.sleep(poll_interval_sec)
     return False, polls, last_error or "timeout"
 
