@@ -10,6 +10,13 @@ Scenarios:
 
 K ∈ {1,5,10,15}, 5 randomized repeats. Outputs:
   container_concurrency_{runs,summary,manifest}.*
+
+Grant latency columns (Grants are sent as batched POSTs of up to BATCH_MAX):
+  grant_batch_latency_*_ms     — HTTP round-trip of each Grant batch POST
+  grant_amortized_ms_per_item  — sum(batch time) / sum(items in batches)
+  grant_latency_*_ms           — legacy: per-batch time / batch size, repeated
+                                 once per successful item; amortized, NOT the
+                                 latency of an individual Grant.
 """
 
 from __future__ import annotations
@@ -70,7 +77,9 @@ RUN_FIELDS = [
     "k_containers", "slice_width_mhz", "total_devices", "device_seed",
     "create_ready_sec", "load_wall_sec", "scenario_wall_sec", "teardown_sec",
     "throughput_devices_per_sec", "grant_latency_mean_ms", "grant_latency_median_ms",
-    "grant_latency_p95_ms", "ram_peak_mb_sum", "cpu_pct_peak_sum",
+    "grant_latency_p95_ms", "grant_batch_count", "grant_batch_latency_mean_ms",
+    "grant_batch_latency_median_ms", "grant_batch_latency_p95_ms",
+    "grant_amortized_ms_per_item", "ram_peak_mb_sum", "cpu_pct_peak_sum",
     "temp_c_start", "devices_ok", "devices_failed", "exit_code", "error",
 ]
 SUMMARY_FIELDS = [
@@ -152,6 +161,25 @@ def _rc(items: list[dict[str, Any]]) -> list[int]:
     return [it.get("response", {}).get("responseCode", -1) for it in items]
 
 
+def _grant_latency_fields(
+    batch_ms: list[float], batch_items: list[int], legacy_item_ms: list[float]
+) -> dict[str, Any]:
+    def r(v: float | None) -> Any:
+        return round(float(v), 4) if v is not None else ""
+
+    n_items = sum(batch_items)
+    return {
+        "grant_latency_mean_ms": r(statistics.fmean(legacy_item_ms)) if legacy_item_ms else "",
+        "grant_latency_median_ms": r(statistics.median(legacy_item_ms)) if legacy_item_ms else "",
+        "grant_latency_p95_ms": r(percentile(legacy_item_ms, 95)),
+        "grant_batch_count": len(batch_ms),
+        "grant_batch_latency_mean_ms": r(statistics.fmean(batch_ms)) if batch_ms else "",
+        "grant_batch_latency_median_ms": r(statistics.median(batch_ms)) if batch_ms else "",
+        "grant_batch_latency_p95_ms": r(percentile(batch_ms, 95)),
+        "grant_amortized_ms_per_item": r(sum(batch_ms) / n_items) if n_items else "",
+    }
+
+
 def _ci95(values: list[float]) -> tuple[float | None, float | None]:
     n = len(values)
     if n < 2:
@@ -223,6 +251,8 @@ def _load_one_container(
     fcc_id = f"dock_k_w{worker_id}"
     user_id = f"op_dock_w{worker_id}"
     grant_latencies: list[float] = []
+    grant_batch_ms: list[float] = []
+    grant_batch_items: list[int] = []
     ok = 0
     failed = 0
     error = ""
@@ -262,6 +292,8 @@ def _load_one_container(
             resp = client.post(f"{base}/v1.2/grant", json={"grantRequest": chunk})
             batch_ms = (time.perf_counter() - t0) * 1000.0
             resp.raise_for_status()
+            grant_batch_ms.append(batch_ms)
+            grant_batch_items.append(len(chunk))
             codes = _rc(resp.json()["grantResponse"])
             per = batch_ms / max(1, len(chunk))
             for c in codes:
@@ -277,6 +309,8 @@ def _load_one_container(
         "devices_ok": ok,
         "devices_failed": failed,
         "grant_latencies_ms": grant_latencies,
+        "grant_batch_ms": grant_batch_ms,
+        "grant_batch_items": grant_batch_items,
         "error": error,
     }
 
@@ -308,6 +342,8 @@ def _run_scenario(
     scenario_wall = float("nan")
     teardown = float("nan")
     grant_all: list[float] = []
+    grant_batch_ms: list[float] = []
+    grant_batch_items: list[int] = []
     devices_ok = 0
     devices_failed = 0
     ram_peak = 0.0
@@ -359,6 +395,8 @@ def _run_scenario(
                     devices_ok += res["devices_ok"]
                     devices_failed += res["devices_failed"]
                     grant_all.extend(res["grant_latencies_ms"])
+                    grant_batch_ms.extend(res["grant_batch_ms"])
+                    grant_batch_items.extend(res["grant_batch_items"])
                     if res["error"] and not error:
                         error = res["error"]
             load_wall = time.perf_counter() - t_load
@@ -405,9 +443,7 @@ def _run_scenario(
         "scenario_wall_sec": round(scenario_wall, 4) if scenario_wall == scenario_wall else "",
         "teardown_sec": round(teardown, 4),
         "throughput_devices_per_sec": round(thr, 3) if thr == thr else "",
-        "grant_latency_mean_ms": round(statistics.fmean(grant_all), 4) if grant_all else "",
-        "grant_latency_median_ms": round(float(statistics.median(grant_all)), 4) if grant_all else "",
-        "grant_latency_p95_ms": round(percentile(grant_all, 95) or 0.0, 4) if grant_all else "",
+        **_grant_latency_fields(grant_batch_ms, grant_batch_items, grant_all),
         "ram_peak_mb_sum": round(ram_peak, 2),
         "cpu_pct_peak_sum": round(cpu_peak, 2),
         "temp_c_start": round(float(temp_start), 2) if temp_start is not None else "",
@@ -426,6 +462,9 @@ def _aggregate(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         "throughput_devices_per_sec",
         "grant_latency_p95_ms",
         "grant_latency_mean_ms",
+        "grant_batch_latency_median_ms",
+        "grant_batch_latency_p95_ms",
+        "grant_amortized_ms_per_item",
         "ram_peak_mb_sum",
     ]
     groups: dict[tuple[str, int], list[dict[str, Any]]] = {}
@@ -541,7 +580,8 @@ def main() -> int:
                     status = "ok" if row["exit_code"] == 0 else f"FAIL:{row['error']}"
                     print(
                         f"  K={k} wall={row['scenario_wall_sec']}s "
-                        f"p95={row['grant_latency_p95_ms']}ms {status}",
+                        f"grant_batch_p95={row['grant_batch_latency_p95_ms']}ms "
+                        f"grant_amortized={row['grant_amortized_ms_per_item']}ms/item {status}",
                         flush=True,
                     )
                     if row["exit_code"] != 0:
@@ -569,6 +609,12 @@ def main() -> int:
                 "k_values": list(args.k_values),
                 "k_schedules": schedules,
                 "repeats": args.repeats,
+                "grant_batch_max": BATCH_MAX,
+                "grant_latency_semantics": {
+                    "grant_batch_latency_*_ms": "HTTP round-trip per Grant batch POST",
+                    "grant_amortized_ms_per_item": "sum(batch time) / sum(items in batches)",
+                    "grant_latency_*_ms": "legacy amortized (batch time / batch size per successful item); not individual Grant latency",
+                },
                 "image": {"tag": args.image, "digest": image_digest(args.image)},
                 "failures": failures,
                 "outputs": {"runs": str(runs_path), "summary": str(summary_path)},
