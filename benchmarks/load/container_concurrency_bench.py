@@ -1,8 +1,15 @@
 """Docker multi-container concurrency benchmark (spectrum slicing).
 
 Partitions the CBRS band into K equal slices and runs K containers in
-parallel, each owning one slice and an equal share of a fixed device
-population (default 1500).
+parallel, each owning one slice.
+
+Population modes:
+  fixed_total     — (default, historical) --devices N split across K agents
+  fixed_per_agent — --devices-per-agent P per agent, total = K × P; outputs
+                    use the container_concurrency_per_agent_* prefix
+
+Each agent is driven by one sequential HTTPS client, so at most K requests
+are in flight (one per agent); recorded as max_inflight_requests_*.
 
 Scenarios:
   A — create K containers, wait all ready, then measure Reg+Grant load wall
@@ -81,11 +88,17 @@ RUN_FIELDS = [
     "grant_batch_latency_median_ms", "grant_batch_latency_p95_ms",
     "grant_amortized_ms_per_item", "ram_peak_mb_sum", "cpu_pct_peak_sum",
     "temp_c_start", "devices_ok", "devices_failed", "exit_code", "error",
+    "population_mode", "devices_per_agent_min", "devices_per_agent_max",
+    "max_inflight_requests_total", "max_inflight_requests_per_agent",
 ]
 SUMMARY_FIELDS = [
     "scenario", "k_containers", "n_repeats", "metric",
     "median", "iqr", "min", "max", "mean", "ci95_low", "ci95_high",
+    "population_mode", "total_devices",
 ]
+FIXED_TOTAL = "fixed_total"
+FIXED_PER_AGENT = "fixed_per_agent"
+INFLIGHT_PER_AGENT = 1
 
 
 def _resolve_certs(cli: Path | None) -> Path:
@@ -112,6 +125,12 @@ def _partition_slices(k: int) -> list[tuple[int, int]]:
 def _partition_devices(total: int, k: int) -> list[int]:
     base, rem = divmod(total, k)
     return [base + (1 if i < rem else 0) for i in range(k)]
+
+
+def _agent_populations(k: int, total_devices: int, devices_per_agent: int | None) -> list[int]:
+    if devices_per_agent is not None:
+        return [devices_per_agent] * k
+    return _partition_devices(total_devices, k)
 
 
 def _channels(low: int, high: int) -> list[tuple[int, int]]:
@@ -328,9 +347,11 @@ def _run_scenario(
     ready_timeout: float,
     repeat: int,
     order_idx: int,
+    devices_per_agent: int | None = None,
 ) -> dict[str, Any]:
     slices = _partition_slices(k)
-    counts = _partition_devices(total_devices, k)
+    counts = _agent_populations(k, total_devices, devices_per_agent)
+    total_devices = sum(counts)
     names = [f"sas-ccon-k{k}-w{i}-r{repeat}" for i in range(k)]
     ports = [base_port + i for i in range(k)]
     run_id = new_run_id()
@@ -451,6 +472,11 @@ def _run_scenario(
         "devices_failed": devices_failed,
         "exit_code": exit_code,
         "error": error,
+        "population_mode": FIXED_TOTAL if devices_per_agent is None else FIXED_PER_AGENT,
+        "devices_per_agent_min": min(counts),
+        "devices_per_agent_max": max(counts),
+        "max_inflight_requests_total": k * INFLIGHT_PER_AGENT,
+        "max_inflight_requests_per_agent": INFLIGHT_PER_AGENT,
     }
 
 
@@ -500,14 +526,20 @@ def _aggregate(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "mean": round(statistics.fmean(vals), 4),
                 "ci95_low": round(lo, 4) if lo is not None else "",
                 "ci95_high": round(hi, 4) if hi is not None else "",
+                "population_mode": rows[0].get("population_mode", FIXED_TOTAL),
+                "total_devices": rows[0].get("total_devices", ""),
             })
     return out
 
 
-def main() -> int:
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--k-values", type=int, nargs="+", default=list(DEFAULT_K))
-    p.add_argument("--devices", type=int, default=DEFAULT_DEVICES)
+    pop = p.add_mutually_exclusive_group()
+    pop.add_argument("--devices", type=int, default=DEFAULT_DEVICES,
+                     help="fixed_total: devices split across K agents (default)")
+    pop.add_argument("--devices-per-agent", type=int, default=None, metavar="P",
+                     help="fixed_per_agent: P devices per agent, total = K*P")
     p.add_argument("--repeats", type=int, default=DEFAULT_REPEATS)
     p.add_argument("--seed", type=int, default=DEFAULT_SEED)
     p.add_argument("--image", default="sas-agent:article")
@@ -520,7 +552,19 @@ def main() -> int:
     p.add_argument("--skip-thermal-gate", action="store_true")
     p.add_argument("--scenarios", nargs="+", default=["A", "B"], choices=["A", "B"])
     p.add_argument("--out-dir", type=Path, default=DATA)
-    args = p.parse_args()
+    args = p.parse_args(argv)
+    if args.devices_per_agent is not None and args.devices_per_agent < 1:
+        p.error("--devices-per-agent must be >= 1")
+    args.population_mode = FIXED_TOTAL if args.devices_per_agent is None else FIXED_PER_AGENT
+    args.output_stem = (
+        "container_concurrency" if args.devices_per_agent is None
+        else "container_concurrency_per_agent"
+    )
+    return args
+
+
+def main() -> int:
+    args = _parse_args()
 
     out_dir = args.out_dir.expanduser().resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -530,7 +574,7 @@ def main() -> int:
     if not args.skip_thermal_gate:
         gate = wait_thermal_gate(
             max_tctl_c=args.max_temp_c,
-            out_path=out_dir / "thermal_gate_container_concurrency.json",
+            out_path=out_dir / f"thermal_gate_{args.output_stem}.json",
             label="container_concurrency",
             timeout_sec=args.gate_timeout_sec,
         )
@@ -538,9 +582,9 @@ def main() -> int:
             print("FAIL thermal/load gate before container concurrency", flush=True)
             return 1
 
-    runs_path = out_dir / "container_concurrency_runs.csv"
-    summary_path = out_dir / "container_concurrency_summary.csv"
-    manifest_path = out_dir / "container_concurrency_manifest.json"
+    runs_path = out_dir / f"{args.output_stem}_runs.csv"
+    summary_path = out_dir / f"{args.output_stem}_summary.csv"
+    manifest_path = out_dir / f"{args.output_stem}_manifest.json"
 
     all_runs: list[dict[str, Any]] = []
     failures = 0
@@ -573,13 +617,14 @@ def main() -> int:
                         ready_timeout=args.ready_timeout_sec,
                         repeat=repeat,
                         order_idx=idx,
+                        devices_per_agent=args.devices_per_agent,
                     )
                     writer.writerow(row)
                     fh.flush()
                     all_runs.append(row)
                     status = "ok" if row["exit_code"] == 0 else f"FAIL:{row['error']}"
                     print(
-                        f"  K={k} wall={row['scenario_wall_sec']}s "
+                        f"  K={k} devices={row['total_devices']} wall={row['scenario_wall_sec']}s "
                         f"grant_batch_p95={row['grant_batch_latency_p95_ms']}ms "
                         f"grant_amortized={row['grant_amortized_ms_per_item']}ms/item {status}",
                         flush=True,
@@ -599,12 +644,28 @@ def main() -> int:
         manifest_path,
         capture_manifest(
             seed=args.seed,
-            n=args.devices,
+            n=args.devices if args.devices_per_agent is None else args.devices_per_agent,
             warmup=0,
             script_paths=[LOAD_DIR / "container_concurrency_bench.py", LOAD_DIR / "common.py"],
             certs_dir=certs,
             extra={
                 "experiment": "container_concurrency",
+                "population": {
+                    "mode": args.population_mode,
+                    "n_semantics": "total devices split across K"
+                    if args.devices_per_agent is None else "devices per agent",
+                    "devices_per_agent": args.devices_per_agent,
+                    "total_devices_by_k": {
+                        str(k): sum(_agent_populations(k, args.devices, args.devices_per_agent))
+                        for k in args.k_values
+                    },
+                },
+                "request_concurrency": {
+                    "model": "one sequential HTTPS client per agent; batches of up to "
+                             f"{BATCH_MAX} items",
+                    "max_inflight_requests_per_agent": INFLIGHT_PER_AGENT,
+                    "max_inflight_requests_total": "k_containers * 1",
+                },
                 "scenarios": list(args.scenarios),
                 "k_values": list(args.k_values),
                 "k_schedules": schedules,
