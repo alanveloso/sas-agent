@@ -147,6 +147,48 @@ def require_peer_sas(
     return cert_hash
 
 
+ADMIN_CERT_ENV = "SAS_ADMIN_CERT_SHA256"
+
+
+def sha256_fingerprint_colon(cert: x509.Certificate) -> str:
+    """SHA-256 fingerprint in OpenSSL digest format: ``AA:BB:CC:...`` (uppercase)."""
+    digest = hashlib.sha256(cert.public_bytes(Encoding.DER)).hexdigest().upper()
+    return ":".join(digest[i : i + 2] for i in range(0, len(digest), 2))
+
+
+def _normalize_fingerprint(value: str) -> str:
+    return "".join(ch for ch in value.upper() if ch in "0123456789ABCDEF")
+
+
+def admin_fingerprints(raw: str | None = None) -> frozenset[str]:
+    """Authorized admin client-cert SHA-256 fingerprints from ``SAS_ADMIN_CERT_SHA256``.
+
+    Comma/space/semicolon separated; colons and case are ignored. Empty → none.
+    """
+    import os
+    import re
+
+    raw = os.environ.get(ADMIN_CERT_ENV, "") if raw is None else raw
+    parts = (_normalize_fingerprint(p) for p in re.split(r"[\s,;]+", raw))
+    return frozenset(p for p in parts if len(p) == 64)
+
+
+def require_admin_client(request: Request) -> str:
+    """
+    FastAPI dependency: authorize ``/admin`` by the client certificate that the
+    TLS handshake validated (taken from the connection, never from headers).
+
+    Fail-closed: no certificate, or an empty allowlist, yields HTTP 403.
+    """
+    cert = load_client_certificate(request)
+    if cert is None:
+        raise HTTPException(status_code=403, detail="Client certificate required")
+    cert_hash = sha256_fingerprint_colon(cert)
+    if _normalize_fingerprint(cert_hash) not in admin_fingerprints():
+        raise HTTPException(status_code=403, detail="Administrative access not authorized")
+    return cert_hash
+
+
 def _patch_request_response_cycle(module_path: str, transport_arg: str) -> bool:
     """Inject TLS transport into ASGI scope so load_client_certificate() works."""
     try:

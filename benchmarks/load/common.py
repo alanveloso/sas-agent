@@ -77,6 +77,15 @@ def build_mtls_context(certs_dir: Path, ciphers: str = RSA_CIPHERS) -> ssl.SSLCo
     return ctx
 
 
+def cert_sha256_fingerprint(path: Path) -> str:
+    """SHA-256 of the first certificate in a PEM file, as ``AA:BB:...``."""
+    pem = path.read_text(encoding="ascii")
+    end = "-----END CERTIFICATE-----"
+    der = ssl.PEM_cert_to_DER_cert(pem[: pem.index(end) + len(end)])
+    digest = hashlib.sha256(der).hexdigest().upper()
+    return ":".join(digest[i : i + 2] for i in range(0, len(digest), 2))
+
+
 def percentile(values: Sequence[float], p: float) -> float | None:
     """Nearest-rank percentile; ``p`` in [0, 100]."""
     if not values:
@@ -497,9 +506,13 @@ def docker_run(spec: DockerRunSpec) -> str:
         cmd += ["-e", f"BAND_LOW={spec.band_low_hz}"]
     if spec.band_high_hz is not None:
         cmd += ["-e", f"BAND_HIGH={spec.band_high_hz}"]
-    if spec.extra_env:
-        for key, value in spec.extra_env.items():
-            cmd += ["-e", f"{key}={value}"]
+    extra_env = dict(spec.extra_env or {})
+    admin_cert = spec.certs_dir.expanduser().resolve() / "domain_proxy.cert"
+    if "SAS_ADMIN_CERT_SHA256" not in extra_env and admin_cert.is_file():
+        # /admin is fail-closed; authorize the client cert the benches use.
+        extra_env["SAS_ADMIN_CERT_SHA256"] = cert_sha256_fingerprint(admin_cert)
+    for key, value in extra_env.items():
+        cmd += ["-e", f"{key}={value}"]
     cmd.append(spec.image)
     proc = subprocess.run(
         cmd,
