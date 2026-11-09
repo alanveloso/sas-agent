@@ -90,6 +90,7 @@ RUN_FIELDS = [
     "temp_c_start", "devices_ok", "devices_failed", "exit_code", "error",
     "population_mode", "devices_per_agent_min", "devices_per_agent_max",
     "max_inflight_requests_total", "max_inflight_requests_per_agent",
+    "stats_sweeps", "ram_after_load_mb_sum",
 ]
 SUMMARY_FIELDS = [
     "scenario", "k_containers", "n_repeats", "metric",
@@ -229,6 +230,7 @@ class _DockerStatsSampler:
         self._thread: threading.Thread | None = None
         self.ram_peak_sum = 0.0
         self.cpu_peak_sum = 0.0
+        self.sweeps = 0
 
     def __enter__(self) -> "_DockerStatsSampler":
         self._thread = threading.Thread(target=self._loop, daemon=True)
@@ -250,9 +252,23 @@ class _DockerStatsSampler:
                     ram_sum += ram
                 if cpu is not None:
                     cpu_sum += cpu
+            if self._stop.is_set():
+                break  # partial sweep: containers sampled at different load phases
             self.ram_peak_sum = max(self.ram_peak_sum, ram_sum)
             self.cpu_peak_sum = max(self.cpu_peak_sum, cpu_sum)
+            self.sweeps += 1
             self._stop.wait(self.interval)
+
+
+def _ram_sum_mb(names: list[str]) -> float | None:
+    """Sum of current container memory (docker stats); None if any read fails."""
+    total = 0.0
+    for name in names:
+        _cpu, ram = docker_stats_sample(name)
+        if ram is None:
+            return None
+        total += ram
+    return total
 
 
 def _load_one_container(
@@ -367,8 +383,10 @@ def _run_scenario(
     grant_batch_items: list[int] = []
     devices_ok = 0
     devices_failed = 0
-    ram_peak = 0.0
-    cpu_peak = 0.0
+    ram_peak: float | None = None
+    cpu_peak: float | None = None
+    stats_sweeps = 0
+    ram_after_load: float | None = None
 
     t_scenario = time.perf_counter()
     try:
@@ -421,13 +439,15 @@ def _run_scenario(
                     if res["error"] and not error:
                         error = res["error"]
             load_wall = time.perf_counter() - t_load
-            ram_peak = sampler.ram_peak_sum
-            cpu_peak = sampler.cpu_peak_sum
+        if sampler.sweeps:
+            ram_peak, cpu_peak = sampler.ram_peak_sum, sampler.cpu_peak_sum
+        stats_sweeps = sampler.sweeps
 
         if scenario == "A":
             scenario_wall = load_wall
         else:
             scenario_wall = time.perf_counter() - t_scenario
+        ram_after_load = _ram_sum_mb(names)
 
         if devices_failed:
             exit_code = 1
@@ -465,8 +485,8 @@ def _run_scenario(
         "teardown_sec": round(teardown, 4),
         "throughput_devices_per_sec": round(thr, 3) if thr == thr else "",
         **_grant_latency_fields(grant_batch_ms, grant_batch_items, grant_all),
-        "ram_peak_mb_sum": round(ram_peak, 2),
-        "cpu_pct_peak_sum": round(cpu_peak, 2),
+        "ram_peak_mb_sum": round(ram_peak, 2) if ram_peak is not None else "",
+        "cpu_pct_peak_sum": round(cpu_peak, 2) if cpu_peak is not None else "",
         "temp_c_start": round(float(temp_start), 2) if temp_start is not None else "",
         "devices_ok": devices_ok,
         "devices_failed": devices_failed,
@@ -477,6 +497,8 @@ def _run_scenario(
         "devices_per_agent_max": max(counts),
         "max_inflight_requests_total": k * INFLIGHT_PER_AGENT,
         "max_inflight_requests_per_agent": INFLIGHT_PER_AGENT,
+        "stats_sweeps": stats_sweeps,
+        "ram_after_load_mb_sum": round(ram_after_load, 2) if ram_after_load is not None else "",
     }
 
 
@@ -492,6 +514,7 @@ def _aggregate(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         "grant_batch_latency_p95_ms",
         "grant_amortized_ms_per_item",
         "ram_peak_mb_sum",
+        "ram_after_load_mb_sum",
     ]
     groups: dict[tuple[str, int], list[dict[str, Any]]] = {}
     for r in runs:
@@ -675,6 +698,14 @@ def main() -> int:
                     "grant_batch_latency_*_ms": "HTTP round-trip per Grant batch POST",
                     "grant_amortized_ms_per_item": "sum(batch time) / sum(items in batches)",
                     "grant_latency_*_ms": "legacy amortized (batch time / batch size per successful item); not individual Grant latency",
+                },
+                "memory_semantics": {
+                    "ram_peak_mb_sum": "max over complete docker-stats sweeps (containers "
+                                       "read sequentially) during load; blank if no sweep "
+                                       "completed (stats_sweeps = 0)",
+                    "ram_after_load_mb_sum": "sum of docker-stats memory per container read "
+                                             "once after load, before teardown; outside "
+                                             "the timed windows",
                 },
                 "image": {"tag": args.image, "digest": image_digest(args.image)},
                 "failures": failures,

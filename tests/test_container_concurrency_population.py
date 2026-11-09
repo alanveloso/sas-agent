@@ -55,6 +55,36 @@ class CliTests(unittest.TestCase):
                     ccb._parse_args(argv)
 
 
+class StatsSamplerTests(unittest.TestCase):
+    def test_partial_sweep_is_not_counted(self):
+        sampler = ccb._DockerStatsSampler(["a", "b"], interval=0.0)
+
+        def stats(name):
+            if name == "b":
+                sampler._stop.set()   # load ends while the sweep is in progress
+            return 1.0, 100.0
+
+        with mock.patch.object(ccb, "docker_stats_sample", side_effect=stats):
+            sampler._loop()
+        self.assertEqual((sampler.sweeps, sampler.ram_peak_sum), (0, 0.0))
+
+    def test_complete_sweep_sums_containers(self):
+        sampler = ccb._DockerStatsSampler(["a", "b"], interval=0.0)
+        calls = iter([(1.0, 100.0), (2.0, 50.0)])
+
+        def stats(_name):
+            v = next(calls, None)
+            if v is None:
+                sampler._stop.set()
+                return 0.0, 0.0
+            return v
+
+        with mock.patch.object(ccb, "docker_stats_sample", side_effect=stats):
+            sampler._loop()
+        self.assertEqual((sampler.sweeps, sampler.ram_peak_sum, sampler.cpu_peak_sum),
+                         (1, 150.0, 3.0))
+
+
 class RunScenarioTests(unittest.TestCase):
     def _run(self, k, devices_per_agent):
         loads = []
@@ -66,10 +96,13 @@ class RunScenarioTests(unittest.TestCase):
                     "grant_batch_ms": [100.0], "grant_batch_items": [n], "error": ""}
 
         sampler = mock.MagicMock()
-        sampler.return_value.__enter__.return_value = mock.Mock(ram_peak_sum=0.0, cpu_peak_sum=0.0)
+        sampler.return_value.__enter__.return_value = mock.Mock(
+            ram_peak_sum=0.0, cpu_peak_sum=0.0, sweeps=0
+        )
         with mock.patch.multiple(
             ccb,
             docker_run=mock.Mock(), docker_rm=mock.Mock(),
+            docker_stats_sample=mock.Mock(return_value=(1.0, 100.0)),
             wait_http_200=mock.Mock(return_value=(True, 200, "")),
             host_load_snapshot=mock.Mock(return_value={}),
             _DockerStatsSampler=sampler, _load_one_container=fake_load,
@@ -91,6 +124,9 @@ class RunScenarioTests(unittest.TestCase):
         self.assertEqual(row["max_inflight_requests_total"], 5)
         self.assertEqual(row["max_inflight_requests_per_agent"], 1)
         self.assertEqual(row["grant_amortized_ms_per_item"], round(500.0 / 1500, 4))
+        # no complete docker-stats sweep → blank peak, not 0.0
+        self.assertEqual((row["stats_sweeps"], row["ram_peak_mb_sum"]), (0, ""))
+        self.assertEqual(row["ram_after_load_mb_sum"], 500.0)
 
     def test_fixed_per_agent_row(self):
         row, loads = self._run(3, 40)
