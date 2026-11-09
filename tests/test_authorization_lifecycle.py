@@ -292,6 +292,74 @@ class AuthorizationLifecycleTests(unittest.TestCase):
         )
         self.assertEqual(hb[0]["response"]["responseCode"], 500, hb)
 
+    def _heartbeat(self, grant, *, profile=None, renew=False):
+        req = {
+            "cbsdId": self.cbsd.cbsd_id,
+            "grantId": grant.grant_id,
+            "operationState": "GRANTED",
+        }
+        if renew:
+            req["grantRenew"] = True
+        return self.process_heartbeat(self.db, [req], profile=profile)[0]
+
+    def test_restart_with_same_profile_keeps_grant(self):
+        from domain.band_profile import cbrs_winnforum_profile
+
+        grant = self._issue_gaa_grant()
+        hb = self._heartbeat(grant, profile=cbrs_winnforum_profile())
+        self.assertEqual(hb["response"]["responseCode"], 0, hb)
+
+    def test_replaced_profile_does_not_carry_over_rights(self):
+        from dataclasses import replace
+
+        from domain.band_profile import br_anatel_privativa_profile, cbrs_winnforum_profile
+
+        cbrs = cbrs_winnforum_profile()
+        cases = {
+            "other_band_and_policy": br_anatel_privativa_profile(),
+            "same_band_other_gaa_policy": replace(cbrs, gaa_policy_id="OTHER_GAA"),
+            "narrowed_band": cbrs.with_band_limits(3_550_000_000, 3_600_000_000),
+        }
+        for name, new_profile in cases.items():
+            with self.subTest(name):
+                grant = self._issue_gaa_grant()
+                hb = self._heartbeat(grant, profile=new_profile)
+                self.assertEqual(hb["response"]["responseCode"], 500, hb)
+                self.assertLess(
+                    datetime.strptime(hb["transmitExpireTime"], "%Y-%m-%dT%H:%M:%SZ"),
+                    datetime.utcnow(),
+                )
+                self.db.refresh(grant)
+                self.assertTrue(grant.terminated)
+                self.assertEqual(grant.termination_reason, "AUTHORIZATION_INVALID")
+                hb_back = self._heartbeat(grant, profile=cbrs)
+                self.assertEqual(hb_back["response"]["responseCode"], 500, hb_back)
+
+    def test_pal_outside_narrowed_band_is_terminated(self):
+        from domain.band_profile import cbrs_winnforum_profile
+
+        grant = self._issue_pal_grant()
+        narrowed = cbrs_winnforum_profile().with_band_limits(3_560_000_000, 3_700_000_000)
+        hb = self._heartbeat(grant, profile=narrowed)
+        self.assertEqual(hb["response"]["responseCode"], 500, hb)
+
+    def test_shortened_pal_expiration_clamps_existing_grant(self):
+        grant = self._issue_pal_grant()
+        near = (datetime.utcnow() + timedelta(seconds=120)).replace(microsecond=0)
+        self._inject_pal(
+            self.pal_id, status="VALID", expiration=near.strftime("%Y-%m-%dT%H:%M:%SZ")
+        )
+        self.db.refresh(grant)
+        self.assertFalse(grant.terminated)
+        self.assertEqual(grant.authorization_expires_at, near)
+
+        hb = self._heartbeat(grant, renew=True)
+        self.assertEqual(hb["response"]["responseCode"], 0, hb)
+        for key in ("grantExpireTime", "transmitExpireTime"):
+            self.assertLessEqual(
+                datetime.strptime(hb[key], "%Y-%m-%dT%H:%M:%SZ"), near, key
+            )
+
     def test_revocation_isolates_other_pal_grants(self):
         other_pal = "pal/test/2"
         other_exp = (datetime.utcnow() + timedelta(days=30)).strftime(
