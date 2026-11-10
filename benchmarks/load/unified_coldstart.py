@@ -48,6 +48,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import os
 import random
 import statistics
@@ -117,6 +118,7 @@ RUN_FIELDS = [
 ECDSA_CONTAINER_PORT = 9001
 SUMMARY_FIELDS = [
     "profile_id", "n_ok", "n_fail", "metric", "median", "mean", "p95", "iqr", "min", "max",
+    "ci95_low", "ci95_high", "experimental_unit", "p95_is_point_estimate",
 ]
 # Stages that must be ≥0 and participate in internal accounting residual
 INTERNAL_ADDITIVE_FIELDS = (
@@ -190,6 +192,24 @@ def _uvicorn_seen_ms_from_logs(logs: str, t0_unix: float) -> float | None:
 
 def _iqr(vals: list[float]) -> float:
     return (percentile(vals, 75) or 0.0) - (percentile(vals, 25) or 0.0)
+
+
+def _ci95(values: list[float]) -> tuple[float | None, float | None]:
+    """Student-t 95% CI for the mean of independent container starts."""
+    n = len(values)
+    if n < 2:
+        return None, None
+    t_table = {
+        1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571,
+        6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
+        11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145, 15: 2.131,
+        16: 2.120, 17: 2.110, 18: 2.101, 19: 2.093, 20: 2.086,
+        21: 2.080, 22: 2.074, 23: 2.069, 24: 2.064, 25: 2.060,
+        26: 2.056, 27: 2.052, 28: 2.048, 29: 2.045, 30: 2.042,
+    }
+    mean = statistics.fmean(values)
+    half = t_table.get(n - 1, 1.96) * statistics.stdev(values) / math.sqrt(n)
+    return mean - half, mean + half
 
 
 def _nonneg(v: Any) -> float | str:
@@ -437,8 +457,12 @@ def _summarize(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
             out.append({
                 "profile_id": pid, "n_ok": 0, "n_fail": n_fail, "metric": "cold_start_total_ms",
                 "median": "", "mean": "", "p95": "", "iqr": "", "min": "", "max": "",
+                "ci95_low": "", "ci95_high": "",
+                "experimental_unit": "independent_docker_container",
+                "p95_is_point_estimate": 1,
             })
             continue
+        lo, hi = _ci95(vals)
         out.append({
             "profile_id": pid,
             "n_ok": len(vals),
@@ -450,6 +474,10 @@ def _summarize(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "iqr": round(_iqr(vals), 3),
             "min": round(min(vals), 3),
             "max": round(max(vals), 3),
+            "ci95_low": round(lo, 3) if lo is not None else "",
+            "ci95_high": round(hi, 3) if hi is not None else "",
+            "experimental_unit": "independent_docker_container",
+            "p95_is_point_estimate": 1,
         })
     return out
 

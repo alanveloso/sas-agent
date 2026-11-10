@@ -96,6 +96,7 @@ SUMMARY_FIELDS = [
     "scenario", "k_containers", "n_repeats", "metric",
     "median", "iqr", "min", "max", "mean", "ci95_low", "ci95_high",
     "population_mode", "total_devices",
+    "experimental_unit", "ci95_of",
 ]
 FIXED_TOTAL = "fixed_total"
 FIXED_PER_AGENT = "fixed_per_agent"
@@ -201,14 +202,21 @@ def _grant_latency_fields(
 
 
 def _ci95(values: list[float]) -> tuple[float | None, float | None]:
+    """Student-t 95% CI for the mean of independent deployment repeats."""
     n = len(values)
     if n < 2:
         return None, None
+    # Two-sided 95% t critical values (df=1..30); larger df ≈ 1.96.
+    t_table = {
+        1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571,
+        6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
+        11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145, 15: 2.131,
+        16: 2.120, 17: 2.110, 18: 2.101, 19: 2.093, 20: 2.086,
+        21: 2.080, 22: 2.074, 23: 2.069, 24: 2.064, 25: 2.060,
+        26: 2.056, 27: 2.052, 28: 2.048, 29: 2.045, 30: 2.042,
+    }
     mean = statistics.fmean(values)
-    sd = statistics.stdev(values)
-    t_table = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571}
-    tcrit = t_table.get(n - 1, 1.96)
-    half = tcrit * sd / math.sqrt(n)
+    half = t_table.get(n - 1, 1.96) * statistics.stdev(values) / math.sqrt(n)
     return mean - half, mean + half
 
 
@@ -551,6 +559,8 @@ def _aggregate(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "ci95_high": round(hi, 4) if hi is not None else "",
                 "population_mode": rows[0].get("population_mode", FIXED_TOTAL),
                 "total_devices": rows[0].get("total_devices", ""),
+                "experimental_unit": "independent_deployment_repeat",
+                "ci95_of": "mean_across_repeats",
             })
     return out
 

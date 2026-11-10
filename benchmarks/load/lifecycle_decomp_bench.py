@@ -90,6 +90,7 @@ RAW_FIELDS = [
 ]
 SUMMARY_FIELDS = [
     "profile_id", "operation", "n", "metric", "median", "iqr", "p95", "mean",
+    "experimental_unit", "n_independent_deployments", "p95_is_point_estimate",
 ]
 SUSTAINED_RAW_FIELDS = [
     "run_id", "timestamp_utc", "profile_id", "event", "operation", "cbsd_index",
@@ -353,6 +354,10 @@ def _summarize(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "iqr": round(_iqr(vals), 4),
                 "p95": round(percentile(vals, 95) or 0.0, 4),
                 "mean": round(statistics.fmean(vals), 4),
+                # One container per profile; n counts within-container cycles.
+                "experimental_unit": "http_request_within_container",
+                "n_independent_deployments": 1,
+                "p95_is_point_estimate": 1,
             })
     return out
 
