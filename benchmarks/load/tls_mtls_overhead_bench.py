@@ -3,7 +3,15 @@
 Quatro condições, blocos randomizados:
   - tls_new / tls_persistent / mtls_new / mtls_persistent
 
-Endpoint: GET /ready (custo de transporte, sem lógica CBSD).
+Endpoint: GET /ready (custo de transporte, sem lógica CBSD). Não é latência
+de operação SAS-CBSD.
+
+Colunas legadas (mantidas): em ``new``, connection_setup_ms é só a criação do
+httpx.Client (sem rede; a conexão é aberta no primeiro request) e
+request_after_connection_ms inclui TCP + handshake TLS + troca HTTP; em
+``persistent``, connection_reused é inferido pelo índice. Colunas observadas
+(trace do httpcore): tcp_connect_ms, tls_handshake_ms, request_exchange_ms,
+connection_reused_observed, tls_version, tls_cipher, tls_session_reused.
 
 Saídas:
   - tls_mtls_overhead_runs.csv      (agregado por bloco)
@@ -75,6 +83,9 @@ REQ_FIELDS = [
     "connection_id", "connection_reused",
     "connection_setup_ms", "request_after_connection_ms", "total_ms",
     "http_status", "success",
+    "client_create_ms", "connection_reused_observed", "tcp_connect_ms",
+    "tls_handshake_ms", "request_exchange_ms", "tls_version", "tls_cipher",
+    "tls_session_reused",
 ]
 SUMMARY_FIELDS = [
     "condition", "n_blocks", "metric", "median", "iqr", "min", "max", "mean", "p95",
@@ -104,6 +115,47 @@ def _tls_only_context(certs: Path) -> ssl.SSLContext:
     ctx.verify_mode = ssl.CERT_REQUIRED
     ctx.load_verify_locations(cafile=str(certs / "ca.cert"))
     return ctx
+
+
+class _Trace:
+    """httpcore trace callback: first perf_counter() per event name."""
+
+    def __init__(self) -> None:
+        self.t: dict[str, float] = {}
+        self.ssl_object: Any = None
+
+    def __call__(self, name: str, info: dict[str, Any]) -> None:
+        self.t.setdefault(name, time.perf_counter())
+        if name == "connection.start_tls.complete":
+            # Captured here: without keep-alive the stream is closed once the
+            # response is read.
+            self.ssl_object = info["return_value"].get_extra_info("ssl_object")
+
+
+def _span_ms(t: dict[str, float], prefix: str) -> float | None:
+    a, b = t.get(f"{prefix}.started"), t.get(f"{prefix}.complete")
+    return (b - a) * 1000.0 if a is not None and b is not None else None
+
+
+def _observed_fields(
+    t: dict[str, float], request_ms: float, resp: Any, ssl_obj: Any = None
+) -> dict[str, Any]:
+    """Connection facts observed for one request (not inferred from its index)."""
+    tcp = _span_ms(t, "connection.connect_tcp")
+    tls = _span_ms(t, "connection.start_tls")
+    stream = getattr(resp, "extensions", {}).get("network_stream")
+    if ssl_obj is None and stream is not None:
+        ssl_obj = stream.get_extra_info("ssl_object")
+    cipher = ssl_obj.cipher() if ssl_obj is not None else None
+    return {
+        "connection_reused_observed": int("connection.connect_tcp.started" not in t),
+        "tcp_connect_ms": round(tcp, 4) if tcp is not None else "",
+        "tls_handshake_ms": round(tls, 4) if tls is not None else "",
+        "request_exchange_ms": round(request_ms - (tcp or 0.0) - (tls or 0.0), 4),
+        "tls_version": ssl_obj.version() if ssl_obj is not None else "",
+        "tls_cipher": cipher[0] if cipher else "",
+        "tls_session_reused": int(ssl_obj.session_reused) if ssl_obj is not None else "",
+    }
 
 
 def _iqr(vals: list[float]) -> float:
@@ -186,8 +238,9 @@ def _run_block(
                     verify=ctx, timeout=10.0, limits=limits_new
                 ) as client:
                     setup_ms = (time.perf_counter() - t_setup0) * 1000.0
+                    trace = _Trace()
                     t_req0 = time.perf_counter()
-                    resp = client.get(url)
+                    resp = client.get(url, extensions={"trace": trace})
                     after_ms = (time.perf_counter() - t_req0) * 1000.0
                     total_ms = setup_ms + after_ms
                     ok = resp.status_code == 200
@@ -208,6 +261,8 @@ def _run_block(
                         "total_ms": round(total_ms, 4),
                         "http_status": resp.status_code,
                         "success": int(ok),
+                        "client_create_ms": round(setup_ms, 4),
+                        **_observed_fields(trace.t, after_ms, resp, trace.ssl_object),
                     })
                     req_fh.flush()
         else:
@@ -218,8 +273,9 @@ def _run_block(
                 for i in range(warmup + n_requests):
                     is_warm = i < warmup
                     reused = 1 if i > 0 else 0
+                    trace = _Trace()
                     t0 = time.perf_counter()
-                    resp = client.get(url)
+                    resp = client.get(url, extensions={"trace": trace})
                     total_ms = (time.perf_counter() - t0) * 1000.0
                     ok = resp.status_code == 200
                     if not is_warm:
@@ -239,6 +295,8 @@ def _run_block(
                         "total_ms": round(total_ms, 4),
                         "http_status": resp.status_code,
                         "success": int(ok),
+                        "client_create_ms": "",
+                        **_observed_fields(trace.t, total_ms, resp, trace.ssl_object),
                     })
                     req_fh.flush()
     except Exception as exc:  # noqa: BLE001
@@ -447,10 +505,30 @@ def main() -> int:
                 "conditions": list(CONDITIONS),
                 "per_request_file": "tls_mtls_requests.csv",
                 "cpu_metric": "process_cpu_user/system_ms from /proc/1/stat deltas",
-                "handshake_limitation": (
-                    "httpx does not expose TLS handshake alone; "
-                    "connection_setup_ms approximates client+handshake for new connections"
-                ),
+                "endpoint": "GET /ready, no request body; transport cost, not a CBSD-SAS operation",
+                "tls": {
+                    "version": "TLS 1.2 (client and server pinned)",
+                    "client_ciphers_mtls": "common.RSA_CIPHERS",
+                    "client_ciphers_tls": "OpenSSL default (server restricts the list)",
+                    "negotiated": "per request in tls_version / tls_cipher",
+                },
+                "keep_alive": {
+                    "new": "httpx.Limits(max_keepalive_connections=0, max_connections=1); "
+                           "one Client per request",
+                    "persistent": "one Client per block, max_keepalive_connections=8; "
+                                  "server keep-alive timeout applies",
+                },
+                "column_semantics": {
+                    "connection_setup_ms": "legacy. new: httpx.Client construction only "
+                                           "(no network I/O); persistent: full first request",
+                    "request_after_connection_ms": "legacy. new: TCP + TLS handshake + HTTP "
+                                                   "exchange; persistent: reused requests",
+                    "connection_reused": "legacy, inferred from request index",
+                    "connection_reused_observed": "1 if no TCP connect event in the request",
+                    "tcp_connect_ms / tls_handshake_ms": "httpcore trace spans",
+                    "request_exchange_ms": "request time minus TCP and TLS spans",
+                    "tls_session_reused": "ssl_object.session_reused (abbreviated handshake)",
+                },
                 "image": {"tag": args.image, "digest": image_digest(args.image)},
                 "failures": failures,
             },
