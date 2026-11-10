@@ -85,11 +85,11 @@ def parse_log(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--logs-dir", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     logs = sorted(args.logs_dir.glob("winnforum_*.log"))
     if not logs:
