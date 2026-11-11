@@ -331,7 +331,14 @@ def _levene(groups: list[list[float]]) -> dict[str, float] | None:
 
 
 def _two_way_anova(runs: list[dict[str, Any]], metric: str) -> dict[str, Any]:
-    """Balanced 2×2 ANOVA (width × devices) with η²."""
+    """Balanced 2×2 CRD ANOVA (width × devices) with η².
+
+    This treats every cell observation as an independent CRD sample and
+    **ignores the randomized-block structure** of the harness (``repeat``).
+    Prefer :func:`_blocked_log_contrasts` as the primary inference for article
+    claims; keep this ANOVA only as a supplementary contrast that explains why
+    earlier summaries reported a significant interaction.
+    """
     cells: dict[tuple[float, int], list[float]] = {}
     for r in runs:
         if r.get("exit_code") != 0:
@@ -389,6 +396,10 @@ def _two_way_anova(runs: list[dict[str, Any]], metric: str) -> dict[str, Any]:
 
     return {
         "metric": metric,
+        "design_note": (
+            "completely_randomized_two_way_anova; ignores randomized blocks "
+            "(repeat). Not the primary inference for this harness."
+        ),
         "factors": {
             "A": "band_width_mhz",
             "B": "devices",
@@ -414,6 +425,105 @@ def _two_way_anova(runs: list[dict[str, Any]], metric: str) -> dict[str, Any]:
         },
         "shapiro_residuals": _shapiro_wilk(residuals),
         "levene_cells": _levene(groups),
+    }
+
+
+def _blocked_log_contrasts(
+    runs: list[dict[str, Any]],
+    metric: str = "device_population_wall_sec",
+    *,
+    bootstrap_n: int = 20_000,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """Primary 2×2 inference for randomized blocks (config A–D within ``repeat``).
+
+    For each complete block, compute log-contrasts:
+
+    - width: 0.5 * ((log C - log A) + (log D - log B))
+    - population: 0.5 * ((log B - log A) + (log D - log C))
+    - interaction: (log D - log C) - (log B - log A)
+
+    Geometric-mean effect = exp(mean contrast). Bootstrap resamples blocks.
+    """
+    import math
+
+    by_block: dict[int, dict[str, float]] = {}
+    for r in runs:
+        if int(r.get("exit_code", 1)) != 0:
+            continue
+        val = r.get(metric)
+        if val in ("", None):
+            continue
+        rep = int(r["repeat"])
+        by_block.setdefault(rep, {})[str(r["config_id"])] = float(val)
+
+    complete = {
+        rep: cells
+        for rep, cells in sorted(by_block.items())
+        if set(cells) >= {"A", "B", "C", "D"}
+    }
+    if not complete:
+        return {"error": "no complete randomized blocks with configs A–D"}
+
+    width_c: list[float] = []
+    pop_c: list[float] = []
+    inter_c: list[float] = []
+    for cells in complete.values():
+        la, lb, lc, ld = (math.log(cells[k]) for k in "ABCD")
+        width_c.append(0.5 * ((lc - la) + (ld - lb)))
+        pop_c.append(0.5 * ((lb - la) + (ld - lc)))
+        inter_c.append((ld - lc) - (lb - la))
+
+    def _wilcoxon_p(contrasts: list[float]) -> float | None:
+        try:
+            from scipy import stats  # type: ignore
+        except ImportError:
+            return None
+        if all(abs(c) < 1e-15 for c in contrasts):
+            return 1.0
+        try:
+            return float(stats.wilcoxon(contrasts, alternative="two-sided").pvalue)
+        except ValueError:
+            return None
+
+    def _effect(contrasts: list[float], name: str) -> dict[str, Any]:
+        mean_c = statistics.fmean(contrasts)
+        rng = random.Random(seed)
+        boots: list[float] = []
+        n = len(contrasts)
+        for _ in range(bootstrap_n):
+            sample = [contrasts[rng.randrange(n)] for _ in range(n)]
+            boots.append(math.exp(statistics.fmean(sample)))
+        boots.sort()
+        lo = boots[int(0.025 * (bootstrap_n - 1))]
+        hi = boots[int(0.975 * (bootstrap_n - 1))]
+        return {
+            "effect": name,
+            "n_blocks": n,
+            "mean_log_contrast": mean_c,
+            "geometric_mean_ratio": math.exp(mean_c),
+            "bootstrap_ci95_ratio": [lo, hi],
+            "bootstrap_n": bootstrap_n,
+            "bootstrap_seed": seed,
+            "wilcoxon_two_sided_p": _wilcoxon_p(contrasts),
+        }
+
+    return {
+        "metric": metric,
+        "design": "randomized_complete_block_2x2",
+        "primary_inference": True,
+        "n_complete_blocks": len(complete),
+        "block_ids": list(complete.keys()),
+        "effects": {
+            "width": _effect(width_c, "width_wide_over_narrow"),
+            "population": _effect(pop_c, "population_1000_over_133"),
+            "interaction": _effect(inter_c, "interaction_width_x_population"),
+        },
+        "anova_divergence_note": (
+            "CRD two-way ANOVA pools residual variance across blocks and can "
+            "inflate interaction significance when block-to-block correlation "
+            "is present. Blocked log-contrasts respect the randomization unit."
+        ),
     }
 
 
@@ -488,6 +598,13 @@ def main() -> int:
                 "schedules": schedules,
                 "probe_n": args.probe_n,
                 "failures": failures,
+                "blocked_log_contrasts": _blocked_log_contrasts(
+                    all_runs, "device_population_wall_sec", seed=args.seed
+                ),
+                "anova_crd_supplementary": _two_way_anova(
+                    all_runs, "device_population_wall_sec"
+                ),
+                # Legacy key retained for older readers; not primary inference.
                 "anova": _two_way_anova(all_runs, "device_population_wall_sec"),
                 "outputs": {
                     "runs_csv": str(runs_path),

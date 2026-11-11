@@ -20,6 +20,7 @@ if str(REPO) not in sys.path:
 from analysis.statistics import (  # noqa: E402
     EXPERIMENT_UNITS,
     mean_ci95,
+    median,
     p95_report,
 )
 
@@ -61,37 +62,106 @@ def _assess_series(values: list[float], *, independent: bool) -> dict[str, Any]:
     }
 
 
+def _lifecycle_raw_paths(campaign_dir: Path) -> list[Path]:
+    flat = campaign_dir / "lifecycle_decomposition" / "lifecycle_decomp_raw.csv"
+    if flat.is_file():
+        return [flat]
+    nested = sorted((campaign_dir / "lifecycle_decomposition").rglob("lifecycle_decomp_raw.csv"))
+    if nested:
+        return nested
+    alt = campaign_dir / "lifecycle_decomp_raw.csv"
+    return [alt] if alt.is_file() else []
+
+
 def audit_lifecycle(campaign_dir: Path) -> dict[str, Any]:
     meta = dict(EXPERIMENT_UNITS["lifecycle_decomp"])
-    raw = _read(campaign_dir / "lifecycle_decomposition" / "lifecycle_decomp_raw.csv")
-    if not raw:
-        raw = _read(campaign_dir / "lifecycle_decomp_raw.csv")
-    rows = [r for r in raw if str(r.get("warmup")) in ("0", "False", "false", "")]
-    profiles = sorted({r["profile_id"] for r in rows}) if rows else []
-    # One container per profile in the current harness; cycles are within-unit.
+    paths = _lifecycle_raw_paths(campaign_dir)
+    # Group rows by independent deployment directory when multi-rep layout is used.
+    deployments: list[tuple[str, str, list[dict[str, str]]]] = []
+    for path in paths:
+        rows = [
+            r for r in _read(path)
+            if str(r.get("warmup")) in ("0", "False", "false", "")
+        ]
+        if not rows:
+            continue
+        profile = rows[0].get("profile_id") or path.parent.parent.name
+        # flat layout → single deployment; nested .../<profile>/repk/ → rep id
+        if path.parent.name.startswith("rep"):
+            dep_id = path.parent.name
+        elif path.parent.name == "lifecycle_decomposition":
+            dep_id = "rep1"
+        else:
+            dep_id = path.parent.name
+        deployments.append((str(profile), str(dep_id), rows))
+
     by_profile: dict[str, Any] = {}
-    for pid in profiles:
-        cycles = {
-            r["cycle"] for r in rows
-            if r["profile_id"] == pid and r.get("operation") == "registration"
-        }
-        client = _nums(
-            [r for r in rows if r["profile_id"] == pid and r.get("operation") == "grant"],
+    for profile, dep_id, rows in deployments:
+        entry = by_profile.setdefault(
+            profile,
+            {
+                "n_independent_deployments": 0,
+                "deployments": {},
+                "deployment_median_grant_client_ms": [],
+                "deployment_median_e2e_client_ms": [],
+            },
+        )
+        grant = _nums(
+            [r for r in rows if r.get("operation") == "grant"],
             "client_ms",
         )
-        by_profile[pid] = {
-            "n_cycles_observed": len(cycles),
-            "n_independent_deployments": 1,
-            "grant_client_ms": _assess_series(client, independent=False),
+        # E2E proxy: sum of the six SAS operations' client_ms per cycle, then
+        # median across cycles — used only descriptively inside a deployment.
+        by_cycle: dict[str, float] = {}
+        for r in rows:
+            if r.get("operation") not in (
+                "registration", "spectrumInquiry", "grant",
+                "heartbeat", "relinquishment", "deregistration",
+            ):
+                continue
+            try:
+                by_cycle[r["cycle"]] = by_cycle.get(r["cycle"], 0.0) + float(r["client_ms"])
+            except (KeyError, TypeError, ValueError):
+                continue
+        e2e = list(by_cycle.values())
+        g_med = median(grant)
+        e_med = median(e2e)
+        entry["n_independent_deployments"] += 1
+        entry["deployments"][dep_id] = {
+            "n_cycles_observed": len(by_cycle),
+            "grant_client_ms": _assess_series(grant, independent=False),
+            "e2e_client_ms_within_deployment": _assess_series(e2e, independent=False),
+            "grant_median_ms": g_med,
+            "e2e_median_ms": e_med,
         }
+        if g_med is not None:
+            entry["deployment_median_grant_client_ms"].append(g_med)
+        if e_med is not None:
+            entry["deployment_median_e2e_client_ms"].append(e_med)
+
+    for profile, entry in by_profile.items():
+        dep_grants = entry.pop("deployment_median_grant_client_ms")
+        dep_e2e = entry.pop("deployment_median_e2e_client_ms")
+        entry["across_deployments"] = {
+            "grant_median_ms": _assess_series(dep_grants, independent=True),
+            "e2e_median_ms": _assess_series(dep_e2e, independent=True),
+            "note": (
+                "CI95 applies to the mean of deployment medians "
+                f"(n={len(dep_grants)} independent containers), not to pooled cycles"
+            ),
+        }
+
+    n_dep = sum(v["n_independent_deployments"] for v in by_profile.values())
     return {
         "experiment": "lifecycle_decomp",
         "catalog": meta,
+        "n_raw_files": len(paths),
+        "n_deployments_total": n_dep,
         "profiles": by_profile,
         "recommendation": (
-            "Treat within-container cycle summaries as descriptive. For inferential "
-            "claims, repeat the full container deployment (≥5 independent containers "
-            "per profile) and compute mean CI / dispersion across deployments."
+            "Treat within-deployment cycle summaries as descriptive. Inferential "
+            "profile claims must use the ≥5 independent deployment medians per "
+            "profile — never pool 150 cycles as if they were independent replicas."
         ),
     }
 

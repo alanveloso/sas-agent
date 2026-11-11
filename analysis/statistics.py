@@ -7,9 +7,22 @@ reported as a point estimate; a CI is refused when the sample cannot sustain one
 
 from __future__ import annotations
 
+import importlib.util
 import math
-import statistics
+import sysconfig
+from pathlib import Path
 from typing import Any, Sequence
+
+# Load the stdlib statistics module by absolute path. Running
+# ``python analysis/*.py`` puts ``analysis/`` on sys.path[0], which would
+# otherwise make ``import statistics`` resolve to *this* file.
+_stdlib_statistics_path = Path(sysconfig.get_paths()["stdlib"]) / "statistics.py"
+_spec = importlib.util.spec_from_file_location(
+    "_sas_stdlib_statistics", _stdlib_statistics_path
+)
+assert _spec and _spec.loader
+_stats = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_stats)
 
 # Two-sided 95% critical values for df = 1..30; for larger df use 1.96.
 _T_CRIT_95 = {
@@ -23,17 +36,17 @@ _T_CRIT_95 = {
 
 
 def fmean(values: Sequence[float]) -> float | None:
-    return statistics.fmean(values) if values else None
+    return _stats.fmean(values) if values else None
 
 
 def median(values: Sequence[float]) -> float | None:
-    return float(statistics.median(values)) if values else None
+    return float(_stats.median(values)) if values else None
 
 
 def iqr(values: Sequence[float]) -> float | None:
     if len(values) < 2:
         return None
-    qs = statistics.quantiles(values, n=4, method="inclusive")
+    qs = _stats.quantiles(values, n=4, method="inclusive")
     return qs[2] - qs[0]
 
 
@@ -63,8 +76,8 @@ def mean_ci95(values: Sequence[float]) -> tuple[float | None, float | None, floa
     n = len(values)
     if n < 2:
         return None, None, None
-    mean = statistics.fmean(values)
-    half = t_critical_95(n - 1) * statistics.stdev(values) / math.sqrt(n)
+    mean = _stats.fmean(values)
+    half = t_critical_95(n - 1) * _stats.stdev(values) / math.sqrt(n)
     return mean, mean - half, mean + half
 
 
@@ -108,14 +121,26 @@ def p95_report(values: Sequence[float]) -> dict[str, Any]:
 # Catalog of article experiments: independent unit vs what summaries currently count.
 EXPERIMENT_UNITS: dict[str, dict[str, Any]] = {
     "lifecycle_decomp": {
-        "summary_n_counts": "HTTP request / lifecycle cycle within one container",
-        "independent_unit": "Docker container (one per band profile)",
+        "summary_n_counts": (
+            "HTTP request / lifecycle cycle within one deployment; per-deployment "
+            "summaries expose n≈30 measured cycles after warmup"
+        ),
+        "independent_unit": (
+            "Docker deployment (one container). Article multiband design: "
+            "8 profiles × ≥5 independent deployments × 30 measured cycles"
+        ),
         "default_n_within_unit": 30,
-        "default_n_independent": 1,
+        "default_n_independent": 5,
         "pseudoreplication_risk": True,
         "mean_ci_appropriate_on_summary_n": False,
-        "p95_on_summary_n": "point estimate of within-container cycles only",
-        "figure_dispersion": "boxplot of within-container cycles (IQR/whiskers), not a CI",
+        "p95_on_summary_n": (
+            "point estimate of within-deployment cycles only; for profile-level "
+            "inference summarize deployment medians (n_independent≈5)"
+        ),
+        "figure_dispersion": (
+            "within-deployment cycle boxplots are descriptive; profile comparisons "
+            "use the distribution of the five deployment medians"
+        ),
     },
     "unified_coldstart": {
         "summary_n_counts": "independent Docker cold start",
@@ -157,11 +182,15 @@ EXPERIMENT_UNITS: dict[str, dict[str, Any]] = {
         "figure_dispersion": "boxplot; request-level panels are descriptive, not independent n",
     },
     "persistence_modes": {
-        "summary_n_counts": "independent child-process population run",
-        "independent_unit": "process repeat × mode × population",
-        "default_n_independent": 10,
-        "pseudoreplication_risk": False,
+        "summary_n_counts": "randomized block cell (mode × population within repeat)",
+        "independent_unit": "randomized block (repeat); 6 treatments ordered within each block",
+        "default_n_independent": 20,
+        "pseudoreplication_risk": True,
         "mean_ci_appropriate_on_summary_n": True,
+        "note": (
+            "group by persist_mode × devices (never a missing 'mode' column). "
+            "Paired mode comparisons must stay within the same repeat/block."
+        ),
         "p95_on_summary_n": "not primary; median/IQR used",
         "figure_dispersion": (
             "boxplot over repeats; persistence_wall_median bars show medians "
@@ -169,12 +198,33 @@ EXPERIMENT_UNITS: dict[str, dict[str, Any]] = {
         ),
     },
     "factorial_provisioning": {
-        "summary_n_counts": "independent child-process cell run",
-        "independent_unit": "repeat within factorial cell",
+        "summary_n_counts": "cell observation inside a randomized block (configs A–D)",
+        "independent_unit": "randomized complete block (repeat) with four treatments",
         "default_n_independent": 20,
+        "pseudoreplication_risk": True,
+        "mean_ci_appropriate_on_summary_n": False,
+        "note": (
+            "Primary inference: blocked log-contrasts across complete repeats. "
+            "CRD two-way ANOVA that ignores blocks is supplementary only."
+        ),
+        "p95_on_summary_n": "probe_grant_p95_ms is within-run probe p95 if present",
+        "figure_dispersion": "tables use median/IQR over repeats; effects use block contrasts",
+    },
+    "process_concurrency": {
+        "summary_n_counts": "independent K-process deployment + load",
+        "independent_unit": "deployment repeat (K)",
+        "default_n_independent": 5,
         "pseudoreplication_risk": False,
         "mean_ci_appropriate_on_summary_n": True,
-        "p95_on_summary_n": "probe_grant_p95_ms is within-run probe p95 if present",
-        "figure_dispersion": "tables use median/IQR over repeats",
+        "p95_on_summary_n": "within-run latency p95 summarized across repeats",
+        "figure_dispersion": "CI95 for mean across n=5 repeats when reported",
+    },
+    "sustained_mixed_load": {
+        "summary_n_counts": "deployment under sustained mixed load",
+        "independent_unit": "Docker deployment (population × seed)",
+        "default_n_independent": 3,
+        "pseudoreplication_risk": False,
+        "mean_ci_appropriate_on_summary_n": True,
+        "note": "txfix schedule (respect_transmit_expire) is the article-relevant corpus",
     },
 }
