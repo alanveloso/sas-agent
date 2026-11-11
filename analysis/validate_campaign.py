@@ -71,7 +71,25 @@ def _add(checks: list[Check], rule: str, ok: bool, detail: str = "", file: str =
     )
 
 
-def validate_lifecycle(raw_csv: Path, checks: list[Check], *, tol_ms: float = 0.5) -> None:
+def discover_lifecycle_raw_csvs(root: Path) -> list[Path]:
+    """Locate lifecycle raw CSVs for flat or multi-deployment layouts.
+
+    Official ``run_campaign`` writes a single
+    ``lifecycle_decomposition/lifecycle_decomp_raw.csv``. Multiband evidence
+    stages one file per independent deployment under
+    ``lifecycle_decomposition/<profile>/rep<k>/``.
+    """
+    flat = root / "lifecycle_decomposition" / "lifecycle_decomp_raw.csv"
+    if flat.is_file():
+        return [flat]
+    nested = sorted((root / "lifecycle_decomposition").rglob("lifecycle_decomp_raw.csv"))
+    if nested:
+        return nested
+    alt = root / "lifecycle_decomp_raw.csv"
+    return [alt] if alt.is_file() else []
+
+
+def validate_lifecycle_file(raw_csv: Path, checks: list[Check], *, tol_ms: float = 0.5) -> None:
     rel = str(raw_csv.relative_to(REPO)) if raw_csv.is_relative_to(REPO) else str(raw_csv)
     if not raw_csv.is_file():
         _add(checks, "lifecycle.file_exists", False, "missing raw csv", rel)
@@ -129,12 +147,46 @@ def validate_lifecycle(raw_csv: Path, checks: list[Check], *, tol_ms: float = 0.
             break
 
 
+def validate_lifecycle(root: Path, checks: list[Check], *, tol_ms: float = 0.5) -> None:
+    paths = discover_lifecycle_raw_csvs(root)
+    if not paths:
+        missing = root / "lifecycle_decomposition" / "lifecycle_decomp_raw.csv"
+        rel = str(missing.relative_to(REPO)) if missing.is_relative_to(REPO) else str(missing)
+        _add(checks, "lifecycle.file_exists", False, "missing raw csv", rel)
+        return
+    _add(
+        checks,
+        "lifecycle.deployment_files_found",
+        True,
+        f"n_files={len(paths)} layout={'flat' if len(paths) == 1 and paths[0].parent.name == 'lifecycle_decomposition' else 'multi_deployment'}",
+        str(paths[0].relative_to(REPO)) if paths[0].is_relative_to(REPO) else str(paths[0]),
+    )
+    # Identity checks on every deployment file; fail budget is per-file inside.
+    for path in paths:
+        validate_lifecycle_file(path, checks, tol_ms=tol_ms)
+
+
+def _resolve_cert_matrix(root: Path) -> Path | None:
+    """Cert matrix may live under mTLS dir (run_campaign) or sibling cert_matrix/."""
+    candidates = [
+        root / "mtls_correctness_overhead" / "cert_matrix_results.csv",
+        root / "cert_matrix" / "cert_matrix_results.csv",
+    ]
+    for path in candidates:
+        if path.is_file():
+            return path
+    found = sorted(root.rglob("cert_matrix_results.csv"))
+    return found[0] if found else None
+
+
 def validate_mtls(root: Path, checks: list[Check]) -> None:
-    cert = root / "mtls_correctness_overhead" / "cert_matrix_results.csv"
-    rel = str(cert.relative_to(REPO)) if cert.is_file() else str(cert)
-    if not cert.is_file():
+    cert = _resolve_cert_matrix(root)
+    if cert is None:
+        expected = root / "mtls_correctness_overhead" / "cert_matrix_results.csv"
+        rel = str(expected.relative_to(REPO)) if expected.is_relative_to(REPO) else str(expected)
         _add(checks, "mtls.cert_matrix_exists", False, "missing", rel)
         return
+    rel = str(cert.relative_to(REPO)) if cert.is_relative_to(REPO) else str(cert)
     _add(checks, "mtls.cert_matrix_exists", True, file=rel)
     with cert.open(encoding="utf-8") as fh:
         rows = list(csv.DictReader(fh))
@@ -156,11 +208,19 @@ def validate_mtls(root: Path, checks: list[Check]) -> None:
             f"pass={r.get('pass')}",
             rel,
         )
-    req = root / "mtls_correctness_overhead" / "tls_mtls_requests.csv"
-    rel_r = str(req.relative_to(REPO)) if req.is_file() else str(req)
-    if not req.is_file():
+    req_candidates = [
+        root / "mtls_correctness_overhead" / "tls_mtls_requests.csv",
+        root / "tls_mtls_requests.csv",
+    ]
+    req = next((p for p in req_candidates if p.is_file()), None)
+    if req is None:
+        found = sorted(root.rglob("tls_mtls_requests.csv"))
+        req = found[0] if found else None
+    if req is None:
+        rel_r = str((root / "mtls_correctness_overhead" / "tls_mtls_requests.csv"))
         _add(checks, "mtls.per_request_exists", False, "missing tls_mtls_requests.csv", rel_r)
     else:
+        rel_r = str(req.relative_to(REPO)) if req.is_relative_to(REPO) else str(req)
         with req.open(encoding="utf-8") as fh:
             n = sum(1 for _ in fh) - 1
         _add(checks, "mtls.per_request_exists", True, f"n_rows={n}", rel_r)
@@ -237,15 +297,26 @@ def validate_cold(root: Path, checks: list[Check], *, tol_ms: float = 5.0) -> No
             break
 
 
+def _resolve_campaign_manifest(root: Path) -> Path | None:
+    """Prefer run_campaign manifest; accept audit/packaging inventory when present."""
+    for name in ("campaign_manifest.json", "campaign_inventory.json"):
+        path = root / name
+        if path.is_file():
+            return path
+    return None
+
+
 def validate_manifest(root: Path, checks: list[Check]) -> None:
-    man = root / "campaign_manifest.json"
-    rel = str(man.relative_to(REPO)) if man.is_file() else str(man)
-    if not man.is_file():
+    man = _resolve_campaign_manifest(root)
+    if man is None:
+        rel = str(root / "campaign_manifest.json")
         _add(checks, "manifest.exists", False, "missing campaign_manifest.json", rel)
         return
+    rel = str(man.relative_to(REPO)) if man.is_relative_to(REPO) else str(man)
     _add(checks, "manifest.exists", True, file=rel)
     data = json.loads(man.read_text(encoding="utf-8"))
-    _add(checks, "manifest.has_experiments", "experiments" in data, file=rel)
+    has_experiments = "experiments" in data or "phases" in data
+    _add(checks, "manifest.has_experiments", has_experiments, file=rel)
     if data.get("campaign_type") == "evaluation" and data.get("git_dirty"):
         _add(
             checks,
@@ -265,7 +336,7 @@ def validate_campaign(campaign_id: str) -> int:
         print(f"missing campaign dir {root}", file=sys.stderr)
         return 1
 
-    validate_lifecycle(root / "lifecycle_decomposition" / "lifecycle_decomp_raw.csv", checks)
+    validate_lifecycle(root, checks)
     validate_mtls(root, checks)
     validate_cold(root, checks)
     validate_manifest(root, checks)

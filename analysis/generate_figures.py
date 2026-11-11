@@ -7,6 +7,11 @@ Design for paper layout:
   - legends outside the axes when present (no overlap).
 
 Box plots are preferred; stacked bars only for composition.
+
+Dispersion: boxplots show IQR/whiskers/fliers of the CSV row unit (lifecycle =
+within-container cycles; cold start = independent containers). They are not
+confidence intervals. ``persistence_wall_median`` bars are medians only, with
+no error bars.
 """
 
 from __future__ import annotations

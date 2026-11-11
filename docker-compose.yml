@@ -10,6 +10,7 @@ services:
       BAND_PROFILE: ${BAND_PROFILE:-cbrs_winnforum}
       BAND_PROFILE_FILE: ${BAND_PROFILE_FILE:-}
       SAS_DATABASE_PATH: ${SAS_DATABASE_PATH:-/data/sas_mvp.db}
+      SAS_ADMIN_CERT_SHA256: ${SAS_ADMIN_CERT_SHA256:-}
     volumes:
       - sas-agent-data:/data
       - ${HARNESS_CERTS_DIR:-./certs}:/app/src/harness/certs:ro

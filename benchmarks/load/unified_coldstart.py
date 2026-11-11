@@ -10,6 +10,36 @@ order per block, container destroyed after each run, same image.
 Intermediate wall segments (best-effort from docker logs):
   docker_create_ms, uvicorn_seen_ms, ready_ms (total = ready wall).
 
+Interval definitions (host clock unless noted; all ms from t0):
+  cold_start_total_ms           host receipt of the first HTTP 200 from the
+                                RSA listener (9000). Upper bound on readiness.
+  rsa_last_failed_probe_start_ms
+                                start of the last failed RSA probe (error in
+                                rsa_last_failed_probe_error). Probe-observed
+                                readiness lies in [this, total]; a failed probe
+                                does not by itself prove the SAS was not ready
+                                (port forwarding, TLS or client-side failures).
+  rsa_ready_probe_ms            duration of the successful probe (normally
+                                TCP + mTLS handshake + GET), contained in total.
+  container_started_to_ready_observed_ms
+                                total - docker_run_to_container_started_ms.
+                                Same value as legacy readiness_polling_ms; it
+                                is NOT time spent polling.
+  internal_total_ms             container clock: import of request_timing ->
+                                /ready handler of the first successful probe.
+                                Includes any idle wait until that probe.
+  external_residual_signed_ms   total - docker_run - internal_total, unclipped.
+                                Mixes runtime/interpreter start before
+                                request_timing import, response transport,
+                                and overlap of docker CLI return with Python
+                                start (negative). Not attributable to polling.
+                                runtime_and_observation_gap_ms is max(0, ·).
+  ecdsa_ready_observed_ms       first 200 from the ECDSA listener (9001),
+                                probed via container IP after RSA is ready.
+
+Polling: GET, then POLL_INTERVAL_SEC sleep after each failed attempt (2 s
+attempt timeout); policy recorded in the manifest.
+
 Outputs: unified_coldstart_{runs,summary,manifest}.csv/json
 """
 
@@ -18,6 +48,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import os
 import random
 import statistics
@@ -37,6 +68,8 @@ if str(LOAD_DIR) not in sys.path:
 
 from common import (  # noqa: E402
     DEFAULT_SEED,
+    ECDSA_CIPHERS,
+    POLL_INTERVAL_SEC,
     DockerRunSpec,
     build_mtls_context,
     capture_manifest,
@@ -72,9 +105,20 @@ RUN_FIELDS = [
     "diag_bind_to_ready_ms",
     "startup_json",
     "temp_tctl_c_start", "exit_code", "error",
+    # Readiness observation window and dual-listener check
+    "container_started_to_ready_observed_ms",
+    "external_residual_signed_ms",
+    "rsa_last_failed_probe_start_ms",
+    "rsa_last_failed_probe_error",
+    "rsa_ready_probe_ms",
+    "ecdsa_ready_observed_ms",
+    "ecdsa_ready_poll_count",
+    "ecdsa_ready_error",
 ]
+ECDSA_CONTAINER_PORT = 9001
 SUMMARY_FIELDS = [
     "profile_id", "n_ok", "n_fail", "metric", "median", "mean", "p95", "iqr", "min", "max",
+    "ci95_low", "ci95_high", "experimental_unit", "p95_is_point_estimate",
 ]
 # Stages that must be ≥0 and participate in internal accounting residual
 INTERNAL_ADDITIVE_FIELDS = (
@@ -150,6 +194,24 @@ def _iqr(vals: list[float]) -> float:
     return (percentile(vals, 75) or 0.0) - (percentile(vals, 25) or 0.0)
 
 
+def _ci95(values: list[float]) -> tuple[float | None, float | None]:
+    """Student-t 95% CI for the mean of independent container starts."""
+    n = len(values)
+    if n < 2:
+        return None, None
+    t_table = {
+        1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571,
+        6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
+        11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145, 15: 2.131,
+        16: 2.120, 17: 2.110, 18: 2.101, 19: 2.093, 20: 2.086,
+        21: 2.080, 22: 2.074, 23: 2.069, 24: 2.064, 25: 2.060,
+        26: 2.056, 27: 2.052, 28: 2.048, 29: 2.045, 30: 2.042,
+    }
+    mean = statistics.fmean(values)
+    half = t_table.get(n - 1, 1.96) * statistics.stdev(values) / math.sqrt(n)
+    return mean - half, mean + half
+
+
 def _nonneg(v: Any) -> float | str:
     if v in ("", None):
         return ""
@@ -200,6 +262,55 @@ def _extract_stages(startup: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _ready_window(trace: dict[str, Any], t0: float) -> dict[str, Any]:
+    """Probe-observed RSA readiness window from a ``wait_http_200`` trace (ms from t0)."""
+    lf = trace.get("last_failed_start")
+    s = trace.get("success_start")
+    e = trace.get("success_end")
+    return {
+        "rsa_last_failed_probe_start_ms": (
+            round((lf - t0) * 1000.0, 3) if lf is not None else ""
+        ),
+        "rsa_last_failed_probe_error": (trace.get("last_failed_error") or "")[:200],
+        "rsa_ready_probe_ms": (
+            round((e - s) * 1000.0, 3) if s is not None and e is not None else ""
+        ),
+    }
+
+
+def _container_ip(name: str) -> str:
+    proc = subprocess.run(
+        ["docker", "inspect", "-f",
+         "{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}", name],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    parts = (proc.stdout or "").split()
+    return parts[0] if parts else ""
+
+
+def _probe_ecdsa(name: str, ctx: Any, timeout_sec: float, t0: float) -> dict[str, Any]:
+    """Poll the unpublished ECDSA listener via the container IP (no extra -p)."""
+    out: dict[str, Any] = {
+        "ecdsa_ready_observed_ms": "", "ecdsa_ready_poll_count": 0, "ecdsa_ready_error": "",
+    }
+    ip = _container_ip(name)
+    if not ip:
+        out["ecdsa_ready_error"] = "container ip unavailable"
+        return out
+    ok, polls, err = wait_http_200(
+        f"https://{ip}:{ECDSA_CONTAINER_PORT}/ready", ctx, timeout_sec
+    )
+    out["ecdsa_ready_poll_count"] = polls
+    if ok:
+        out["ecdsa_ready_observed_ms"] = round((time.perf_counter() - t0) * 1000.0, 3)
+    else:
+        out["ecdsa_ready_error"] = (err or "timeout")[:200]
+    return out
+
+
 def _run_once(
     *,
     profile_path: Path,
@@ -212,6 +323,8 @@ def _run_once(
     repeat: int,
     order: int,
     temp_start: float | None,
+    ecdsa_ctx: Any = None,
+    ecdsa_timeout_sec: float = 10.0,
 ) -> dict[str, Any]:
     name = f"sas-ucold-{profile_id[:20]}-{repeat}-{order}"
     run_id = new_run_id()
@@ -230,8 +343,15 @@ def _run_once(
         "internal_total_ms": "",
         "diag_bind_to_ready_ms": "",
         "runtime_and_observation_gap_ms": "",
+        "external_residual_signed_ms": "",
         "startup_json": "",
     }
+    obs: dict[str, Any] = {
+        "rsa_last_failed_probe_start_ms": "", "rsa_last_failed_probe_error": "",
+        "rsa_ready_probe_ms": "",
+        "ecdsa_ready_observed_ms": "", "ecdsa_ready_poll_count": "", "ecdsa_ready_error": "",
+    }
+    trace: dict[str, Any] = {}
 
     spec = DockerRunSpec(
         image=image,
@@ -249,20 +369,22 @@ def _run_once(
     try:
         docker_run(spec)
         docker_create_ms = (time.perf_counter() - t0) * 1000.0
-        ok, polls, poll_err = wait_http_200(ready_url, ctx, timeout_sec)
+        ok, polls, poll_err = wait_http_200(ready_url, ctx, timeout_sec, trace=trace)
         ready_ms = (time.perf_counter() - t0) * 1000.0
         if not ok:
             exit_code = 1
             error = poll_err or "ready timeout"
         else:
+            obs.update(_ready_window(trace, t0))
+            if ecdsa_ctx is not None:
+                obs.update(_probe_ecdsa(name, ecdsa_ctx, ecdsa_timeout_sec, t0))
             seen = _uvicorn_seen_ms_from_logs(_docker_logs_timestamps(name), t0_unix)
             if seen is not None:
                 uvicorn_seen_ms = round(seen, 3)
             try:
-                import httpx
-
-                with httpx.Client(verify=ctx, timeout=5.0) as client:
-                    body = client.get(ready_url).json()
+                # Startup snapshot from the first 200: any later /ready call
+                # overwrites the server's first_ready mark.
+                body = trace.get("body") or {}
                 startup = body.get("startup") or {}
                 seg["startup_json"] = json.dumps(startup, separators=(",", ":"))[:4000]
                 seg.update(_extract_stages(startup))
@@ -277,6 +399,7 @@ def _run_once(
                 ):
                     gap = ready_ms - float(docker_create_ms) - float(internal)
                     seg["runtime_and_observation_gap_ms"] = round(max(0.0, gap), 3)
+                    seg["external_residual_signed_ms"] = round(gap, 3)
             except Exception:  # noqa: BLE001
                 pass
     except Exception as exc:  # noqa: BLE001
@@ -293,6 +416,10 @@ def _run_once(
             exit_code = 1
             error = f"negative stage {k}={v}"
 
+    started_to_ready = round(
+        max(0.0, ready_ms - (docker_create_ms if docker_create_ms == docker_create_ms else 0.0)),
+        3,
+    )
     return {
         "run_id": run_id,
         "timestamp_utc": utc_now_iso(),
@@ -305,13 +432,12 @@ def _run_once(
         "docker_run_to_container_started_ms": (
             round(docker_create_ms, 3) if docker_create_ms == docker_create_ms else ""
         ),
-        "readiness_polling_ms": round(
-            max(0.0, ready_ms - (docker_create_ms if docker_create_ms == docker_create_ms else 0.0)),
-            3,
-        ),
+        "readiness_polling_ms": started_to_ready,
+        "container_started_to_ready_observed_ms": started_to_ready,
         "ready_poll_count": polls,
         "uvicorn_seen_ms": uvicorn_seen_ms,
         **seg,
+        **obs,
         "temp_tctl_c_start": round(temp_start, 2) if temp_start is not None else "",
         "exit_code": exit_code,
         "error": error,
@@ -331,8 +457,12 @@ def _summarize(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
             out.append({
                 "profile_id": pid, "n_ok": 0, "n_fail": n_fail, "metric": "cold_start_total_ms",
                 "median": "", "mean": "", "p95": "", "iqr": "", "min": "", "max": "",
+                "ci95_low": "", "ci95_high": "",
+                "experimental_unit": "independent_docker_container",
+                "p95_is_point_estimate": 1,
             })
             continue
+        lo, hi = _ci95(vals)
         out.append({
             "profile_id": pid,
             "n_ok": len(vals),
@@ -344,6 +474,10 @@ def _summarize(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "iqr": round(_iqr(vals), 3),
             "min": round(min(vals), 3),
             "max": round(max(vals), 3),
+            "ci95_low": round(lo, 3) if lo is not None else "",
+            "ci95_high": round(hi, 3) if hi is not None else "",
+            "experimental_unit": "independent_docker_container",
+            "p95_is_point_estimate": 1,
         })
     return out
 
@@ -361,6 +495,9 @@ def main() -> int:
     p.add_argument("--max-tctl-c", type=float, default=65.0)
     p.add_argument("--gate-timeout-sec", type=float, default=600.0)
     p.add_argument("--skip-thermal-gate", action="store_true")
+    p.add_argument("--skip-ecdsa-check", action="store_true",
+                   help="do not probe the ECDSA listener (e.g. sas-agent:core image)")
+    p.add_argument("--ecdsa-timeout-sec", type=float, default=10.0)
     p.add_argument("--out-dir", type=Path, default=DATA)
     args = p.parse_args()
 
@@ -368,6 +505,7 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     certs = _resolve_certs(args.certs_dir)
     ctx = build_mtls_context(certs)
+    ecdsa_ctx = None if args.skip_ecdsa_check else build_mtls_context(certs, ECDSA_CIPHERS)
     profiles = sorted(args.profiles_dir.glob("*.json"))
     if not profiles:
         raise SystemExit(f"no profiles in {args.profiles_dir}")
@@ -412,6 +550,8 @@ def main() -> int:
                     repeat=repeat,
                     order=idx,
                     temp_start=float(temp) if temp is not None else None,
+                    ecdsa_ctx=ecdsa_ctx,
+                    ecdsa_timeout_sec=args.ecdsa_timeout_sec,
                 )
                 writer.writerow(row)
                 fh.flush()
@@ -454,6 +594,54 @@ def main() -> int:
                     ),
                     "dual_listener_aggregation": "max(RSA, ECDSA) per stage interval",
                     "no_negative_rule": "rows with negative additive stages → exit_code=1",
+                    "cold_start_total_ms": (
+                        "t0 (before docker CLI, incl. its pre-run `docker rm -f`) → host "
+                        "receipt of first HTTP 200 on RSA :9000 /ready; upper bound on "
+                        "RSA readiness"
+                    ),
+                    "rsa_ready_window": (
+                        "probe-observed RSA readiness ∈ [rsa_last_failed_probe_start_ms, "
+                        "cold_start_total_ms]; bound derived from probes only — a failed "
+                        "probe (see rsa_last_failed_probe_error) can stem from port "
+                        "forwarding, TLS or the client and does not prove the SAS was "
+                        "unavailable; rsa_ready_probe_ms = successful probe "
+                        "(normally TCP + mTLS + GET)"
+                    ),
+                    "readiness_polling_ms": (
+                        "legacy name; = container_started_to_ready_observed_ms; "
+                        "not time spent polling"
+                    ),
+                    "internal_total_ms": (
+                        "container clock, request_timing import → /ready handler of "
+                        "the first successful probe (snapshot from that response); "
+                        "includes server idle time until that probe arrives"
+                    ),
+                    "external_residual_signed_ms": (
+                        "total − docker_run − internal_total, unclipped; mixes runtime "
+                        "start before request_timing import, transport, and CLI/Python "
+                        "overlap (negative); runtime_and_observation_gap_ms = max(0, ·)"
+                    ),
+                    "ready_200_proves": (
+                        "RSA listener bound, mTLS handshake with harness client cert, "
+                        "that listener's lifespan startup (profile + database init) done; "
+                        "not ECDSA readiness nor CBSD request processing"
+                    ),
+                    "ecdsa_ready_observed_ms": (
+                        "first 200 on ECDSA :9001 /ready via container IP (port not "
+                        "published), probed only after RSA 200; upper bound"
+                    ),
+                },
+                "readiness_polling_policy": {
+                    "endpoint": "GET /ready over mTLS (TLS 1.2)",
+                    "poll_interval_sec_after_failure": POLL_INTERVAL_SEC,
+                    "attempt_timeout_sec": 2.0,
+                    "connection_per_attempt": (
+                        "httpx keep-alive pool; after a connect/TLS failure the next "
+                        "attempt opens a new connection"
+                    ),
+                    "ready_timeout_sec": args.timeout_sec,
+                    "ecdsa_check": not args.skip_ecdsa_check,
+                    "ecdsa_timeout_sec": args.ecdsa_timeout_sec,
                 },
                 "image": {"tag": args.image, "digest": image_digest(args.image)},
                 "profiles": [p.name for p in profiles],

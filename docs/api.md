@@ -16,8 +16,11 @@ three system actors:
 - CBSD–SAS requests accept at most 100 items per batch.
 - CBSD protocol errors normally return HTTP 200 and report the outcome in
   `response.responseCode`.
-- The administrative API currently has no control-plane-specific
-  authentication beyond the client certificate accepted by the mTLS listener.
+- The administrative API (`/admin/*`) additionally requires that the client
+  certificate validated by the TLS handshake has a SHA-256 fingerprint listed
+  in `SAS_ADMIN_CERT_SHA256` (comma separated). Otherwise it returns HTTP 403;
+  with the variable unset, all administrative calls are rejected. HTTP headers
+  are never used as client identity.
 - The band profile is selected at startup with `BAND_PROFILE_FILE` or
   `BAND_PROFILE`. There is no endpoint to change the profile at runtime.
 - One instance manages one profile/band at a time. For multiple bands, run

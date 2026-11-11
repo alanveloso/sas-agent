@@ -70,10 +70,11 @@ def main() -> int:
         _write_csv(out_dir / "lifecycle_summary.csv", life)
         focus = [r for r in life if r.get("profile_id") == "cbrs_winnforum"]
         md += ["## Lifecycle decomposition (cbrs_winnforum)", ""]
-        headers = ["operation", "metric", "median", "iqr", "p95", "n"]
+        headers = ["operation", "metric", "median", "iqr", "p95", "n", "unit"]
         body = [
             [r.get("operation", ""), r.get("metric", ""), r.get("median", ""),
-             r.get("iqr", ""), r.get("p95", ""), r.get("n", "")]
+             r.get("iqr", ""), r.get("p95", ""), r.get("n", ""),
+             r.get("experimental_unit", "http_request_within_container")]
             for r in focus
             if r.get("metric") in (
                 "client_ms", "application_non_db_ms", "database_ms",
@@ -81,7 +82,12 @@ def main() -> int:
                 "stage_serialization_ms", "stage_other_ms", "contrib_pct",
             )
         ]
-        md += _md_table(headers, body) + [""]
+        md += _md_table(headers, body) + [
+            "",
+            "Note: lifecycle `n` counts cycles inside one container per profile; "
+            "p95 is a point estimate (not a CI).",
+            "",
+        ]
 
     mtls = load_mtls_overhead_summary(campaign)
     if mtls:
@@ -122,13 +128,19 @@ def main() -> int:
     if cold:
         _write_csv(out_dir / "coldstart_summary.csv", cold)
         md += ["## Cold start", ""]
-        headers = ["profile", "metric", "median", "p95", "n_ok"]
+        headers = ["profile", "metric", "median", "p95", "ci95_low", "ci95_high", "n_ok"]
         body = [
             [r.get("profile_id", ""), r.get("metric", ""), r.get("median", ""),
-             r.get("p95", ""), r.get("n_ok", "")]
+             r.get("p95", ""), r.get("ci95_low", ""), r.get("ci95_high", ""),
+             r.get("n_ok", "")]
             for r in cold
         ]
-        md += _md_table(headers, body) + [""]
+        md += _md_table(headers, body) + [
+            "",
+            "Note: cold-start `n_ok` is independent Docker containers; "
+            "`ci95_*` is for the mean; p95 remains a point estimate.",
+            "",
+        ]
 
     md_path = out_dir / "tables.md"
     md_path.write_text("\n".join(md) + "\n", encoding="utf-8")

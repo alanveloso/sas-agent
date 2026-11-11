@@ -104,9 +104,15 @@ fi
 
 log "Executando suítes de regressão CBRS (no container do harness)..."
 
-# Evidence logs for the evaluation report (Fase 1 do plano de avaliação).
-EVIDENCE_DIR="$SCRIPT_DIR/benchmarks/data"
+# Evidence goes to a fresh directory by default so historical
+# benchmarks/data/winnforum_*.log and lifecycle_validation.csv (the article's
+# 65-case run) are not overwritten. Override with EVIDENCE_DIR=... if needed.
+if [[ -z "${EVIDENCE_DIR:-}" ]]; then
+  stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+  EVIDENCE_DIR="$(mktemp -d "/tmp/winnforum_evidence_${stamp}_XXXX")"
+fi
 mkdir -p "$EVIDENCE_DIR"
+log "Evidências WInnForum → $EVIDENCE_DIR"
 
 FAILED=0
 # Full CBSD lifecycle order: REG -> SIQ -> GRA -> HBT -> RLQ -> DRG.

@@ -1,8 +1,15 @@
 """Docker multi-container concurrency benchmark (spectrum slicing).
 
 Partitions the CBRS band into K equal slices and runs K containers in
-parallel, each owning one slice and an equal share of a fixed device
-population (default 1500).
+parallel, each owning one slice.
+
+Population modes:
+  fixed_total     — (default, historical) --devices N split across K agents
+  fixed_per_agent — --devices-per-agent P per agent, total = K × P; outputs
+                    use the container_concurrency_per_agent_* prefix
+
+Each agent is driven by one sequential HTTPS client, so at most K requests
+are in flight (one per agent); recorded as max_inflight_requests_*.
 
 Scenarios:
   A — create K containers, wait all ready, then measure Reg+Grant load wall
@@ -10,6 +17,13 @@ Scenarios:
 
 K ∈ {1,5,10,15}, 5 randomized repeats. Outputs:
   container_concurrency_{runs,summary,manifest}.*
+
+Grant latency columns (Grants are sent as batched POSTs of up to BATCH_MAX):
+  grant_batch_latency_*_ms     — HTTP round-trip of each Grant batch POST
+  grant_amortized_ms_per_item  — sum(batch time) / sum(items in batches)
+  grant_latency_*_ms           — legacy: per-batch time / batch size, repeated
+                                 once per successful item; amortized, NOT the
+                                 latency of an individual Grant.
 """
 
 from __future__ import annotations
@@ -70,13 +84,23 @@ RUN_FIELDS = [
     "k_containers", "slice_width_mhz", "total_devices", "device_seed",
     "create_ready_sec", "load_wall_sec", "scenario_wall_sec", "teardown_sec",
     "throughput_devices_per_sec", "grant_latency_mean_ms", "grant_latency_median_ms",
-    "grant_latency_p95_ms", "ram_peak_mb_sum", "cpu_pct_peak_sum",
+    "grant_latency_p95_ms", "grant_batch_count", "grant_batch_latency_mean_ms",
+    "grant_batch_latency_median_ms", "grant_batch_latency_p95_ms",
+    "grant_amortized_ms_per_item", "ram_peak_mb_sum", "cpu_pct_peak_sum",
     "temp_c_start", "devices_ok", "devices_failed", "exit_code", "error",
+    "population_mode", "devices_per_agent_min", "devices_per_agent_max",
+    "max_inflight_requests_total", "max_inflight_requests_per_agent",
+    "stats_sweeps", "ram_after_load_mb_sum",
 ]
 SUMMARY_FIELDS = [
     "scenario", "k_containers", "n_repeats", "metric",
     "median", "iqr", "min", "max", "mean", "ci95_low", "ci95_high",
+    "population_mode", "total_devices",
+    "experimental_unit", "ci95_of",
 ]
+FIXED_TOTAL = "fixed_total"
+FIXED_PER_AGENT = "fixed_per_agent"
+INFLIGHT_PER_AGENT = 1
 
 
 def _resolve_certs(cli: Path | None) -> Path:
@@ -103,6 +127,12 @@ def _partition_slices(k: int) -> list[tuple[int, int]]:
 def _partition_devices(total: int, k: int) -> list[int]:
     base, rem = divmod(total, k)
     return [base + (1 if i < rem else 0) for i in range(k)]
+
+
+def _agent_populations(k: int, total_devices: int, devices_per_agent: int | None) -> list[int]:
+    if devices_per_agent is not None:
+        return [devices_per_agent] * k
+    return _partition_devices(total_devices, k)
 
 
 def _channels(low: int, high: int) -> list[tuple[int, int]]:
@@ -152,15 +182,41 @@ def _rc(items: list[dict[str, Any]]) -> list[int]:
     return [it.get("response", {}).get("responseCode", -1) for it in items]
 
 
+def _grant_latency_fields(
+    batch_ms: list[float], batch_items: list[int], legacy_item_ms: list[float]
+) -> dict[str, Any]:
+    def r(v: float | None) -> Any:
+        return round(float(v), 4) if v is not None else ""
+
+    n_items = sum(batch_items)
+    return {
+        "grant_latency_mean_ms": r(statistics.fmean(legacy_item_ms)) if legacy_item_ms else "",
+        "grant_latency_median_ms": r(statistics.median(legacy_item_ms)) if legacy_item_ms else "",
+        "grant_latency_p95_ms": r(percentile(legacy_item_ms, 95)),
+        "grant_batch_count": len(batch_ms),
+        "grant_batch_latency_mean_ms": r(statistics.fmean(batch_ms)) if batch_ms else "",
+        "grant_batch_latency_median_ms": r(statistics.median(batch_ms)) if batch_ms else "",
+        "grant_batch_latency_p95_ms": r(percentile(batch_ms, 95)),
+        "grant_amortized_ms_per_item": r(sum(batch_ms) / n_items) if n_items else "",
+    }
+
+
 def _ci95(values: list[float]) -> tuple[float | None, float | None]:
+    """Student-t 95% CI for the mean of independent deployment repeats."""
     n = len(values)
     if n < 2:
         return None, None
+    # Two-sided 95% t critical values (df=1..30); larger df ≈ 1.96.
+    t_table = {
+        1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571,
+        6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
+        11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145, 15: 2.131,
+        16: 2.120, 17: 2.110, 18: 2.101, 19: 2.093, 20: 2.086,
+        21: 2.080, 22: 2.074, 23: 2.069, 24: 2.064, 25: 2.060,
+        26: 2.056, 27: 2.052, 28: 2.048, 29: 2.045, 30: 2.042,
+    }
     mean = statistics.fmean(values)
-    sd = statistics.stdev(values)
-    t_table = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571}
-    tcrit = t_table.get(n - 1, 1.96)
-    half = tcrit * sd / math.sqrt(n)
+    half = t_table.get(n - 1, 1.96) * statistics.stdev(values) / math.sqrt(n)
     return mean - half, mean + half
 
 
@@ -182,6 +238,7 @@ class _DockerStatsSampler:
         self._thread: threading.Thread | None = None
         self.ram_peak_sum = 0.0
         self.cpu_peak_sum = 0.0
+        self.sweeps = 0
 
     def __enter__(self) -> "_DockerStatsSampler":
         self._thread = threading.Thread(target=self._loop, daemon=True)
@@ -203,9 +260,23 @@ class _DockerStatsSampler:
                     ram_sum += ram
                 if cpu is not None:
                     cpu_sum += cpu
+            if self._stop.is_set():
+                break  # partial sweep: containers sampled at different load phases
             self.ram_peak_sum = max(self.ram_peak_sum, ram_sum)
             self.cpu_peak_sum = max(self.cpu_peak_sum, cpu_sum)
+            self.sweeps += 1
             self._stop.wait(self.interval)
+
+
+def _ram_sum_mb(names: list[str]) -> float | None:
+    """Sum of current container memory (docker stats); None if any read fails."""
+    total = 0.0
+    for name in names:
+        _cpu, ram = docker_stats_sample(name)
+        if ram is None:
+            return None
+        total += ram
+    return total
 
 
 def _load_one_container(
@@ -223,6 +294,8 @@ def _load_one_container(
     fcc_id = f"dock_k_w{worker_id}"
     user_id = f"op_dock_w{worker_id}"
     grant_latencies: list[float] = []
+    grant_batch_ms: list[float] = []
+    grant_batch_items: list[int] = []
     ok = 0
     failed = 0
     error = ""
@@ -262,6 +335,8 @@ def _load_one_container(
             resp = client.post(f"{base}/v1.2/grant", json={"grantRequest": chunk})
             batch_ms = (time.perf_counter() - t0) * 1000.0
             resp.raise_for_status()
+            grant_batch_ms.append(batch_ms)
+            grant_batch_items.append(len(chunk))
             codes = _rc(resp.json()["grantResponse"])
             per = batch_ms / max(1, len(chunk))
             for c in codes:
@@ -277,6 +352,8 @@ def _load_one_container(
         "devices_ok": ok,
         "devices_failed": failed,
         "grant_latencies_ms": grant_latencies,
+        "grant_batch_ms": grant_batch_ms,
+        "grant_batch_items": grant_batch_items,
         "error": error,
     }
 
@@ -294,9 +371,11 @@ def _run_scenario(
     ready_timeout: float,
     repeat: int,
     order_idx: int,
+    devices_per_agent: int | None = None,
 ) -> dict[str, Any]:
     slices = _partition_slices(k)
-    counts = _partition_devices(total_devices, k)
+    counts = _agent_populations(k, total_devices, devices_per_agent)
+    total_devices = sum(counts)
     names = [f"sas-ccon-k{k}-w{i}-r{repeat}" for i in range(k)]
     ports = [base_port + i for i in range(k)]
     run_id = new_run_id()
@@ -308,10 +387,14 @@ def _run_scenario(
     scenario_wall = float("nan")
     teardown = float("nan")
     grant_all: list[float] = []
+    grant_batch_ms: list[float] = []
+    grant_batch_items: list[int] = []
     devices_ok = 0
     devices_failed = 0
-    ram_peak = 0.0
-    cpu_peak = 0.0
+    ram_peak: float | None = None
+    cpu_peak: float | None = None
+    stats_sweeps = 0
+    ram_after_load: float | None = None
 
     t_scenario = time.perf_counter()
     try:
@@ -359,16 +442,20 @@ def _run_scenario(
                     devices_ok += res["devices_ok"]
                     devices_failed += res["devices_failed"]
                     grant_all.extend(res["grant_latencies_ms"])
+                    grant_batch_ms.extend(res["grant_batch_ms"])
+                    grant_batch_items.extend(res["grant_batch_items"])
                     if res["error"] and not error:
                         error = res["error"]
             load_wall = time.perf_counter() - t_load
-            ram_peak = sampler.ram_peak_sum
-            cpu_peak = sampler.cpu_peak_sum
+        if sampler.sweeps:
+            ram_peak, cpu_peak = sampler.ram_peak_sum, sampler.cpu_peak_sum
+        stats_sweeps = sampler.sweeps
 
         if scenario == "A":
             scenario_wall = load_wall
         else:
             scenario_wall = time.perf_counter() - t_scenario
+        ram_after_load = _ram_sum_mb(names)
 
         if devices_failed:
             exit_code = 1
@@ -405,16 +492,21 @@ def _run_scenario(
         "scenario_wall_sec": round(scenario_wall, 4) if scenario_wall == scenario_wall else "",
         "teardown_sec": round(teardown, 4),
         "throughput_devices_per_sec": round(thr, 3) if thr == thr else "",
-        "grant_latency_mean_ms": round(statistics.fmean(grant_all), 4) if grant_all else "",
-        "grant_latency_median_ms": round(float(statistics.median(grant_all)), 4) if grant_all else "",
-        "grant_latency_p95_ms": round(percentile(grant_all, 95) or 0.0, 4) if grant_all else "",
-        "ram_peak_mb_sum": round(ram_peak, 2),
-        "cpu_pct_peak_sum": round(cpu_peak, 2),
+        **_grant_latency_fields(grant_batch_ms, grant_batch_items, grant_all),
+        "ram_peak_mb_sum": round(ram_peak, 2) if ram_peak is not None else "",
+        "cpu_pct_peak_sum": round(cpu_peak, 2) if cpu_peak is not None else "",
         "temp_c_start": round(float(temp_start), 2) if temp_start is not None else "",
         "devices_ok": devices_ok,
         "devices_failed": devices_failed,
         "exit_code": exit_code,
         "error": error,
+        "population_mode": FIXED_TOTAL if devices_per_agent is None else FIXED_PER_AGENT,
+        "devices_per_agent_min": min(counts),
+        "devices_per_agent_max": max(counts),
+        "max_inflight_requests_total": k * INFLIGHT_PER_AGENT,
+        "max_inflight_requests_per_agent": INFLIGHT_PER_AGENT,
+        "stats_sweeps": stats_sweeps,
+        "ram_after_load_mb_sum": round(ram_after_load, 2) if ram_after_load is not None else "",
     }
 
 
@@ -426,7 +518,11 @@ def _aggregate(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         "throughput_devices_per_sec",
         "grant_latency_p95_ms",
         "grant_latency_mean_ms",
+        "grant_batch_latency_median_ms",
+        "grant_batch_latency_p95_ms",
+        "grant_amortized_ms_per_item",
         "ram_peak_mb_sum",
+        "ram_after_load_mb_sum",
     ]
     groups: dict[tuple[str, int], list[dict[str, Any]]] = {}
     for r in runs:
@@ -461,14 +557,22 @@ def _aggregate(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "mean": round(statistics.fmean(vals), 4),
                 "ci95_low": round(lo, 4) if lo is not None else "",
                 "ci95_high": round(hi, 4) if hi is not None else "",
+                "population_mode": rows[0].get("population_mode", FIXED_TOTAL),
+                "total_devices": rows[0].get("total_devices", ""),
+                "experimental_unit": "independent_deployment_repeat",
+                "ci95_of": "mean_across_repeats",
             })
     return out
 
 
-def main() -> int:
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--k-values", type=int, nargs="+", default=list(DEFAULT_K))
-    p.add_argument("--devices", type=int, default=DEFAULT_DEVICES)
+    pop = p.add_mutually_exclusive_group()
+    pop.add_argument("--devices", type=int, default=DEFAULT_DEVICES,
+                     help="fixed_total: devices split across K agents (default)")
+    pop.add_argument("--devices-per-agent", type=int, default=None, metavar="P",
+                     help="fixed_per_agent: P devices per agent, total = K*P")
     p.add_argument("--repeats", type=int, default=DEFAULT_REPEATS)
     p.add_argument("--seed", type=int, default=DEFAULT_SEED)
     p.add_argument("--image", default="sas-agent:article")
@@ -481,7 +585,19 @@ def main() -> int:
     p.add_argument("--skip-thermal-gate", action="store_true")
     p.add_argument("--scenarios", nargs="+", default=["A", "B"], choices=["A", "B"])
     p.add_argument("--out-dir", type=Path, default=DATA)
-    args = p.parse_args()
+    args = p.parse_args(argv)
+    if args.devices_per_agent is not None and args.devices_per_agent < 1:
+        p.error("--devices-per-agent must be >= 1")
+    args.population_mode = FIXED_TOTAL if args.devices_per_agent is None else FIXED_PER_AGENT
+    args.output_stem = (
+        "container_concurrency" if args.devices_per_agent is None
+        else "container_concurrency_per_agent"
+    )
+    return args
+
+
+def main() -> int:
+    args = _parse_args()
 
     out_dir = args.out_dir.expanduser().resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -491,7 +607,7 @@ def main() -> int:
     if not args.skip_thermal_gate:
         gate = wait_thermal_gate(
             max_tctl_c=args.max_temp_c,
-            out_path=out_dir / "thermal_gate_container_concurrency.json",
+            out_path=out_dir / f"thermal_gate_{args.output_stem}.json",
             label="container_concurrency",
             timeout_sec=args.gate_timeout_sec,
         )
@@ -499,9 +615,9 @@ def main() -> int:
             print("FAIL thermal/load gate before container concurrency", flush=True)
             return 1
 
-    runs_path = out_dir / "container_concurrency_runs.csv"
-    summary_path = out_dir / "container_concurrency_summary.csv"
-    manifest_path = out_dir / "container_concurrency_manifest.json"
+    runs_path = out_dir / f"{args.output_stem}_runs.csv"
+    summary_path = out_dir / f"{args.output_stem}_summary.csv"
+    manifest_path = out_dir / f"{args.output_stem}_manifest.json"
 
     all_runs: list[dict[str, Any]] = []
     failures = 0
@@ -534,14 +650,16 @@ def main() -> int:
                         ready_timeout=args.ready_timeout_sec,
                         repeat=repeat,
                         order_idx=idx,
+                        devices_per_agent=args.devices_per_agent,
                     )
                     writer.writerow(row)
                     fh.flush()
                     all_runs.append(row)
                     status = "ok" if row["exit_code"] == 0 else f"FAIL:{row['error']}"
                     print(
-                        f"  K={k} wall={row['scenario_wall_sec']}s "
-                        f"p95={row['grant_latency_p95_ms']}ms {status}",
+                        f"  K={k} devices={row['total_devices']} wall={row['scenario_wall_sec']}s "
+                        f"grant_batch_p95={row['grant_batch_latency_p95_ms']}ms "
+                        f"grant_amortized={row['grant_amortized_ms_per_item']}ms/item {status}",
                         flush=True,
                     )
                     if row["exit_code"] != 0:
@@ -559,16 +677,46 @@ def main() -> int:
         manifest_path,
         capture_manifest(
             seed=args.seed,
-            n=args.devices,
+            n=args.devices if args.devices_per_agent is None else args.devices_per_agent,
             warmup=0,
             script_paths=[LOAD_DIR / "container_concurrency_bench.py", LOAD_DIR / "common.py"],
             certs_dir=certs,
             extra={
                 "experiment": "container_concurrency",
+                "population": {
+                    "mode": args.population_mode,
+                    "n_semantics": "total devices split across K"
+                    if args.devices_per_agent is None else "devices per agent",
+                    "devices_per_agent": args.devices_per_agent,
+                    "total_devices_by_k": {
+                        str(k): sum(_agent_populations(k, args.devices, args.devices_per_agent))
+                        for k in args.k_values
+                    },
+                },
+                "request_concurrency": {
+                    "model": "one sequential HTTPS client per agent; batches of up to "
+                             f"{BATCH_MAX} items",
+                    "max_inflight_requests_per_agent": INFLIGHT_PER_AGENT,
+                    "max_inflight_requests_total": "k_containers * 1",
+                },
                 "scenarios": list(args.scenarios),
                 "k_values": list(args.k_values),
                 "k_schedules": schedules,
                 "repeats": args.repeats,
+                "grant_batch_max": BATCH_MAX,
+                "grant_latency_semantics": {
+                    "grant_batch_latency_*_ms": "HTTP round-trip per Grant batch POST",
+                    "grant_amortized_ms_per_item": "sum(batch time) / sum(items in batches)",
+                    "grant_latency_*_ms": "legacy amortized (batch time / batch size per successful item); not individual Grant latency",
+                },
+                "memory_semantics": {
+                    "ram_peak_mb_sum": "max over complete docker-stats sweeps (containers "
+                                       "read sequentially) during load; blank if no sweep "
+                                       "completed (stats_sweeps = 0)",
+                    "ram_after_load_mb_sum": "sum of docker-stats memory per container read "
+                                             "once after load, before teardown; outside "
+                                             "the timed windows",
+                },
                 "image": {"tag": args.image, "digest": image_digest(args.image)},
                 "failures": failures,
                 "outputs": {"runs": str(runs_path), "summary": str(summary_path)},

@@ -12,6 +12,8 @@ from domain.band_profile import BandProfile
 from models.models import AdminInjectedData, BlacklistedFccId, Cbsd, Grant
 from services.authorization_service import (
     AUTH_TERMINATION_REASONS,
+    SOURCE_TYPE_GAA,
+    TERM_AUTH_INVALID,
     clamp_datetime,
     is_authorization_valid,
     utc_now,
@@ -122,6 +124,15 @@ def _grant_overlaps_active_dpa(db: Session, grant: Grant) -> bool:
     return False
 
 
+def _grant_within_active_profile(grant: Grant, profile: BandProfile) -> bool:
+    """Rights issued under a replaced or narrowed BandProfile do not carry over."""
+    if not profile.contains_range(grant.low_frequency, grant.high_frequency):
+        return False
+    if (grant.authorization_source_type or "").upper() == SOURCE_TYPE_GAA:
+        return grant.authorization_source_id == profile.gaa_source_id()
+    return True
+
+
 def _terminate_for_authorization(
     grant: Grant, reason: str
 ) -> None:
@@ -206,6 +217,14 @@ def process_heartbeat(
                     cbsd_id,
                     grant_id,
                     auth_reason or "AUTHORIZATION_INVALID",
+                )
+            )
+            continue
+
+        if not _grant_within_active_profile(grant, active):
+            responses.append(
+                _authorization_failure_response(
+                    grant, cbsd_id, grant_id, TERM_AUTH_INVALID
                 )
             )
             continue

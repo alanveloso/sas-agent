@@ -36,8 +36,11 @@ from services.fad_service import (
     rewrite_esc_sensor_id,
     rewrite_zone_id,
 )
+from services.mtls_auth import require_admin_client
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+router = APIRouter(
+    prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin_client)]
+)
 
 
 def _empty_ok() -> Response:
