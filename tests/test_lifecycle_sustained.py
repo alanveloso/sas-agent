@@ -50,7 +50,8 @@ class FakeSas:
             body = {"grantId": f"g-{item['cbsdId']}", "heartbeatInterval": 60}
         elif op == "heartbeat":
             rc = self.hb_rc
-            tx = self.utcnow().replace(microsecond=0) + timedelta(seconds=self.tx_sec)
+            # Match services.heartbeat_service._fmt: add window, then drop sub-seconds.
+            tx = (self.utcnow() + timedelta(seconds=self.tx_sec)).replace(microsecond=0)
             body = {"transmitExpireTime": tx.strftime("%Y-%m-%dT%H:%M:%SZ")}
         return [{"response": {"responseCode": rc}, **body}], 5.0, {}, SimpleNamespace(status_code=200)
 
@@ -58,7 +59,9 @@ class FakeSas:
 def run(sas, **kw):
     params = dict(fcc="fcc", user="u", seed=7, initial_devices=3, duration_sec=10.0,
                   heartbeat_interval_sec=2.0, arrival_interval_sec=4.0,
-                  relinquish_interval_sec=5.0, late_threshold_ms=500.0)
+                  relinquish_interval_sec=5.0, late_threshold_ms=500.0,
+                  heartbeat_schedule_mode="respect_transmit_expire",
+                  heartbeat_safety_margin_sec=1.0)
     params.update(kw)
     return ldb._run_sustained(sas.post, PROFILE, clock=sas.clock, sleep=sas.sleep,
                               utcnow=sas.utcnow, **params)
@@ -116,7 +119,8 @@ class SequenceTests(unittest.TestCase):
 class MetricTests(unittest.TestCase):
     def test_overload_marks_late_and_missed(self):
         sas = FakeSas(cost={"heartbeat": 1.5}, tx_sec=1)
-        rows, _ = run(sas, arrival_interval_sec=None, relinquish_interval_sec=None)
+        rows, _ = run(sas, arrival_interval_sec=None, relinquish_interval_sec=None,
+                      heartbeat_schedule_mode="fixed_rate")
         hb = [r for r in rows if r["operation"] == "heartbeat"]
         self.assertGreater(sum(r["late"] for r in hb), 0)
         self.assertGreater(sum(r["missed"] for r in hb), 0)
@@ -156,6 +160,110 @@ class MetricTests(unittest.TestCase):
         self.assertEqual(summary[("heartbeat", "client_ms_max")], 100.0)
         self.assertGreaterEqual(summary[("heartbeat", "client_ms_p95")], 95.0)
         self.assertTrue(set(rows[0]) <= set(ldb.SUSTAINED_RAW_FIELDS))
+
+
+class TransmitExpireScheduleTests(unittest.TestCase):
+    """Reproduce campaign missed=1 with responseCode=0; verify schedule fix."""
+
+    def test_next_due_helper_caps_to_transmit_deadline(self):
+        epoch = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        due, hb, now = 10.0, 60.0, 10.05
+        tx = epoch + timedelta(seconds=70.0)  # 59.95 s remaining from utc 10.05? use explicit
+        utc = epoch + timedelta(seconds=10.05)
+        # remaining = 70 - 10.05 - 1.0 = 58.95 → cap = 10.05+58.95 = 69.0 < due+hb=70
+        capped = ldb._next_heartbeat_due(
+            due=due, hb_sec=hb, clock_now=now, tx_expire=tx, utc_now=utc,
+            schedule_mode="respect_transmit_expire", safety_margin_sec=1.0,
+        )
+        self.assertAlmostEqual(capped, 69.0, places=6)
+        fixed = ldb._next_heartbeat_due(
+            due=due, hb_sec=hb, clock_now=now, tx_expire=tx, utc_now=utc,
+            schedule_mode="fixed_rate", safety_margin_sec=1.0,
+        )
+        self.assertAlmostEqual(fixed, 70.0, places=6)
+
+    def test_fixed_rate_with_truncated_tx_marks_missed_but_rc0(self):
+        # Interval == transmit window + 1 s truncation ⇒ seq≥2 miss while SAS renews.
+        sas = FakeSas(tx_sec=2, cost={"heartbeat": 0.01})
+        rows, info = run(
+            sas, initial_devices=4, duration_sec=8.0,
+            heartbeat_interval_sec=2.0, arrival_interval_sec=None,
+            relinquish_interval_sec=None, heartbeat_schedule_mode="fixed_rate",
+            heartbeat_safety_margin_sec=1.0,
+        )
+        self.assertEqual(info["heartbeat_schedule_mode"], "fixed_rate")
+        hb = [r for r in rows if r["operation"] == "heartbeat"]
+        first = [r for r in hb if r["heartbeat_seq"] == 1]
+        later = [r for r in hb if r["heartbeat_seq"] >= 2]
+        self.assertTrue(first)
+        self.assertTrue(later)
+        self.assertTrue(all(r["missed"] == 0 for r in first))
+        self.assertTrue(any(r["missed"] == 1 for r in later))
+        self.assertTrue(all(r["success"] == 1 and r["response_code"] == 0 for r in later))
+        # Agenda may still be on time while the RF window is already past.
+        self.assertTrue(any(r["missed"] == 1 and r["late"] == 0 for r in later))
+
+    def test_respect_transmit_expire_avoids_false_window_breach(self):
+        sas = FakeSas(tx_sec=2, cost={"heartbeat": 0.01})
+        rows, info = run(
+            sas, initial_devices=4, duration_sec=8.0,
+            heartbeat_interval_sec=2.0, arrival_interval_sec=None,
+            relinquish_interval_sec=None,
+            heartbeat_schedule_mode="respect_transmit_expire",
+            heartbeat_safety_margin_sec=1.0,
+        )
+        self.assertEqual(info["heartbeat_schedule_mode"], "respect_transmit_expire")
+        self.assertEqual(info["heartbeat_safety_margin_sec"], 1.0)
+        hb = [r for r in rows if r["operation"] == "heartbeat"]
+        later = [r for r in hb if r["heartbeat_seq"] >= 2]
+        self.assertTrue(later)
+        self.assertEqual(sum(r["missed"] for r in later), 0)
+        self.assertTrue(all(r["success"] == 1 for r in hb))
+        # Cadence must pull earlier than pure fixed rate for at least one CBSD.
+        gaps = []
+        for idx in {r["cbsd_index"] for r in hb}:
+            sched = [r["scheduled_sec"] for r in hb if r["cbsd_index"] == idx]
+            gaps.extend(b - a for a, b in zip(sched, sched[1:]))
+        self.assertTrue(any(g < 2.0 - 1e-6 for g in gaps))
+
+    def test_explicit_send_after_expire_is_true_missed(self):
+        # One device: first HB grants a 1 s window; force the next due past expire.
+        sas = FakeSas(tx_sec=1, cost={"heartbeat": 0.01})
+        rows, _ = run(
+            sas, initial_devices=1, duration_sec=5.0,
+            heartbeat_interval_sec=3.0, arrival_interval_sec=None,
+            relinquish_interval_sec=None, heartbeat_schedule_mode="fixed_rate",
+            heartbeat_safety_margin_sec=0.0,
+        )
+        hb = [r for r in rows if r["operation"] == "heartbeat"]
+        self.assertGreaterEqual(len(hb), 2)
+        self.assertEqual(hb[0]["missed"], 0)
+        self.assertEqual(hb[1]["missed"], 1)
+        self.assertEqual(hb[1]["response_code"], 0)
+
+    def test_send_before_expire_is_not_missed(self):
+        sas = FakeSas(tx_sec=5, cost={"heartbeat": 0.01})
+        rows, _ = run(
+            sas, initial_devices=1, duration_sec=4.0,
+            heartbeat_interval_sec=1.0, arrival_interval_sec=None,
+            relinquish_interval_sec=None, heartbeat_schedule_mode="fixed_rate",
+            heartbeat_safety_margin_sec=0.0,
+        )
+        hb = [r for r in rows if r["operation"] == "heartbeat"]
+        self.assertGreaterEqual(len(hb), 2)
+        self.assertTrue(all(r["missed"] == 0 for r in hb))
+
+    def test_sequential_multicbsd_fixed_rate_still_misses_under_truncation(self):
+        sas = FakeSas(tx_sec=2, cost={"heartbeat": 0.25})
+        rows, _ = run(
+            sas, initial_devices=8, duration_sec=7.0,
+            heartbeat_interval_sec=2.0, arrival_interval_sec=None,
+            relinquish_interval_sec=None, heartbeat_schedule_mode="fixed_rate",
+        )
+        hb = [r for r in rows if r["operation"] == "heartbeat" and r["heartbeat_seq"] >= 2]
+        self.assertTrue(hb)
+        self.assertGreater(sum(r["missed"] for r in hb), 0)
+        self.assertTrue(all(r["response_code"] == 0 for r in hb))
 
 
 if __name__ == "__main__":

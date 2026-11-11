@@ -14,11 +14,19 @@ Saídas: lifecycle_decomp_{raw,summary,manifest}.*
 
 Modo sustentado (``--sustained-sec D``): carga contínua mista num único
 agente. Registra N CBSDs + Grant, depois, durante D segundos, envia
-Heartbeats periódicos (taxa fixa, fases escalonadas), chegadas periódicas de
+Heartbeats periódicos (fases escalonadas), chegadas periódicas de
 novos CBSDs (Registration + Grant) e Relinquishments ocasionais (CBSD ativo
 escolhido com semente). Um único cliente HTTPS persistente e sequencial
 (1 requisição em voo); requisições de item único, portanto client_ms é a
 latência HTTP de cada requisição. Saídas: lifecycle_sustained_*.
+
+Agendamento de Heartbeat (``--heartbeat-schedule-mode``):
+  * ``respect_transmit_expire`` (padrão): taxa nominal ``heartbeatInterval``,
+    limitada para enviar antes do ``transmitExpireTime`` anterior com margem
+    ``--heartbeat-safety-margin-sec`` (cobre a resolução de 1 s do SAS).
+  * ``fixed_rate``: modo histórico — próximo envio em ``due + interval``,
+    sem usar ``transmitExpireTime`` (pode marcar ``missed=1`` com
+    ``responseCode=0`` quando o prazo truncado cai antes da agenda).
 """
 
 from __future__ import annotations
@@ -369,6 +377,31 @@ def _parse_utc(value: Any) -> datetime | None:
         return None
 
 
+def _next_heartbeat_due(
+    *,
+    due: float,
+    hb_sec: float,
+    clock_now: float,
+    tx_expire: datetime | None,
+    utc_now: datetime,
+    schedule_mode: str,
+    safety_margin_sec: float,
+) -> float:
+    """Next heartbeat due time on the monotonic ``clock`` timeline.
+
+    ``fixed_rate`` keeps the historical cadence ``due + hb_sec``.
+    ``respect_transmit_expire`` also caps the due time so the send happens
+    before the previous ``transmitExpireTime`` (1 s SAS resolution) minus an
+    explicit safety margin. Does not change protocol semantics — only when
+    the client chooses to send.
+    """
+    ideal = due + hb_sec
+    if schedule_mode != "respect_transmit_expire" or tx_expire is None:
+        return ideal
+    remaining = (tx_expire - utc_now).total_seconds() - safety_margin_sec
+    return max(clock_now, min(ideal, clock_now + remaining))
+
+
 def _run_sustained(
     post: Any,
     profile: dict[str, Any],
@@ -382,11 +415,17 @@ def _run_sustained(
     arrival_interval_sec: float | None,
     relinquish_interval_sec: float | None,
     late_threshold_ms: float,
+    heartbeat_schedule_mode: str = "respect_transmit_expire",
+    heartbeat_safety_margin_sec: float = 1.0,
     clock: Any = time.perf_counter,
     sleep: Any = time.sleep,
     utcnow: Any = lambda: datetime.now(timezone.utc),
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Sequential mixed load; ``post(op, item)`` has the signature of ``_post``."""
+    if heartbeat_schedule_mode not in ("respect_transmit_expire", "fixed_rate"):
+        raise ValueError(
+            "heartbeat_schedule_mode must be 'respect_transmit_expire' or 'fixed_rate'"
+        )
     low, high = _channel(profile)
     rng = random.Random(seed)
     rows: list[dict[str, Any]] = []
@@ -486,11 +525,25 @@ def _run_sustained(
                 due, dev["hb_seq"],
             )
             row["transmit_margin_ms"] = round(margin, 1) if margin is not None else ""
+            # missed = sent after previous transmitExpireTime (CBSD RF window).
+            # Independent of SAS responseCode: the agent may still renew (0).
             row["missed"] = int(margin is not None and margin < 0)
             if row["success"]:
                 dev["state"] = "AUTHORIZED"
                 dev["tx_expire"] = _parse_utc(items[0].get("transmitExpireTime"))
-            push(due + hb_sec, "heartbeat", idx)
+            push(
+                _next_heartbeat_due(
+                    due=due,
+                    hb_sec=hb_sec,
+                    clock_now=clock(),
+                    tx_expire=dev["tx_expire"],
+                    utc_now=utcnow(),
+                    schedule_mode=heartbeat_schedule_mode,
+                    safety_margin_sec=heartbeat_safety_margin_sec,
+                ),
+                "heartbeat",
+                idx,
+            )
         elif kind == "arrival":
             counts["arrivals"] += 1
             if admit(next_idx, "arrival", due):
@@ -512,6 +565,8 @@ def _run_sustained(
         "active_at_end": len(devices),
         "heartbeat_interval_sec_used": hb_sec,
         "server_heartbeat_interval_sec": next((v for v in server_hbi if v), None),
+        "heartbeat_schedule_mode": heartbeat_schedule_mode,
+        "heartbeat_safety_margin_sec": heartbeat_safety_margin_sec,
         "window_sec_configured": duration_sec,
         "window_sec_measured": round(clock() - t0, 4),
     }
@@ -586,6 +641,8 @@ def _main_sustained(args: argparse.Namespace, certs: Path, ctx: Any, out_dir: Pa
                 arrival_interval_sec=args.arrival_interval_sec,
                 relinquish_interval_sec=args.relinquish_interval_sec,
                 late_threshold_ms=args.late_threshold_ms,
+                heartbeat_schedule_mode=args.heartbeat_schedule_mode,
+                heartbeat_safety_margin_sec=args.heartbeat_safety_margin_sec,
             )
     finally:
         docker_rm(name)
@@ -616,8 +673,18 @@ def _main_sustained(args: argparse.Namespace, certs: Path, ctx: Any, out_dir: Pa
                     "initial_devices": args.sustained_devices,
                     "duration_sec": args.sustained_sec,
                     "heartbeat_interval_sec_cli": args.heartbeat_interval_sec,
-                    "heartbeat_schedule": "fixed rate per CBSD, initial phases staggered "
-                                          "evenly over one interval; arrivals start at once",
+                    "heartbeat_schedule_mode": args.heartbeat_schedule_mode,
+                    "heartbeat_safety_margin_sec": args.heartbeat_safety_margin_sec,
+                    "heartbeat_schedule": (
+                        "respect_transmit_expire: nominal heartbeatInterval per CBSD, "
+                        "capped to send before previous transmitExpireTime minus "
+                        f"{args.heartbeat_safety_margin_sec}s safety margin "
+                        "(covers SAS 1 s timestamp resolution); initial phases "
+                        "staggered evenly over one interval; arrivals start at once"
+                        if args.heartbeat_schedule_mode == "respect_transmit_expire"
+                        else "fixed_rate (historical): due + heartbeatInterval only; "
+                             "initial phases staggered; does not use transmitExpireTime"
+                    ),
                     "arrival_interval_sec": args.arrival_interval_sec,
                     "arrival_pattern": "periodic (deterministic); each = Registration + Grant",
                     "relinquish_interval_sec": args.relinquish_interval_sec,
@@ -633,9 +700,13 @@ def _main_sustained(args: argparse.Namespace, certs: Path, ctx: Any, out_dir: Pa
                 "metric_semantics": {
                     "client_ms": "HTTP round-trip of one single-item request (not amortized)",
                     "success": "HTTP 200 and SAS responseCode 0 (reported separately)",
-                    "lateness_ms": "send time minus scheduled time",
+                    "lateness_ms": "send time minus scheduled time (agenda delay)",
+                    "late": "lateness_ms above late_threshold_ms",
                     "missed": "heartbeat sent after the previous transmitExpireTime "
-                              "(1 s resolution)",
+                              "(1 s SAS resolution); CBSD RF-window breach, independent "
+                              "of responseCode — SAS may still renew with code 0",
+                    "transmit_margin_ms": "previous transmitExpireTime minus send-time UTC; "
+                                         "negative means missed",
                 },
                 "image": {"tag": args.image, "digest": image_digest(args.image)},
                 "failures": failures,
@@ -666,6 +737,21 @@ def main() -> int:
     s.add_argument("--sustained-devices", type=int, default=50)
     s.add_argument("--heartbeat-interval-sec", type=float, default=None,
                    help="default: heartbeatInterval returned by Grant")
+    s.add_argument(
+        "--heartbeat-schedule-mode",
+        choices=("respect_transmit_expire", "fixed_rate"),
+        default="respect_transmit_expire",
+        help="respect_transmit_expire (default) caps the nominal interval using the "
+             "previous transmitExpireTime; fixed_rate is the historical due+interval "
+             "cadence",
+    )
+    s.add_argument(
+        "--heartbeat-safety-margin-sec",
+        type=float,
+        default=1.0,
+        help="seconds before transmitExpireTime to target the next send "
+             "(respect_transmit_expire only); default 1.0 covers SAS 1 s resolution",
+    )
     s.add_argument("--arrival-interval-sec", type=float, default=10.0)
     s.add_argument("--relinquish-interval-sec", type=float, default=30.0)
     s.add_argument("--late-threshold-ms", type=float, default=1000.0)
