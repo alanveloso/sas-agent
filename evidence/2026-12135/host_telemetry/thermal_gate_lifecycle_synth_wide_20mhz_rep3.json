@@ -1,0 +1,84 @@
+{
+  "label": "lifecycle_synth_wide_20mhz_rep3",
+  "timestamp_utc": "2026-11-11T21:14:58Z",
+  "passed": true,
+  "timed_out": false,
+  "sensor": "k10temp:Tctl",
+  "max_tctl_c_threshold": 65.0,
+  "max_load1_threshold": 1.0,
+  "max_cpu_pct_threshold": 10.0,
+  "wait_sec": 0.54,
+  "final": {
+    "loadavg_1m": 0.69580078125,
+    "loadavg_5m": 0.51953125,
+    "loadavg_15m": 0.515625,
+    "cpu_percent_prior": 0.4,
+    "memory_used_percent_prior": 8.6,
+    "temperatures_c": {
+      "amdgpu:edge": 47.0,
+      "ath11k_hwmon:ath11k_hwmon_0": 44.0,
+      "acpitz:acpitz_0": 70.0,
+      "nvme:Composite": 35.85,
+      "nvme:Sensor 1": 50.85,
+      "nvme:Sensor 2": 35.85,
+      "k10temp:Tctl": 64.0,
+      "spd5118:spd5118_0": 43.75,
+      "thinkpad:CPU": 70.0,
+      "thinkpad:thinkpad_1": 70.0,
+      "thinkpad:thinkpad_2": 0.0,
+      "thinkpad:thinkpad_3": 70.0,
+      "thinkpad:thinkpad_4": 70.0
+    },
+    "temperature_max_c": 70.0,
+    "temperature_tctl_c": 64.0,
+    "cpu_freq": {
+      "freq_mhz_mean": 3543.5979375,
+      "freq_mhz_min": 2914.828,
+      "freq_mhz_max": 5115.21,
+      "freq_mhz_per_cpu": [
+        3221.689,
+        4769.033,
+        2914.828,
+        3103.332,
+        3252.754,
+        3115.016,
+        5115.21,
+        3620.135,
+        3200.774,
+        3219.759,
+        3237.968,
+        4804.873,
+        3205.276,
+        3859.039,
+        2923.496,
+        3134.385
+      ],
+      "governor": "performance"
+    },
+    "throttling_hints": {
+      "sources": [
+        "powercap",
+        "sysfs_thermal"
+      ],
+      "powercap_zones": [
+        "intel-rapl",
+        "intel-rapl:0",
+        "intel-rapl:0:0"
+      ],
+      "thermal_zones": [
+        {
+          "zone": "thermal_zone0",
+          "type": "acpitz",
+          "temp_c": 70.0
+        }
+      ]
+    },
+    "elapsed_wait_sec": 0.54
+  },
+  "n_samples": 1,
+  "git": {
+    "commit": "d3aaa3dae1da39eb1de888434897a06e00f46df2",
+    "dirty": true,
+    "dirty_file_count": 3
+  }
+}

@@ -42,6 +42,14 @@ artifacts/manifests/
 artifacts/processed/
 !artifacts/README.md
 
+# Evidence: version only the canonical TNSM corpus; ignore other local dumps
+evidence/*
+!evidence/2026-12135/
+!evidence/2026-12135/**
+evidence/2026-12135/**/harness_certs/
+evidence/2026-12135/**/*.key
+evidence/2026-12135/**/private/
+
 # Dados/logs locais de bench (saída antiga)
 benchmarks/data/*
 !benchmarks/data/README.md

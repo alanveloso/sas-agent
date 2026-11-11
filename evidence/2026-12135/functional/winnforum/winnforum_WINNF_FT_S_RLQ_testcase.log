@@ -1,0 +1,50 @@
+[INFO] 2026-11-10 19:11:50,086 util.py:76 Running WinnForum test case test_WINNF_FT_S_RLQ_6:
+[INFO] 2026-11-10 19:11:50,086 util.py:77 [Configurable] Multiple Relinquishments.
+[INFO] 2026-11-10 19:11:50,086 util.py:127 test_WINNF_FT_S_RLQ_6: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_RLQ_6/default.config'
+test_WINNF_FT_S_RLQ_1 (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_1) ... [INFO] 2026-11-10 19:11:50,183 util.py:76 Running WinnForum test case test_WINNF_FT_S_RLQ_1:
+[INFO] 2026-11-10 19:11:50,183 util.py:77 Multiple iterative Grant relinquishments.
+
+    The response should be SUCCESS.
+    
+ok
+test_WINNF_FT_S_RLQ_2 (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_2) ... [INFO] 2026-11-10 19:11:50,312 util.py:76 Running WinnForum test case test_WINNF_FT_S_RLQ_2:
+[INFO] 2026-11-10 19:11:50,312 util.py:77 Multiple Grant relinquishments: Successful simultaneous Relinquishment
+    Request of multiple grants.
+
+    Relinquishment Request array including valid CBSD ID and Grant ID.
+    The response should be SUCCESS.
+    
+ok
+test_WINNF_FT_S_RLQ_3 (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_3) ... [INFO] 2026-11-10 19:11:50,435 util.py:76 Running WinnForum test case test_WINNF_FT_S_RLQ_3:
+[INFO] 2026-11-10 19:11:50,435 util.py:77 CBSD relinquishment request of multiple grants
+
+    CBSD Harness sends Relinquishment Request to SAS including multiple
+    grants, some with Grant ID that does not belong to the CBSD, some with
+    valid CBSD ID and Grant ID that's previously relinquished.
+    The response should be FAIL.
+    
+ok
+test_WINNF_FT_S_RLQ_4 (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_4) ... [INFO] 2026-11-10 19:11:50,588 util.py:76 Running WinnForum test case test_WINNF_FT_S_RLQ_4:
+[INFO] 2026-11-10 19:11:50,588 util.py:77 CBSD relinquishment request of multiple grants
+
+    CBSD Harness sends Relinquishment Request to SAS including multiple
+    grants with valid CBSD ID and valid Grant ID, but with protocol
+    version not supported by SAS. The response should be FAIL.
+    
+ok
+test_WINNF_FT_S_RLQ_5 (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_5) ... [INFO] 2026-11-10 19:11:50,699 util.py:76 Running WinnForum test case test_WINNF_FT_S_RLQ_5:
+[INFO] 2026-11-10 19:11:50,699 util.py:77 Missing Parameter in Relinquishment Array request.
+
+    Relinquishment Request including multiple grants with missing CBSD/Grant ID.
+    The response should be FAIL.
+    
+ok
+test_WINNF_FT_S_RLQ_6_0_default (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_6_0_default)
+[Configurable] Multiple Relinquishments. ... [INFO] 2026-11-10 19:11:50,813 util.py:76 Running WinnForum test case test_WINNF_FT_S_RLQ_6_0_default:
+[INFO] 2026-11-10 19:11:50,813 util.py:77 [Configurable] Multiple Relinquishments.
+ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.783s
+
+OK

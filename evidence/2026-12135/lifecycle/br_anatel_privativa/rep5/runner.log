@@ -1,0 +1,5 @@
+=== [5] br_anatel_privativa rep5 port=20105 21:11:10Z ===
+=== lifecycle decomp br_anatel_privativa ===
+Wrote /home/alanveloso/Código/sas-agent/evidence/tnsm-2026-12135-controlled-20261111T205011Z/02_lifecycle_multiband/br_anatel_privativa/rep5/lifecycle_decomp_raw.csv
+Wrote /home/alanveloso/Código/sas-agent/evidence/tnsm-2026-12135-controlled-20261111T205011Z/02_lifecycle_multiband/br_anatel_privativa/rep5/lifecycle_decomp_summary.csv
+EXIT:0

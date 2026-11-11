@@ -1,0 +1,40 @@
+=== N=1500 seed=1 port=22501 01:33:28Z ===
+Wrote /home/alanveloso/Código/sas-agent/evidence/tnsm-2026-12135-sustained-txfix-20261111T005908Z/n1500_s1/lifecycle_sustained_raw.csv
+Wrote /home/alanveloso/Código/sas-agent/evidence/tnsm-2026-12135-sustained-txfix-20261111T005908Z/n1500_s1/lifecycle_sustained_summary.csv
+  grant           requests                 1559
+  grant           http_200                 1559
+  grant           transport_errors         0
+  grant           sas_response_code_0      1559
+  grant           success_rate             1.0
+  grant           client_ms_median         4.6175
+  grant           client_ms_p95            5.665
+  grant           client_ms_max            23.866
+  heartbeat       requests                 15499
+  heartbeat       http_200                 15499
+  heartbeat       transport_errors         0
+  heartbeat       sas_response_code_0      15499
+  heartbeat       success_rate             1.0
+  heartbeat       client_ms_median         3.6824
+  heartbeat       client_ms_p95            8.2715
+  heartbeat       client_ms_max            21.6388
+  heartbeat       late                     0
+  heartbeat       missed_transmit_expire   0
+  heartbeat       lateness_ms_p95          96.9659
+  heartbeat       lateness_ms_max          163.9143
+  registration    requests                 1559
+  registration    http_200                 1559
+  registration    transport_errors         0
+  registration    sas_response_code_0      1559
+  registration    success_rate             1.0
+  registration    client_ms_median         3.5816
+  registration    client_ms_p95            4.7939
+  registration    client_ms_max            10.8472
+  relinquishment  requests                 19
+  relinquishment  http_200                 19
+  relinquishment  transport_errors         0
+  relinquishment  sas_response_code_0      19
+  relinquishment  success_rate             1.0
+  relinquishment  client_ms_median         8.2041
+  relinquishment  client_ms_p95            9.9771
+  relinquishment  client_ms_max            9.9771
+EXIT:0

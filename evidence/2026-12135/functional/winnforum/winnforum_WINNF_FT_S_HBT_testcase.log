@@ -1,0 +1,89 @@
+[INFO] 2026-11-10 18:46:36,520 util.py:76 Running WinnForum test case test_WINNF_FT_S_HBT_10:
+[INFO] 2026-11-10 18:46:36,520 util.py:77 [Configurable] Heartbeat with optional intervening grant termination
+       or blacklist.
+[INFO] 2026-11-10 18:46:36,520 util.py:127 test_WINNF_FT_S_HBT_10: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_HBT_10/default.config'
+test_WINNF_FT_S_HBT_1 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_1) ... [INFO] 2026-11-10 18:46:36,618 util.py:76 Running WinnForum test case test_WINNF_FT_S_HBT_1:
+[INFO] 2026-11-10 18:46:36,618 util.py:77 Heartbeat request array after moving to Granted / Heartbeating state.
+
+    Returns response code 0 (NO_ERROR) for all requests.
+    
+ok
+test_WINNF_FT_S_HBT_10_0_default (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_10_0_default)
+[Configurable] Heartbeat with optional intervening grant termination ... [INFO] 2026-11-10 18:46:36,785 util.py:76 Running WinnForum test case test_WINNF_FT_S_HBT_10_0_default:
+[INFO] 2026-11-10 18:46:36,785 util.py:77 [Configurable] Heartbeat with optional intervening grant termination
+       or blacklist.
+ok
+test_WINNF_FT_S_HBT_11 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_11) ... [INFO] 2026-11-10 18:46:36,945 util.py:76 Running WinnForum test case test_WINNF_FT_S_HBT_11:
+[INFO] 2026-11-10 18:46:36,945 util.py:77 Out of sync Grant state between the CBSD and the SAS.
+
+    Returns response code 502 (UNSYNC_OP_PARAM).
+    
+ok
+test_WINNF_FT_S_HBT_12 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_12) ... [INFO] 2026-11-10 18:46:37,057 util.py:76 Running WinnForum test case test_WINNF_FT_S_HBT_12:
+[INFO] 2026-11-10 18:46:37,057 util.py:77 The grant is SUSPENDED or TERMINATED in the heartbeat response.
+
+     Heartbeat Response Code for Step 7 and 8, should  be:
+     - 500(TERMINATED_GRANT) or 501(SUSPENDED_GRANT)
+    
+ok
+test_WINNF_FT_S_HBT_2 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_2) ... [INFO] 2026-11-10 18:55:37,202 util.py:76 Running WinnForum test case test_WINNF_FT_S_HBT_2:
+[INFO] 2026-11-10 18:55:37,202 util.py:77 Array Request: Heartbeat request from 3 CBSDs for GRANT renewal.
+
+    Returns response code 0.
+    
+ok
+test_WINNF_FT_S_HBT_3 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_3) ... [INFO] 2026-11-10 18:55:37,348 util.py:76 Running WinnForum test case test_WINNF_FT_S_HBT_3:
+[INFO] 2026-11-10 18:55:37,349 util.py:77 Initial Heartbeat Request (immediately after CBSD moves into Granted
+    State) from three CBSDs with an unsupported protocol version by SAS.
+
+    Returns response code 100.
+    
+ok
+test_WINNF_FT_S_HBT_4 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_4) ... [INFO] 2026-11-10 18:55:37,511 util.py:76 Running WinnForum test case test_WINNF_FT_S_HBT_4:
+[INFO] 2026-11-10 18:55:37,511 util.py:77 CBSD heartbeat request array with various required parameters missing.
+
+    Heartbeat request immediately after CBSD moves into Granted State.
+    Requests: 1 is valid; 2, 3 and 4 are missing required parameters.
+    Returns: response code 0 for request 1; 102 for requests 2, 3 and 4.
+    
+ok
+test_WINNF_FT_S_HBT_5 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_5) ... [INFO] 2026-11-10 18:55:37,673 util.py:76 Running WinnForum test case test_WINNF_FT_S_HBT_5:
+[INFO] 2026-11-10 18:55:37,673 util.py:77 CBSD heartbeat request after grant is terminated.
+
+    Heartbeat request immediately after CBSD moves out of Granted State. The
+    grantId is invalid in heartbeat request. The response should be FAIL.
+    
+ok
+test_WINNF_FT_S_HBT_6 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_6) ... [INFO] 2026-11-10 18:56:38,085 util.py:76 Running WinnForum test case test_WINNF_FT_S_HBT_6:
+[INFO] 2026-11-10 18:56:38,085 util.py:77 Heartbeat Request from CBSD immediately after CBSD's grant is expired.
+
+    Response Code should  be 103.
+    
+ok
+test_WINNF_FT_S_HBT_7 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_7) ... [INFO] 2026-11-10 19:11:39,078 util.py:76 Running WinnForum test case test_WINNF_FT_S_HBT_7:
+[INFO] 2026-11-10 19:11:39,078 util.py:77 CBSD heartbeat requests with invalid parameter.
+
+    Heartbeat request immediately after CBSD moves into Granted State.
+    Requests: 1 & 2 are valid; 3rd request has a parameter with invalid value.
+    Returns: response code 0 for requests 1 & 2; 103 for request 3.
+    
+ok
+test_WINNF_FT_S_HBT_8 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_8) ... [INFO] 2026-11-10 19:11:39,227 util.py:76 Running WinnForum test case test_WINNF_FT_S_HBT_8:
+[INFO] 2026-11-10 19:11:39,227 util.py:77 Heartbeat Array Request: BLACKLISTED.
+
+    Response Code should  be 101.
+    
+ok
+test_WINNF_FT_S_HBT_9 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_9) ... [INFO] 2026-11-10 19:11:39,390 util.py:76 Running WinnForum test case test_WINNF_FT_S_HBT_9:
+[INFO] 2026-11-10 19:11:39,390 util.py:77  Array request, of three cbsds,SAS terminates the Grant for the one
+    that impacts incumbent activity.
+
+    successful heartbeat for the grants of two cbsds that don't impact
+     the incumbent and failed with responseCode 500 for the third one.
+    
+ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 1512.960s
+
+OK

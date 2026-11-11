@@ -1,0 +1,44 @@
+[INFO] 2026-11-10 19:11:51,473 util.py:76 Running WinnForum test case test_WINNF_FT_S_DRG_6:
+[INFO] 2026-11-10 19:11:51,473 util.py:77 [Configurable] Array Deregistration.
+[INFO] 2026-11-10 19:11:51,473 util.py:127 test_WINNF_FT_S_DRG_6: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_DRG_6/default.config'
+test_WINNF_FT_S_DRG_1 (testcases.WINNF_FT_S_DRG_testcase.DeregistrationTestcase.test_WINNF_FT_S_DRG_1) ... [INFO] 2026-11-10 19:11:51,573 util.py:76 Running WinnForum test case test_WINNF_FT_S_DRG_1:
+[INFO] 2026-11-10 19:11:51,574 util.py:77 Valid and correct CBSD ID: two deregistrationRequest objects
+    CBSD sends deregistration request to SAS with two deregistrationRequest
+    objects that contain correct and valid CBSD ID, the response should be
+    SUCCESS.
+    
+ok
+test_WINNF_FT_S_DRG_2 (testcases.WINNF_FT_S_DRG_testcase.DeregistrationTestcase.test_WINNF_FT_S_DRG_2) ... [INFO] 2026-11-10 19:11:51,697 util.py:76 Running WinnForum test case test_WINNF_FT_S_DRG_2:
+[INFO] 2026-11-10 19:11:51,697 util.py:77 Missing CBSD ID: two objects in the DeregistrationRequest.
+    CBSD sends Deregistration Request with two objects to the SAS, first
+    object has the correct CBSD ID, the second does not have CBSD ID. The
+    response for the first object should be SUCCESS. The response for the
+    second object should be FAIL.
+    
+ok
+test_WINNF_FT_S_DRG_3 (testcases.WINNF_FT_S_DRG_testcase.DeregistrationTestcase.test_WINNF_FT_S_DRG_3)
+CBSD ID initially exists, CBSD deregisters first by sending ... ok
+test_WINNF_FT_S_DRG_4 (testcases.WINNF_FT_S_DRG_testcase.DeregistrationTestcase.test_WINNF_FT_S_DRG_4) ... [INFO] 2026-11-10 19:11:51,921 util.py:76 Running WinnForum test case test_WINNF_FT_S_DRG_4:
+[INFO] 2026-11-10 19:11:51,921 util.py:77 CBSD ID value invalid: two request objects.
+    CBSD sends deregistration request to SAS with two objects in which
+    the first object has the correct CBSD ID and the second object
+    has an nonexistent CBSD ID. The response for the first
+    object should be SUCCESS. The response for the second object
+    should be FAIL.
+    
+ok
+test_WINNF_FT_S_DRG_5 (testcases.WINNF_FT_S_DRG_testcase.DeregistrationTestcase.test_WINNF_FT_S_DRG_5) ... [INFO] 2026-11-10 19:11:52,020 util.py:76 Running WinnForum test case test_WINNF_FT_S_DRG_5:
+[INFO] 2026-11-10 19:11:52,020 util.py:77 CBSD ID initially exists with a grant, CBSD deregisters,
+    then re-registers and attempts to use the old grant ID. This
+    is to verify SAS deletes grants on deregistration.
+    
+ok
+test_WINNF_FT_S_DRG_6_0_default (testcases.WINNF_FT_S_DRG_testcase.DeregistrationTestcase.test_WINNF_FT_S_DRG_6_0_default)
+[Configurable] Array Deregistration. ... [INFO] 2026-11-10 19:11:52,155 util.py:76 Running WinnForum test case test_WINNF_FT_S_DRG_6_0_default:
+[INFO] 2026-11-10 19:11:52,155 util.py:77 [Configurable] Array Deregistration.
+ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.777s
+
+OK

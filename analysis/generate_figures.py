@@ -30,6 +30,7 @@ sys.path.insert(0, str(REPO))
 import statistics as st  # noqa: E402
 
 from analysis.load_data import latest_campaign  # noqa: E402
+from analysis.validate_campaign import discover_lifecycle_raw_csvs  # noqa: E402
 
 OPS = [
     "registration",
@@ -161,17 +162,14 @@ def _save(fig, out: Path, stem: str, *, with_legend: bool = False) -> None:
 
 
 def _load_lifecycle(campaign: str) -> list[dict]:
-    path = (
-        REPO
-        / "artifacts"
-        / "raw"
-        / campaign
-        / "lifecycle_decomposition"
-        / "lifecycle_decomp_raw.csv"
-    )
-    if not path.is_file():
+    """Load measured lifecycle rows from flat or multi-deployment layouts."""
+    root = REPO / "artifacts" / "raw" / campaign
+    paths = discover_lifecycle_raw_csvs(root)
+    if not paths:
         return []
-    rows = list(csv.DictReader(path.open(encoding="utf-8")))
+    rows: list[dict] = []
+    for path in paths:
+        rows.extend(csv.DictReader(path.open(encoding="utf-8")))
     return [r for r in rows if str(r.get("warmup")) in ("0", "false", "False", "")]
 
 

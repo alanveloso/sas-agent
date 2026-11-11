@@ -1,0 +1,39 @@
+=== scenario=A repeat=1/5 K-order=[15, 3, 10, 5, 1, 2] ===
+  K=15 devices=1500 wall=0.9999s grant_batch_p95=745.1552ms grant_amortized=6.5217ms/item ok
+  K=3 devices=1500 wall=1.5727s grant_batch_p95=236.2954ms grant_amortized=2.1031ms/item ok
+  K=10 devices=1500 wall=0.9267s grant_batch_p95=526.9403ms grant_amortized=3.6558ms/item ok
+  K=5 devices=1500 wall=1.097s grant_batch_p95=290.0502ms grant_amortized=2.3471ms/item ok
+  K=1 devices=1500 wall=4.328s grant_batch_p95=220.0727ms grant_amortized=1.9908ms/item ok
+  K=2 devices=1500 wall=2.3502s grant_batch_p95=235.4935ms grant_amortized=2.095ms/item ok
+=== scenario=A repeat=2/5 K-order=[15, 2, 1, 10, 5, 3] ===
+  K=15 devices=1500 wall=0.9365s grant_batch_p95=660.0506ms grant_amortized=5.98ms/item ok
+  K=2 devices=1500 wall=2.2798s grant_batch_p95=232.3118ms grant_amortized=2.065ms/item ok
+  K=1 devices=1500 wall=4.2149s grant_batch_p95=217.5786ms grant_amortized=1.9476ms/item ok
+  K=10 devices=1500 wall=1.0126s grant_batch_p95=490.9778ms grant_amortized=3.5769ms/item ok
+  K=5 devices=1500 wall=1.0861s grant_batch_p95=273.0384ms grant_amortized=2.4135ms/item ok
+  K=3 devices=1500 wall=1.6404s grant_batch_p95=266.7021ms grant_amortized=2.14ms/item ok
+=== scenario=A repeat=3/5 K-order=[2, 15, 1, 3, 10, 5] ===
+  K=2 devices=1500 wall=2.3913s grant_batch_p95=236.9431ms grant_amortized=2.1543ms/item ok
+  K=15 devices=1500 wall=0.9556s grant_batch_p95=637.4542ms grant_amortized=6.101ms/item ok
+  K=1 devices=1500 wall=4.3982s grant_batch_p95=225.6113ms grant_amortized=2.0295ms/item ok
+  K=3 devices=1500 wall=1.6753s grant_batch_p95=260.5917ms grant_amortized=2.2077ms/item ok
+  K=10 devices=1500 wall=0.9131s grant_batch_p95=493.8067ms grant_amortized=3.7095ms/item ok
+  K=5 devices=1500 wall=1.0506s grant_batch_p95=259.3589ms grant_amortized=2.363ms/item ok
+=== scenario=A repeat=4/5 K-order=[1, 3, 15, 2, 10, 5] ===
+  K=1 devices=1500 wall=4.3345s grant_batch_p95=223.7331ms grant_amortized=2.0143ms/item ok
+  K=3 devices=1500 wall=1.692s grant_batch_p95=263.7649ms grant_amortized=2.235ms/item ok
+  K=15 devices=1500 wall=0.9757s grant_batch_p95=653.9338ms grant_amortized=6.1215ms/item ok
+  K=2 devices=1500 wall=2.2353s grant_batch_p95=224.0388ms grant_amortized=2.0651ms/item ok
+  K=10 devices=1500 wall=0.8832s grant_batch_p95=480.3006ms grant_amortized=3.676ms/item ok
+  K=5 devices=1500 wall=1.1135s grant_batch_p95=276.4685ms grant_amortized=2.4588ms/item ok
+=== scenario=A repeat=5/5 K-order=[2, 3, 5, 15, 10, 1] ===
+  K=2 devices=1500 wall=2.3533s grant_batch_p95=262.4425ms grant_amortized=2.1247ms/item ok
+  K=3 devices=1500 wall=1.6547s grant_batch_p95=248.0055ms grant_amortized=2.1879ms/item ok
+  K=5 devices=1500 wall=1.1375s grant_batch_p95=303.943ms grant_amortized=2.5844ms/item ok
+  K=15 devices=1500 wall=0.9706s grant_batch_p95=643.7101ms grant_amortized=5.8228ms/item ok
+  K=10 devices=1500 wall=0.8998s grant_batch_p95=470.6166ms grant_amortized=3.7378ms/item ok
+  K=1 devices=1500 wall=4.3394s grant_batch_p95=217.9594ms grant_amortized=2.0063ms/item ok
+Wrote /home/alanveloso/Código/sas-agent/evidence/tnsm-2026-12135-rev1-20261110T124131Z/03_concurrency/calibration/container_concurrency_runs.csv
+Wrote /home/alanveloso/Código/sas-agent/evidence/tnsm-2026-12135-rev1-20261110T124131Z/03_concurrency/calibration/container_concurrency_summary.csv
+Wrote /home/alanveloso/Código/sas-agent/evidence/tnsm-2026-12135-rev1-20261110T124131Z/03_concurrency/calibration/container_concurrency_manifest.json
+EXIT:0

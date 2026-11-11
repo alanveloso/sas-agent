@@ -1,0 +1,10 @@
+case_id,description,layer,cert_pair,endpoint,expected_outcome,observed_outcome,tls_handshake_ok,application_reached,authorization_ok,http_status,error,pass,latency_ms
+valid_authorized,certificado válido e autorizado,app,sas.cert+sas.key,/v1.3/status,ok,ok,1,1,1,200,,1,5.0
+missing_cert,ausência de certificado,handshake,(none),/ready,handshake_fail,handshake_fail,0,0,,,,1,1.353
+untrusted_ca,CA não confiável,handshake,non_cbrs_signed_sas.cert+non_cbrs_signed_sas.key,/ready,handshake_fail,handshake_fail,0,0,,,,1,2.0
+expired,certificado expirado,handshake,sas_expired.cert+sas_expired.key,/ready,handshake_fail,handshake_fail,0,0,,,,1,1.777
+no_client_auth,ausência de clientAuth,app,no_client_auth.(cert/key),/v1.3/status,http_403_invalid,http_403_invalid,1,1,0,403,,1,3.134
+missing_sas_policy,política SAS ausente,app,device_a.cert+device_a.key,/v1.3/status,http_403_invalid,http_403_invalid,1,1,0,403,,1,5.434
+wrong_zone_policy,política de zona indevida,app,sas_inapplicable.cert+sas.key,/v1.3/status,http_403_invalid,http_403_invalid,1,1,0,403,,1,3.203
+unauthorized_peer,"certificado válido, mas peer não autorizado",app,sas_1.cert+sas_1.key,/v1.3/status,http_403_peer,http_403_peer,1,1,0,403,,1,4.546
+revoked_crl,certificado revogado com CRL,handshake,sas_blacklisted.cert+sas_blacklisted.key,/ready,handshake_fail,handshake_fail,0,0,,,,1,1.879

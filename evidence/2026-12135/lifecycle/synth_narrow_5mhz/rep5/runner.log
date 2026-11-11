@@ -1,0 +1,5 @@
+=== [20] synth_narrow_5mhz rep5 port=20120 21:12:51Z ===
+=== lifecycle decomp synth_narrow_5mhz ===
+Wrote /home/alanveloso/Código/sas-agent/evidence/tnsm-2026-12135-controlled-20261111T205011Z/02_lifecycle_multiband/synth_narrow_5mhz/rep5/lifecycle_decomp_raw.csv
+Wrote /home/alanveloso/Código/sas-agent/evidence/tnsm-2026-12135-controlled-20261111T205011Z/02_lifecycle_multiband/synth_narrow_5mhz/rep5/lifecycle_decomp_summary.csv
+EXIT:0
