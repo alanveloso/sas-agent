@@ -535,17 +535,28 @@ def wait_http_200(
     *,
     poll_interval_sec: float = POLL_INTERVAL_SEC,
     trace: dict[str, Any] | None = None,
+    record_attempts: bool = False,
 ) -> tuple[bool, int, str | None]:
     """Poll ``url`` until HTTP 200 or timeout.
 
     Each attempt is a blocking GET (2 s timeout) followed, on failure, by a
-    ``poll_interval_sec`` sleep, so the effective period is attempt + sleep.
+    ``poll_interval_sec`` sleep, so the effective period is attempt + sleep
+    (not sleep alone).
 
     Returns ``(ok, poll_count, error)``. If ``trace`` is given it receives
     ``perf_counter`` instants ``last_failed_start``, ``success_start`` and
     ``success_end`` (None when absent), ``last_failed_error`` and the JSON
     ``body`` of the first 200.
+
+    When ``record_attempts`` is true (or ``trace`` already contains an
+    ``attempts`` list), every try is appended as
+    ``{start, end, ok, error, sleep_after_sec}`` with monotonic ``perf_counter``
+    values. Canonical cold-start CSVs do not require this; it is for
+    complementary fine-grained campaigns.
     """
+    want_attempts = record_attempts or (
+        trace is not None and isinstance(trace.get("attempts"), list)
+    )
     if trace is not None:
         trace.update(
             poll_interval_sec=poll_interval_sec,
@@ -555,6 +566,8 @@ def wait_http_200(
             success_end=None,
             body=None,
         )
+        if want_attempts:
+            trace.setdefault("attempts", [])
     deadline = time.perf_counter() + timeout_sec
     polls = 0
     last_error: str | None = None
@@ -562,23 +575,45 @@ def wait_http_200(
         while time.perf_counter() < deadline:
             polls += 1
             t_attempt = time.perf_counter()
+            ok_attempt = False
             try:
                 resp = client.get(url)
+                t_end = time.perf_counter()
                 if resp.status_code == 200:
+                    ok_attempt = True
                     if trace is not None:
                         trace["success_start"] = t_attempt
-                        trace["success_end"] = time.perf_counter()
+                        trace["success_end"] = t_end
                         try:
                             trace["body"] = resp.json()
                         except ValueError:
                             pass
+                        if want_attempts:
+                            trace["attempts"].append({
+                                "start": t_attempt,
+                                "end": t_end,
+                                "ok": True,
+                                "error": None,
+                                "sleep_after_sec": 0.0,
+                            })
                     return True, polls, None
                 last_error = f"HTTP {resp.status_code}"
             except Exception as exc:  # noqa: BLE001 — poll until ready
+                t_end = time.perf_counter()
                 last_error = str(exc)
+            else:
+                t_end = time.perf_counter()
             if trace is not None:
                 trace["last_failed_start"] = t_attempt
                 trace["last_failed_error"] = last_error
+                if want_attempts:
+                    trace["attempts"].append({
+                        "start": t_attempt,
+                        "end": t_end,
+                        "ok": ok_attempt,
+                        "error": last_error,
+                        "sleep_after_sec": poll_interval_sec,
+                    })
             time.sleep(poll_interval_sec)
     return False, polls, last_error or "timeout"
 
