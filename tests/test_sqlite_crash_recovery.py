@@ -13,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import unittest
 from pathlib import Path
 
@@ -81,12 +82,14 @@ time.sleep(600)
 _VERIFY = _COMMON + r"""
 from models.models import Cbsd, Grant
 from services.heartbeat_service import process_heartbeat
-out = {}
+t0 = time.perf_counter()
+out = {"t_verify_start_perf": t0}
 with database.engine.connect() as c:
     out["integrity_check"] = c.execute(text("PRAGMA integrity_check")).scalar()
     out["foreign_key_violations"] = len(c.execute(text("PRAGMA foreign_key_check")).fetchall())
     out["journal_mode"] = c.execute(text("PRAGMA journal_mode")).scalar()
     out["synchronous"] = c.execute(text("PRAGMA synchronous")).scalar()
+out["t_integrity_ms"] = (time.perf_counter() - t0) * 1000.0
 db = database.SessionLocal()
 out["grants"] = {g.cbsd_id: g.grant_id for g in db.query(Grant).all()}
 out["pending_cbsds"] = db.query(Cbsd).filter(Cbsd.cbsd_serial_number.like("pending_%")).count()
@@ -94,16 +97,20 @@ out["orphan_grants"] = sum(
     1 for g in db.query(Grant).all() if db.get(Cbsd, g.cbsd_pk) is None
 )
 out["live_grants"] = db.query(Grant).filter(Grant.terminated.is_(False)).count()
+t_hb = time.perf_counter()
 hb = process_heartbeat(db, [
     {"cbsdId": c, "grantId": g, "operationState": "GRANTED"}
     for c, g in out["grants"].items()
 ], profile=profile)
+out["t_first_valid_heartbeat_batch_ms"] = (time.perf_counter() - t_hb) * 1000.0
+out["t_kill_to_first_heartbeat_ms"] = (time.perf_counter() - t0) * 1000.0
 out["heartbeat_codes"] = sorted({h["response"]["responseCode"] for h in hb})
 db.close()
 db = database.SessionLocal()
 _, extra = batch(db, "after", 1)
 db.close()
 out["write_after_recovery"] = extra[0]["response"]["responseCode"]
+out["t_verify_total_ms"] = (time.perf_counter() - t0) * 1000.0
 print(json.dumps(out), flush=True)
 """
 
@@ -145,6 +152,7 @@ class SqliteCrashRecoveryTests(unittest.TestCase):
                 first = json.loads(first_line)
                 size_before_kill = db_path.stat().st_size
                 journal_before_kill = journal.is_file() and journal.stat().st_size > 0
+                t_kill = time.perf_counter()
                 os.kill(proc.pid, signal.SIGKILL)
                 proc.wait(timeout=30)
             finally:
@@ -167,6 +175,7 @@ class SqliteCrashRecoveryTests(unittest.TestCase):
                 [sys.executable, "-c", _VERIFY], cwd=str(ROOT), env=env,
                 capture_output=True, text=True, timeout=120,
             )
+            t_recovered = time.perf_counter()
             self.assertEqual(done.returncode, 0, done.stderr[-2000:])
             out = json.loads(done.stdout.strip().splitlines()[-1])
 
@@ -180,6 +189,13 @@ class SqliteCrashRecoveryTests(unittest.TestCase):
             self.assertEqual(out["heartbeat_codes"], [0])
             self.assertEqual(out["write_after_recovery"], 0)
             self.assertFalse(journal.exists(), "hot journal left behind after recovery")
+            # Recovery timings: process-restart path only (not power-loss / media failure).
+            self.assertIn("t_integrity_ms", out)
+            self.assertIn("t_first_valid_heartbeat_batch_ms", out)
+            self.assertGreaterEqual(float(out["t_verify_total_ms"]), 0.0)
+            # Parent wall: SIGKILL → verifier process completed first valid HB + writes.
+            out["t_parent_kill_to_verify_done_ms"] = (t_recovered - t_kill) * 1000.0
+            self.assertGreater(out["t_parent_kill_to_verify_done_ms"], 0.0)
 
 
 if __name__ == "__main__":
