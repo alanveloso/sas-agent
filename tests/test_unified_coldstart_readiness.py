@@ -69,6 +69,24 @@ class WaitHttp200TraceTests(unittest.TestCase):
         self.assertIsNone(trace["last_failed_start"])
         self.assertEqual(uc._ready_window(trace, 0.0)["rsa_last_failed_probe_start_ms"], "")
 
+    def test_record_attempts_lists_failed_and_success(self):
+        trace: dict = {"attempts": []}
+        with mock.patch.object(common.httpx, "Client", _mock_client_factory(self._handler_ready_on_third())):
+            ok, polls, err = common.wait_http_200(
+                "https://x/ready", None, 5.0, poll_interval_sec=0.01,
+                trace=trace, record_attempts=True,
+            )
+        self.assertEqual((ok, polls, err), (True, 3, None))
+        self.assertEqual(len(trace["attempts"]), 3)
+        self.assertFalse(trace["attempts"][0]["ok"])
+        self.assertFalse(trace["attempts"][1]["ok"])
+        self.assertTrue(trace["attempts"][2]["ok"])
+        self.assertEqual(trace["attempts"][0]["sleep_after_sec"], 0.01)
+        self.assertEqual(trace["attempts"][2]["sleep_after_sec"], 0.0)
+        # Effective gap between failed starts ≈ attempt duration + sleep
+        gap = trace["attempts"][1]["start"] - trace["attempts"][0]["start"]
+        self.assertGreaterEqual(gap, 0.01)
+
 
 class ReadyWindowTests(unittest.TestCase):
     def test_window_relative_to_t0(self):
