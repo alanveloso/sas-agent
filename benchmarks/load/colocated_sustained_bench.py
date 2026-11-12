@@ -590,12 +590,14 @@ def run_scenario(
                     "isolation": "one file per agent container",
                 },
                 "memory_sampling": {
-                    "method": "docker stats RSS sum across agent containers",
+                    "method": "docker stats MemUsage (cgroup) sum across agent containers",
                     "interval_sec": STATS_INTERVAL_SEC,
-                    "peak_definition": (
-                        "max over sampler sweeps of sum(RSS); empty if sweeps=0"
+                    "sampled_max_definition": (
+                        "max over complete sweeps (enter + periodic + exit); "
+                        "NOT absolute peak; NOT process PSS"
                     ),
                     "after_load": "single docker stats sample after load window",
+                    "column_ram_peak_mb_sum": "legacy name for sampled maximum",
                 },
                 "failure_taxonomy": {
                     "infrastructure": "container/ready/docker failures",

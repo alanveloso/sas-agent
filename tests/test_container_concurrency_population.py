@@ -84,6 +84,28 @@ class StatsSamplerTests(unittest.TestCase):
         self.assertEqual((sampler.sweeps, sampler.ram_peak_sum, sampler.cpu_peak_sum),
                          (1, 150.0, 3.0))
 
+    def test_enter_exit_sample_covers_short_loads(self):
+        """Short loads must not leave sweeps=0 when docker stats succeed."""
+        sampler = ccb._DockerStatsSampler(["a", "b"], interval=10.0)
+        with mock.patch.object(
+            ccb, "docker_stats_sample", return_value=(1.0, 40.0)
+        ):
+            with sampler:
+                pass  # load shorter than interval
+        self.assertGreaterEqual(sampler.sweeps, 2)  # enter + exit
+        self.assertEqual(sampler.ram_peak_sum, 80.0)
+        self.assertTrue(sampler.not_pss)
+
+    def test_failed_read_does_not_count_incomplete_enter_sample(self):
+        sampler = ccb._DockerStatsSampler(["a", "b"], interval=10.0)
+        seq = iter([(1.0, 10.0), (None, None)])  # second container fails
+
+        def stats(_name):
+            return next(seq)
+
+        with mock.patch.object(ccb, "docker_stats_sample", side_effect=stats):
+            self.assertFalse(sampler._sample_complete())
+        self.assertEqual((sampler.sweeps, sampler.ram_peak_sum), (0, 0.0))
 
 class RunScenarioTests(unittest.TestCase):
     def _run(self, k, devices_per_agent):
