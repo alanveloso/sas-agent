@@ -78,6 +78,8 @@ RUN_FIELDS = [
     "requests_completed", "http_200_sum", "sas_ok_sum",
     "heartbeat_late_sum", "missed_transmit_expire_sum",
     "registered_sum", "granted_sum", "arrivals_sum", "relinquished_sum",
+    "planned_arrivals_sum", "planned_relinquishments_sum",
+    "arrival_admit_failures_sum",
     "ram_peak_mb_sum", "ram_after_load_mb_sum", "cpu_pct_peak_sum",
     "stats_sweeps", "stats_interval_sec", "temp_c_start", "temp_c_end",
     "load1_start", "exit_code", "error", "failure_class",
@@ -89,6 +91,8 @@ CLIENT_FIELDS = [
     "run_id", "scenario", "repeat", "pair_id", "client_id", "agent_id",
     "devices", "seed", "requests", "sas_ok", "http_200", "registered",
     "granted", "arrivals", "relinquished", "hb_late", "missed",
+    "planned_arrivals", "planned_relinquishments",
+    "arrivals_executed", "relinquishments_executed", "arrival_admit_failures",
     "connections_established", "connection_reuse_events",
     "client_ms_median", "client_ms_p95",
 ]
@@ -440,6 +444,9 @@ def run_scenario(
         "granted_sum": _sum_info("granted"),
         "arrivals_sum": _sum_info("arrivals"),
         "relinquished_sum": _sum_info("relinquished"),
+        "planned_arrivals_sum": _sum_info("planned_arrivals"),
+        "planned_relinquishments_sum": _sum_info("planned_relinquishments"),
+        "arrival_admit_failures_sum": _sum_info("arrival_admit_failures"),
         "ram_peak_mb_sum": round(ram_peak, 2) if ram_peak is not None else "",
         "ram_after_load_mb_sum": round(ram_after, 2) if ram_after is not None else "",
         "cpu_pct_peak_sum": round(cpu_peak, 2) if cpu_peak is not None else "",
@@ -508,6 +515,13 @@ def run_scenario(
             "granted": info.get("granted", ""),
             "arrivals": info.get("arrivals", ""),
             "relinquished": info.get("relinquished", ""),
+            "planned_arrivals": info.get("planned_arrivals", ""),
+            "planned_relinquishments": info.get("planned_relinquishments", ""),
+            "arrivals_executed": info.get("arrivals_executed", info.get("arrivals", "")),
+            "relinquishments_executed": info.get(
+                "relinquishments_executed", info.get("relinquished", "")
+            ),
+            "arrival_admit_failures": info.get("arrival_admit_failures", ""),
             "hb_late": sum(
                 int(r.get("late") or 0) for r in rows if r.get("operation") == "heartbeat"
             ),
@@ -661,8 +675,24 @@ def run_paired_campaign(
                 "n_clients": n_clients,
                 "devices_per_client": devices_per_client,
                 "duration_sec": duration_sec,
+                "arrival_interval_sec": arrival_interval_sec,
+                "relinquish_interval_sec": relinquish_interval_sec,
+                "mix_semantics": {
+                    "scope": "per_client",
+                    "arrival": (
+                        "each client independently schedules Registration+Grant "
+                        "every arrival_interval_sec during the sustained window"
+                    ),
+                    "relinquish": (
+                        "each client independently picks one of its active CBSDs "
+                        "uniformly (seeded) every relinquish_interval_sec; victim "
+                        "stops heartbeating"
+                    ),
+                    "heartbeat": "per CBSD; continues until Relinquish removes it",
+                    "does_not_stop_after_bootstrap": True,
+                },
                 "schedule": schedule,
-                "note": "Paired seeds; A=K1/B=K=n_clients; client count fixed",
+                "note": "Paired seeds; A=K1/B=K=n_clients; client count and offered mix fixed",
             },
             indent=2,
         )

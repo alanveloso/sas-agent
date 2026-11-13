@@ -35,23 +35,24 @@ CERTS_DIR="$(cd "$REPO" && realpath -m "$CERTS_DIR")"
 HARNESS_CERTS_DIR="$(cd "$REPO" && realpath -m "$HARNESS_CERTS_DIR")"
 
 # Complementary / selection (limits frozen; do not retune after observing results)
-K5_SEED=84242
-K5_REPEATS=5
+# Env overrides allowed for campaign wiring; P4 numeric limits stay illustrative-frozen.
+K5_SEED="${K5_SEED:-84242}"
+K5_REPEATS="${K5_REPEATS:-5}"
 # Independent K=3 validation seeds: disjoint from calib SEED and K5_SEED.
-K3_SEED=94242
-K3_REPEATS=5
-COLOCATED_PAIRS=5
-COLOCATED_CLIENTS=5
-COLOCATED_DPC=300
-COLOCATED_SEC=600
+K3_SEED="${K3_SEED:-94242}"
+K3_REPEATS="${K3_REPEATS:-5}"
+COLOCATED_PAIRS="${COLOCATED_PAIRS:-5}"
+COLOCATED_CLIENTS="${COLOCATED_CLIENTS:-5}"
+COLOCATED_DPC="${COLOCATED_DPC:-300}"
+COLOCATED_SEC="${COLOCATED_SEC:-600}"
 # Match lifecycle_decomp sustained defaults (Registration+Grant / Relinquish mix).
-COLOCATED_ARRIVAL_SEC=10
-COLOCATED_RELINQUISH_SEC=30
-RECOVERY_CYCLES=30
-P4_STARTUP=60
-P4_PROV=1.5
-P4_GRANT_P95=1000
-P4_MEM=2048
+COLOCATED_ARRIVAL_SEC="${COLOCATED_ARRIVAL_SEC:-10}"
+COLOCATED_RELINQUISH_SEC="${COLOCATED_RELINQUISH_SEC:-30}"
+RECOVERY_CYCLES="${RECOVERY_CYCLES:-30}"
+P4_STARTUP="${P4_STARTUP:-60}"
+P4_PROV="${P4_PROV:-1.5}"
+P4_GRANT_P95="${P4_GRANT_P95:-1000}"
+P4_MEM="${P4_MEM:-2048}"
 
 STAGE="${1:-}"
 shift || true

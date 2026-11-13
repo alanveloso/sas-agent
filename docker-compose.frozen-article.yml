@@ -1,0 +1,7 @@
+# Overlay: pin WInnForum UUT to a pre-built image (no Dockerfile rebuild).
+# Requires Compose that supports clearing `build` via empty override, or use
+# scripts/manual_complementary_tnsm_2026_12135.sh which invokes compose without --build.
+services:
+  sas-agent:
+    image: ${SAS_IMAGE:-sas-agent:article}
+    pull_policy: never

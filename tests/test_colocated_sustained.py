@@ -104,6 +104,10 @@ class ProfileAndLoadTests(unittest.TestCase):
         self.assertGreater(info["arrivals"], 0)
         self.assertGreater(info["registered"], 3)
         self.assertGreater(info["relinquished"], 0)
+        self.assertEqual(info["planned_arrivals"], info["arrivals"])
+        self.assertGreaterEqual(info["planned_relinquishments"], info["relinquished"])
+        self.assertEqual(info["arrival_interval_sec"], 10.0)
+        self.assertEqual(info["relinquish_interval_sec"], 30.0)
 
     def test_disabled_arrival_yields_zero_midwindow_arrivals(self):
         sas = FakeSas()
