@@ -1,0 +1,2270 @@
+{
+  "campaign_id": "experiments",
+  "catalog": {
+    "lifecycle_decomp": {
+      "summary_n_counts": "HTTP request / lifecycle cycle within one deployment; per-deployment summaries expose n\u224830 measured cycles after warmup",
+      "independent_unit": "Docker deployment (one container). Article multiband design: 8 profiles \u00d7 \u22655 independent deployments \u00d7 30 measured cycles",
+      "default_n_within_unit": 30,
+      "default_n_independent": 5,
+      "pseudoreplication_risk": true,
+      "mean_ci_appropriate_on_summary_n": false,
+      "p95_on_summary_n": "point estimate of within-deployment cycles only; for profile-level inference summarize deployment medians (n_independent\u22485)",
+      "figure_dispersion": "within-deployment cycle boxplots are descriptive; profile comparisons use the distribution of the five deployment medians"
+    },
+    "unified_coldstart": {
+      "summary_n_counts": "independent Docker cold start",
+      "independent_unit": "Docker container destroyed after each run",
+      "default_n_within_unit": 1,
+      "default_n_independent": 30,
+      "pseudoreplication_risk": false,
+      "mean_ci_appropriate_on_summary_n": true,
+      "p95_on_summary_n": "point estimate over ~30 independent starts; no CI",
+      "figure_dispersion": "boxplot over independent containers (IQR/whiskers)"
+    },
+    "container_concurrency": {
+      "summary_n_counts": "independent K-container deployment + load",
+      "independent_unit": "deployment repeat (scenario \u00d7 K)",
+      "default_n_within_unit": 1,
+      "default_n_independent": 5,
+      "pseudoreplication_risk": false,
+      "mean_ci_appropriate_on_summary_n": true,
+      "p95_on_summary_n": "grant_batch_latency_p95_ms is a within-run batch p95, then summarized across repeats; legacy grant_latency_p95_ms is amortized, not per-Grant",
+      "figure_dispersion": "summary CI95 is for the mean across repeats (n\u22485)"
+    },
+    "tls_mtls_overhead": {
+      "summary_n_counts": "randomized block (condition \u00d7 block)",
+      "independent_unit": "block",
+      "default_n_within_unit": 100,
+      "default_n_independent": 30,
+      "pseudoreplication_risk": true,
+      "mean_ci_appropriate_on_summary_n": true,
+      "note": "within a persistent block, requests share one TLS connection; block-level medians/p95 are the right inputs to cross-block summaries. Endpoint is GET /ready (transport), not a CBSD-SAS operation.",
+      "p95_on_summary_n": "summary metric latency_p95_ms is the p95 of per-block latency medians/p95s",
+      "figure_dispersion": "boxplot; request-level panels are descriptive, not independent n"
+    },
+    "persistence_modes": {
+      "summary_n_counts": "randomized block cell (mode \u00d7 population within repeat)",
+      "independent_unit": "randomized block (repeat); 6 treatments ordered within each block",
+      "default_n_independent": 20,
+      "pseudoreplication_risk": true,
+      "mean_ci_appropriate_on_summary_n": true,
+      "note": "group by persist_mode \u00d7 devices (never a missing 'mode' column). Paired mode comparisons must stay within the same repeat/block.",
+      "p95_on_summary_n": "not primary; median/IQR used",
+      "figure_dispersion": "boxplot over repeats; persistence_wall_median bars show medians without error bars"
+    },
+    "factorial_provisioning": {
+      "summary_n_counts": "cell observation inside a randomized block (configs A\u2013D)",
+      "independent_unit": "randomized complete block (repeat) with four treatments",
+      "default_n_independent": 20,
+      "pseudoreplication_risk": true,
+      "mean_ci_appropriate_on_summary_n": false,
+      "note": "Primary inference: blocked log-contrasts across complete repeats. CRD two-way ANOVA that ignores blocks is supplementary only.",
+      "p95_on_summary_n": "probe_grant_p95_ms is within-run probe p95 if present",
+      "figure_dispersion": "tables use median/IQR over repeats; effects use block contrasts"
+    },
+    "process_concurrency": {
+      "summary_n_counts": "independent K-process deployment + load",
+      "independent_unit": "deployment repeat (K)",
+      "default_n_independent": 5,
+      "pseudoreplication_risk": false,
+      "mean_ci_appropriate_on_summary_n": true,
+      "p95_on_summary_n": "within-run latency p95 summarized across repeats",
+      "figure_dispersion": "CI95 for mean across n=5 repeats when reported"
+    },
+    "sustained_mixed_load": {
+      "summary_n_counts": "deployment under sustained mixed load",
+      "independent_unit": "Docker deployment (population \u00d7 seed)",
+      "default_n_independent": 3,
+      "pseudoreplication_risk": false,
+      "mean_ci_appropriate_on_summary_n": true,
+      "note": "txfix schedule (respect_transmit_expire) is the article-relevant corpus"
+    }
+  },
+  "figure_conventions": {
+    "boxplots": "IQR box, whiskers and fliers; not a confidence interval. The plotted sample is whatever unit the CSV row represents.",
+    "persistence_wall_median": "Grouped bars of medians only \u2014 no error bars / no CI.",
+    "no_errorbar_ci_figures": true
+  },
+  "prior_corrections": {
+    "P0-02": "grant_latency_p95_ms is amortized, not per-Grant p95",
+    "P0-04": "pre-fix cold-start decompositions are not reusable as-is",
+    "P1-07": "fixed_total vs fixed_per_agent must not be pooled",
+    "P1-09": "illustrative limits must not be tuned after seeing calibration"
+  },
+  "audits": {
+    "lifecycle_decomp": {
+      "experiment": "lifecycle_decomp",
+      "catalog": {
+        "summary_n_counts": "HTTP request / lifecycle cycle within one deployment; per-deployment summaries expose n\u224830 measured cycles after warmup",
+        "independent_unit": "Docker deployment (one container). Article multiband design: 8 profiles \u00d7 \u22655 independent deployments \u00d7 30 measured cycles",
+        "default_n_within_unit": 30,
+        "default_n_independent": 5,
+        "pseudoreplication_risk": true,
+        "mean_ci_appropriate_on_summary_n": false,
+        "p95_on_summary_n": "point estimate of within-deployment cycles only; for profile-level inference summarize deployment medians (n_independent\u22485)",
+        "figure_dispersion": "within-deployment cycle boxplots are descriptive; profile comparisons use the distribution of the five deployment medians"
+      },
+      "n_raw_files": 40,
+      "n_deployments_total": 40,
+      "profiles": {
+        "br_anatel_privativa": {
+          "n_independent_deployments": 5,
+          "deployments": {
+            "rep1": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.4489,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 24.4543,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.4346499999999995,
+              "e2e_median_ms": 20.6378
+            },
+            "rep2": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 6.7336,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 25.910600000000002,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 5.0374,
+              "e2e_median_ms": 22.29605
+            },
+            "rep3": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.4483,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 25.5441,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.584350000000001,
+              "e2e_median_ms": 22.2931
+            },
+            "rep4": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.3032,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 22.619300000000003,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.24325,
+              "e2e_median_ms": 20.394750000000002
+            },
+            "rep5": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.5036,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 24.7179,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.66165,
+              "e2e_median_ms": 22.9184
+            }
+          },
+          "across_deployments": {
+            "grant_median_ms": {
+              "n": 5,
+              "mean": 4.5922600000000005,
+              "mean_ci95": {
+                "low": 4.225199705246049,
+                "high": 4.959320294753952
+              },
+              "mean_ci_refused": false,
+              "mean_ci_refusal_reason": null,
+              "p95": {
+                "n": 5,
+                "p95": 5.0374,
+                "order_rank": 5,
+                "ci95_low": null,
+                "ci95_high": null,
+                "point_estimate_only": true,
+                "note": "nearest-rank p95 is order statistic 5 of 5; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+              }
+            },
+            "e2e_median_ms": {
+              "n": 5,
+              "mean": 21.708019999999998,
+              "mean_ci95": {
+                "low": 20.31680819569314,
+                "high": 23.099231804306854
+              },
+              "mean_ci_refused": false,
+              "mean_ci_refusal_reason": null,
+              "p95": {
+                "n": 5,
+                "p95": 22.9184,
+                "order_rank": 5,
+                "ci95_low": null,
+                "ci95_high": null,
+                "point_estimate_only": true,
+                "note": "nearest-rank p95 is order statistic 5 of 5; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+              }
+            },
+            "note": "CI95 applies to the mean of deployment medians (n=5 independent containers), not to pooled cycles"
+          }
+        },
+        "cbrs_winnforum": {
+          "n_independent_deployments": 5,
+          "deployments": {
+            "rep1": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.651,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 22.7161,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.431699999999999,
+              "e2e_median_ms": 19.362099999999998
+            },
+            "rep2": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 6.1997,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 26.792900000000003,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 5.475,
+              "e2e_median_ms": 23.213949999999997
+            },
+            "rep3": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.9634,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 24.5605,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.7138,
+              "e2e_median_ms": 21.4527
+            },
+            "rep4": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.9784,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 25.6971,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.5565999999999995,
+              "e2e_median_ms": 20.69475
+            },
+            "rep5": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 6.3468,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 26.4381,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.9064,
+              "e2e_median_ms": 22.684800000000003
+            }
+          },
+          "across_deployments": {
+            "grant_median_ms": {
+              "n": 5,
+              "mean": 4.816699999999999,
+              "mean_ci95": {
+                "low": 4.3094167040208,
+                "high": 5.323983295979199
+              },
+              "mean_ci_refused": false,
+              "mean_ci_refusal_reason": null,
+              "p95": {
+                "n": 5,
+                "p95": 5.475,
+                "order_rank": 5,
+                "ci95_low": null,
+                "ci95_high": null,
+                "point_estimate_only": true,
+                "note": "nearest-rank p95 is order statistic 5 of 5; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+              }
+            },
+            "e2e_median_ms": {
+              "n": 5,
+              "mean": 21.481659999999998,
+              "mean_ci95": {
+                "low": 19.562303896246913,
+                "high": 23.401016103753083
+              },
+              "mean_ci_refused": false,
+              "mean_ci_refusal_reason": null,
+              "p95": {
+                "n": 5,
+                "p95": 23.213949999999997,
+                "order_rank": 5,
+                "ci95_low": null,
+                "ci95_high": null,
+                "point_estimate_only": true,
+                "note": "nearest-rank p95 is order statistic 5 of 5; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+              }
+            },
+            "note": "CI95 applies to the mean of deployment medians (n=5 independent containers), not to pooled cycles"
+          }
+        },
+        "lab_custom_3p8": {
+          "n_independent_deployments": 5,
+          "deployments": {
+            "rep1": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.6552,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 25.044000000000004,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.953200000000001,
+              "e2e_median_ms": 22.61835
+            },
+            "rep2": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.6464,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 25.835299999999997,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.7284500000000005,
+              "e2e_median_ms": 23.5434
+            },
+            "rep3": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 6.2108,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 26.054000000000002,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.91145,
+              "e2e_median_ms": 22.941449999999996
+            },
+            "rep4": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.1593,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 23.035,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.338,
+              "e2e_median_ms": 19.90945
+            },
+            "rep5": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.8956,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 24.7639,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.55505,
+              "e2e_median_ms": 21.204050000000002
+            }
+          },
+          "across_deployments": {
+            "grant_median_ms": {
+              "n": 5,
+              "mean": 4.69723,
+              "mean_ci95": {
+                "low": 4.3797164624736915,
+                "high": 5.014743537526309
+              },
+              "mean_ci_refused": false,
+              "mean_ci_refusal_reason": null,
+              "p95": {
+                "n": 5,
+                "p95": 4.953200000000001,
+                "order_rank": 5,
+                "ci95_low": null,
+                "ci95_high": null,
+                "point_estimate_only": true,
+                "note": "nearest-rank p95 is order statistic 5 of 5; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+              }
+            },
+            "e2e_median_ms": {
+              "n": 5,
+              "mean": 22.04334,
+              "mean_ci95": {
+                "low": 20.21820578231574,
+                "high": 23.868474217684263
+              },
+              "mean_ci_refused": false,
+              "mean_ci_refusal_reason": null,
+              "p95": {
+                "n": 5,
+                "p95": 23.5434,
+                "order_rank": 5,
+                "ci95_low": null,
+                "ci95_high": null,
+                "point_estimate_only": true,
+                "note": "nearest-rank p95 is order statistic 5 of 5; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+              }
+            },
+            "note": "CI95 applies to the mean of deployment medians (n=5 independent containers), not to pooled cycles"
+          }
+        },
+        "synth_narrow_5mhz": {
+          "n_independent_deployments": 5,
+          "deployments": {
+            "rep1": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.7625,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 24.5388,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.44285,
+              "e2e_median_ms": 19.436249999999998
+            },
+            "rep2": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.0273,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 23.814100000000003,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.2971,
+              "e2e_median_ms": 19.8086
+            },
+            "rep3": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.8197,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 26.086699999999997,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.5242,
+              "e2e_median_ms": 22.595100000000002
+            },
+            "rep4": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.4985,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 23.705,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.56645,
+              "e2e_median_ms": 21.6393
+            },
+            "rep5": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 6.0806,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 27.5856,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.837999999999999,
+              "e2e_median_ms": 22.27885
+            }
+          },
+          "across_deployments": {
+            "grant_median_ms": {
+              "n": 5,
+              "mean": 4.53372,
+              "mean_ci95": {
+                "low": 4.286987952664778,
+                "high": 4.780452047335221
+              },
+              "mean_ci_refused": false,
+              "mean_ci_refusal_reason": null,
+              "p95": {
+                "n": 5,
+                "p95": 4.837999999999999,
+                "order_rank": 5,
+                "ci95_low": null,
+                "ci95_high": null,
+                "point_estimate_only": true,
+                "note": "nearest-rank p95 is order statistic 5 of 5; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+              }
+            },
+            "e2e_median_ms": {
+              "n": 5,
+              "mean": 21.15162,
+              "mean_ci95": {
+                "low": 19.359184645878056,
+                "high": 22.944055354121947
+              },
+              "mean_ci_refused": false,
+              "mean_ci_refusal_reason": null,
+              "p95": {
+                "n": 5,
+                "p95": 22.595100000000002,
+                "order_rank": 5,
+                "ci95_low": null,
+                "ci95_high": null,
+                "point_estimate_only": true,
+                "note": "nearest-rank p95 is order statistic 5 of 5; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+              }
+            },
+            "note": "CI95 applies to the mean of deployment medians (n=5 independent containers), not to pooled cycles"
+          }
+        },
+        "synth_protections_all_off": {
+          "n_independent_deployments": 5,
+          "deployments": {
+            "rep1": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.3853,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 23.8274,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.45615,
+              "e2e_median_ms": 21.2813
+            },
+            "rep2": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.6723,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 26.1657,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.8635,
+              "e2e_median_ms": 22.60765
+            },
+            "rep3": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.506,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 24.546699999999998,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.12285,
+              "e2e_median_ms": 21.3462
+            },
+            "rep4": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.3365,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 24.4006,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.25705,
+              "e2e_median_ms": 22.253100000000003
+            },
+            "rep5": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.2469,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 24.8928,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 3.928,
+              "e2e_median_ms": 18.9951
+            }
+          },
+          "across_deployments": {
+            "grant_median_ms": {
+              "n": 5,
+              "mean": 4.3255099999999995,
+              "mean_ci95": {
+                "low": 3.882100111332016,
+                "high": 4.768919888667983
+              },
+              "mean_ci_refused": false,
+              "mean_ci_refusal_reason": null,
+              "p95": {
+                "n": 5,
+                "p95": 4.8635,
+                "order_rank": 5,
+                "ci95_low": null,
+                "ci95_high": null,
+                "point_estimate_only": true,
+                "note": "nearest-rank p95 is order statistic 5 of 5; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+              }
+            },
+            "e2e_median_ms": {
+              "n": 5,
+              "mean": 21.29667,
+              "mean_ci95": {
+                "low": 19.548303323805417,
+                "high": 23.04503667619458
+              },
+              "mean_ci_refused": false,
+              "mean_ci_refusal_reason": null,
+              "p95": {
+                "n": 5,
+                "p95": 22.60765,
+                "order_rank": 5,
+                "ci95_low": null,
+                "ci95_high": null,
+                "point_estimate_only": true,
+                "note": "nearest-rank p95 is order statistic 5 of 5; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+              }
+            },
+            "note": "CI95 applies to the mean of deployment medians (n=5 independent containers), not to pooled cycles"
+          }
+        },
+        "synth_protections_all_on": {
+          "n_independent_deployments": 5,
+          "deployments": {
+            "rep1": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.703,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 26.829199999999997,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.97865,
+              "e2e_median_ms": 23.451849999999997
+            },
+            "rep2": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 4.895,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 21.6653,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.39935,
+              "e2e_median_ms": 19.85765
+            },
+            "rep3": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 4.9956,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 22.5476,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.49095,
+              "e2e_median_ms": 19.83415
+            },
+            "rep4": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 6.0004,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 27.3367,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.5813500000000005,
+              "e2e_median_ms": 20.9231
+            },
+            "rep5": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.6669,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 25.321900000000003,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.61925,
+              "e2e_median_ms": 21.623350000000002
+            }
+          },
+          "across_deployments": {
+            "grant_median_ms": {
+              "n": 5,
+              "mean": 4.61391,
+              "mean_ci95": {
+                "low": 4.339605875707984,
+                "high": 4.888214124292015
+              },
+              "mean_ci_refused": false,
+              "mean_ci_refusal_reason": null,
+              "p95": {
+                "n": 5,
+                "p95": 4.97865,
+                "order_rank": 5,
+                "ci95_low": null,
+                "ci95_high": null,
+                "point_estimate_only": true,
+                "note": "nearest-rank p95 is order statistic 5 of 5; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+              }
+            },
+            "e2e_median_ms": {
+              "n": 5,
+              "mean": 21.13802,
+              "mean_ci95": {
+                "low": 19.278413942583512,
+                "high": 22.99762605741649
+              },
+              "mean_ci_refused": false,
+              "mean_ci_refusal_reason": null,
+              "p95": {
+                "n": 5,
+                "p95": 23.451849999999997,
+                "order_rank": 5,
+                "ci95_low": null,
+                "ci95_high": null,
+                "point_estimate_only": true,
+                "note": "nearest-rank p95 is order statistic 5 of 5; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+              }
+            },
+            "note": "CI95 applies to the mean of deployment medians (n=5 independent containers), not to pooled cycles"
+          }
+        },
+        "synth_short_timers": {
+          "n_independent_deployments": 5,
+          "deployments": {
+            "rep1": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.7358,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 25.087999999999997,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.8792,
+              "e2e_median_ms": 22.499650000000003
+            },
+            "rep2": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.8866,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 25.028,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 5.124499999999999,
+              "e2e_median_ms": 22.982000000000003
+            },
+            "rep3": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.3267,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 24.1166,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.46485,
+              "e2e_median_ms": 20.39965
+            },
+            "rep4": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 6.2087,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 25.7525,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.88415,
+              "e2e_median_ms": 22.193199999999997
+            },
+            "rep5": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.8355,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 25.3827,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.69875,
+              "e2e_median_ms": 21.661499999999997
+            }
+          },
+          "across_deployments": {
+            "grant_median_ms": {
+              "n": 5,
+              "mean": 4.81029,
+              "mean_ci95": {
+                "low": 4.505750162123677,
+                "high": 5.114829837876323
+              },
+              "mean_ci_refused": false,
+              "mean_ci_refusal_reason": null,
+              "p95": {
+                "n": 5,
+                "p95": 5.124499999999999,
+                "order_rank": 5,
+                "ci95_low": null,
+                "ci95_high": null,
+                "point_estimate_only": true,
+                "note": "nearest-rank p95 is order statistic 5 of 5; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+              }
+            },
+            "e2e_median_ms": {
+              "n": 5,
+              "mean": 21.947200000000002,
+              "mean_ci95": {
+                "low": 20.719300242285794,
+                "high": 23.17509975771421
+              },
+              "mean_ci_refused": false,
+              "mean_ci_refusal_reason": null,
+              "p95": {
+                "n": 5,
+                "p95": 22.982000000000003,
+                "order_rank": 5,
+                "ci95_low": null,
+                "ci95_high": null,
+                "point_estimate_only": true,
+                "note": "nearest-rank p95 is order statistic 5 of 5; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+              }
+            },
+            "note": "CI95 applies to the mean of deployment medians (n=5 independent containers), not to pooled cycles"
+          }
+        },
+        "synth_wide_20mhz": {
+          "n_independent_deployments": 5,
+          "deployments": {
+            "rep1": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.4965,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 24.6887,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.29235,
+              "e2e_median_ms": 20.64545
+            },
+            "rep2": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.3943,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 23.104199999999995,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.3395,
+              "e2e_median_ms": 20.03465
+            },
+            "rep3": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.8058,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 24.6109,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.64035,
+              "e2e_median_ms": 22.322850000000003
+            },
+            "rep4": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 5.6427,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 25.6068,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.3842,
+              "e2e_median_ms": 21.0426
+            },
+            "rep5": {
+              "n_cycles_observed": 30,
+              "grant_client_ms": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 4.9858,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "e2e_client_ms_within_deployment": {
+                "n": 30,
+                "mean": null,
+                "mean_ci95": null,
+                "mean_ci_refused": true,
+                "mean_ci_refusal_reason": "observations are not independent experimental units",
+                "p95": {
+                  "n": 30,
+                  "p95": 23.6172,
+                  "order_rank": 29,
+                  "ci95_low": null,
+                  "ci95_high": null,
+                  "point_estimate_only": true,
+                  "note": "nearest-rank p95 is order statistic 29 of 30; reported as a point estimate only (no CI)"
+                }
+              },
+              "grant_median_ms": 4.2583,
+              "e2e_median_ms": 19.5104
+            }
+          },
+          "across_deployments": {
+            "grant_median_ms": {
+              "n": 5,
+              "mean": 4.38294,
+              "mean_ci95": {
+                "low": 4.194774898583925,
+                "high": 4.571105101416074
+              },
+              "mean_ci_refused": false,
+              "mean_ci_refusal_reason": null,
+              "p95": {
+                "n": 5,
+                "p95": 4.64035,
+                "order_rank": 5,
+                "ci95_low": null,
+                "ci95_high": null,
+                "point_estimate_only": true,
+                "note": "nearest-rank p95 is order statistic 5 of 5; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+              }
+            },
+            "e2e_median_ms": {
+              "n": 5,
+              "mean": 20.71119,
+              "mean_ci95": {
+                "low": 19.378246649482946,
+                "high": 22.04413335051705
+              },
+              "mean_ci_refused": false,
+              "mean_ci_refusal_reason": null,
+              "p95": {
+                "n": 5,
+                "p95": 22.322850000000003,
+                "order_rank": 5,
+                "ci95_low": null,
+                "ci95_high": null,
+                "point_estimate_only": true,
+                "note": "nearest-rank p95 is order statistic 5 of 5; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+              }
+            },
+            "note": "CI95 applies to the mean of deployment medians (n=5 independent containers), not to pooled cycles"
+          }
+        }
+      },
+      "recommendation": "Treat within-deployment cycle summaries as descriptive. Inferential profile claims must use the \u22655 independent deployment medians per profile \u2014 never pool 150 cycles as if they were independent replicas."
+    },
+    "unified_coldstart": {
+      "experiment": "unified_coldstart",
+      "catalog": {
+        "summary_n_counts": "independent Docker cold start",
+        "independent_unit": "Docker container destroyed after each run",
+        "default_n_within_unit": 1,
+        "default_n_independent": 30,
+        "pseudoreplication_risk": false,
+        "mean_ci_appropriate_on_summary_n": true,
+        "p95_on_summary_n": "point estimate over ~30 independent starts; no CI",
+        "figure_dispersion": "boxplot over independent containers (IQR/whiskers)"
+      },
+      "cold_start_total_ms": {
+        "n": 240,
+        "mean": 725.1802124999999,
+        "mean_ci95": {
+          "low": 722.1050100565363,
+          "high": 728.2554149434635
+        },
+        "mean_ci_refused": false,
+        "mean_ci_refusal_reason": null,
+        "p95": {
+          "n": 240,
+          "p95": 775.653,
+          "order_rank": 228,
+          "ci95_low": null,
+          "ci95_high": null,
+          "point_estimate_only": true,
+          "note": "nearest-rank p95 is order statistic 228 of 240; reported as a point estimate only (no CI)"
+        }
+      },
+      "legacy_first_ready_risk": false,
+      "legacy_note": null,
+      "recommendation": "Mean CI across independent containers is appropriate. Keep p95 as a point estimate unless n is substantially increased."
+    },
+    "container_concurrency": {
+      "experiment": "container_concurrency",
+      "catalog": {
+        "summary_n_counts": "independent K-container deployment + load",
+        "independent_unit": "deployment repeat (scenario \u00d7 K)",
+        "default_n_within_unit": 1,
+        "default_n_independent": 5,
+        "pseudoreplication_risk": false,
+        "mean_ci_appropriate_on_summary_n": true,
+        "p95_on_summary_n": "grant_batch_latency_p95_ms is a within-run batch p95, then summarized across repeats; legacy grant_latency_p95_ms is amortized, not per-Grant",
+        "figure_dispersion": "summary CI95 is for the mean across repeats (n\u22485)"
+      },
+      "groups": {
+        "K=10|mode=fixed_total": {
+          "n_repeats": 10,
+          "load_wall_sec": {
+            "n": 10,
+            "mean": 0.77622,
+            "mean_ci95": {
+              "low": 0.7652976756121419,
+              "high": 0.7871423243878581
+            },
+            "mean_ci_refused": false,
+            "mean_ci_refusal_reason": null,
+            "p95": {
+              "n": 10,
+              "p95": 0.7941,
+              "order_rank": 10,
+              "ci95_low": null,
+              "ci95_high": null,
+              "point_estimate_only": true,
+              "note": "nearest-rank p95 is order statistic 10 of 10; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+            }
+          },
+          "grant_batch_latency_p95_ms_across_repeats": {
+            "n": 10,
+            "mean": 399.4807,
+            "mean_ci95": {
+              "low": 381.7851115523177,
+              "high": 417.17628844768234
+            },
+            "mean_ci_refused": false,
+            "mean_ci_refusal_reason": null,
+            "p95": {
+              "n": 10,
+              "p95": 439.5803,
+              "order_rank": 10,
+              "ci95_low": null,
+              "ci95_high": null,
+              "point_estimate_only": true,
+              "note": "nearest-rank p95 is order statistic 10 of 10; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+            }
+          },
+          "note": "CI on grant_batch_latency_p95_ms is a CI for the mean of within-run batch p95s across repeats \u2014 not a CI for a per-Grant p95. Do not use legacy grant_latency_p95_ms."
+        },
+        "K=15|mode=fixed_total": {
+          "n_repeats": 10,
+          "load_wall_sec": {
+            "n": 10,
+            "mean": 0.8079700000000001,
+            "mean_ci95": {
+              "low": 0.7985698211878923,
+              "high": 0.8173701788121078
+            },
+            "mean_ci_refused": false,
+            "mean_ci_refusal_reason": null,
+            "p95": {
+              "n": 10,
+              "p95": 0.8316,
+              "order_rank": 10,
+              "ci95_low": null,
+              "ci95_high": null,
+              "point_estimate_only": true,
+              "note": "nearest-rank p95 is order statistic 10 of 10; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+            }
+          },
+          "grant_batch_latency_p95_ms_across_repeats": {
+            "n": 10,
+            "mean": 550.11043,
+            "mean_ci95": {
+              "low": 539.4247590624798,
+              "high": 560.7961009375201
+            },
+            "mean_ci_refused": false,
+            "mean_ci_refusal_reason": null,
+            "p95": {
+              "n": 10,
+              "p95": 577.4924,
+              "order_rank": 10,
+              "ci95_low": null,
+              "ci95_high": null,
+              "point_estimate_only": true,
+              "note": "nearest-rank p95 is order statistic 10 of 10; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+            }
+          },
+          "note": "CI on grant_batch_latency_p95_ms is a CI for the mean of within-run batch p95s across repeats \u2014 not a CI for a per-Grant p95. Do not use legacy grant_latency_p95_ms."
+        },
+        "K=1|mode=fixed_total": {
+          "n_repeats": 10,
+          "load_wall_sec": {
+            "n": 10,
+            "mean": 3.6491100000000003,
+            "mean_ci95": {
+              "low": 3.6186498660427047,
+              "high": 3.679570133957296
+            },
+            "mean_ci_refused": false,
+            "mean_ci_refusal_reason": null,
+            "p95": {
+              "n": 10,
+              "p95": 3.7219,
+              "order_rank": 10,
+              "ci95_low": null,
+              "ci95_high": null,
+              "point_estimate_only": true,
+              "note": "nearest-rank p95 is order statistic 10 of 10; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+            }
+          },
+          "grant_batch_latency_p95_ms_across_repeats": {
+            "n": 10,
+            "mean": 186.43716999999998,
+            "mean_ci95": {
+              "low": 183.48985892026514,
+              "high": 189.38448107973483
+            },
+            "mean_ci_refused": false,
+            "mean_ci_refusal_reason": null,
+            "p95": {
+              "n": 10,
+              "p95": 193.4005,
+              "order_rank": 10,
+              "ci95_low": null,
+              "ci95_high": null,
+              "point_estimate_only": true,
+              "note": "nearest-rank p95 is order statistic 10 of 10; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+            }
+          },
+          "note": "CI on grant_batch_latency_p95_ms is a CI for the mean of within-run batch p95s across repeats \u2014 not a CI for a per-Grant p95. Do not use legacy grant_latency_p95_ms."
+        },
+        "K=2|mode=fixed_total": {
+          "n_repeats": 10,
+          "load_wall_sec": {
+            "n": 10,
+            "mean": 2.0129,
+            "mean_ci95": {
+              "low": 1.9848159948893327,
+              "high": 2.040984005110668
+            },
+            "mean_ci_refused": false,
+            "mean_ci_refusal_reason": null,
+            "p95": {
+              "n": 10,
+              "p95": 2.0786,
+              "order_rank": 10,
+              "ci95_low": null,
+              "ci95_high": null,
+              "point_estimate_only": true,
+              "note": "nearest-rank p95 is order statistic 10 of 10; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+            }
+          },
+          "grant_batch_latency_p95_ms_across_repeats": {
+            "n": 10,
+            "mean": 201.00087,
+            "mean_ci95": {
+              "low": 198.61800569697772,
+              "high": 203.38373430302227
+            },
+            "mean_ci_refused": false,
+            "mean_ci_refusal_reason": null,
+            "p95": {
+              "n": 10,
+              "p95": 207.0156,
+              "order_rank": 10,
+              "ci95_low": null,
+              "ci95_high": null,
+              "point_estimate_only": true,
+              "note": "nearest-rank p95 is order statistic 10 of 10; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+            }
+          },
+          "note": "CI on grant_batch_latency_p95_ms is a CI for the mean of within-run batch p95s across repeats \u2014 not a CI for a per-Grant p95. Do not use legacy grant_latency_p95_ms."
+        },
+        "K=3|mode=fixed_total": {
+          "n_repeats": 10,
+          "load_wall_sec": {
+            "n": 10,
+            "mean": 1.3689500000000001,
+            "mean_ci95": {
+              "low": 1.360206054094289,
+              "high": 1.3776939459057111
+            },
+            "mean_ci_refused": false,
+            "mean_ci_refusal_reason": null,
+            "p95": {
+              "n": 10,
+              "p95": 1.3868,
+              "order_rank": 10,
+              "ci95_low": null,
+              "ci95_high": null,
+              "point_estimate_only": true,
+              "note": "nearest-rank p95 is order statistic 10 of 10; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+            }
+          },
+          "grant_batch_latency_p95_ms_across_repeats": {
+            "n": 10,
+            "mean": 209.68968,
+            "mean_ci95": {
+              "low": 208.29930043657768,
+              "high": 211.08005956342234
+            },
+            "mean_ci_refused": false,
+            "mean_ci_refusal_reason": null,
+            "p95": {
+              "n": 10,
+              "p95": 212.1221,
+              "order_rank": 10,
+              "ci95_low": null,
+              "ci95_high": null,
+              "point_estimate_only": true,
+              "note": "nearest-rank p95 is order statistic 10 of 10; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+            }
+          },
+          "note": "CI on grant_batch_latency_p95_ms is a CI for the mean of within-run batch p95s across repeats \u2014 not a CI for a per-Grant p95. Do not use legacy grant_latency_p95_ms."
+        },
+        "K=5|mode=fixed_total": {
+          "n_repeats": 10,
+          "load_wall_sec": {
+            "n": 10,
+            "mean": 0.90169,
+            "mean_ci95": {
+              "low": 0.8921563594772826,
+              "high": 0.9112236405227174
+            },
+            "mean_ci_refused": false,
+            "mean_ci_refusal_reason": null,
+            "p95": {
+              "n": 10,
+              "p95": 0.9236,
+              "order_rank": 10,
+              "ci95_low": null,
+              "ci95_high": null,
+              "point_estimate_only": true,
+              "note": "nearest-rank p95 is order statistic 10 of 10; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+            }
+          },
+          "grant_batch_latency_p95_ms_across_repeats": {
+            "n": 10,
+            "mean": 223.00633,
+            "mean_ci95": {
+              "low": 220.4319856429271,
+              "high": 225.5806743570729
+            },
+            "mean_ci_refused": false,
+            "mean_ci_refusal_reason": null,
+            "p95": {
+              "n": 10,
+              "p95": 229.0415,
+              "order_rank": 10,
+              "ci95_low": null,
+              "ci95_high": null,
+              "point_estimate_only": true,
+              "note": "nearest-rank p95 is order statistic 10 of 10; reported as a point estimate only (no CI); with n<20 the estimate is dominated by the extreme order statistics"
+            }
+          },
+          "note": "CI on grant_batch_latency_p95_ms is a CI for the mean of within-run batch p95s across repeats \u2014 not a CI for a per-Grant p95. Do not use legacy grant_latency_p95_ms."
+        }
+      },
+      "k_selection_sensitivity": {
+        "available": false,
+        "reason": "No calibration campaign with fixed population and measured memory/latency under the P1-09 limits is present in artifacts. Sensitivity of selected K cannot be assessed from current data.",
+        "minimal_collection": "Run container_concurrency with --devices 1500, K\u2208{1,2,3,5,10,15}, 5 repeats (calibration), then 5 validation repeats for selected K and reference K=15 with a disjoint seed (see P1-09)."
+      },
+      "recommendation": "With n_repeats=5, mean CIs are wide; do not treat run-level p95 as a stable tail proof. Prefer median/IQR of load_wall_sec and grant_batch_latency_p95_ms across repeats."
+    }
+  }
+}

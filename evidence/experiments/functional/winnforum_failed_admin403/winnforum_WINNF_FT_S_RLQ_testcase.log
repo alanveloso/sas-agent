@@ -1,0 +1,106 @@
+[INFO] 2026-11-13 16:29:04,792 util.py:76 Running WinnForum test case test_WINNF_FT_S_RLQ_6:
+[INFO] 2026-11-13 16:29:04,793 util.py:77 [Configurable] Multiple Relinquishments.
+[INFO] 2026-11-13 16:29:04,793 util.py:127 test_WINNF_FT_S_RLQ_6: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_RLQ_6/default.config'
+test_WINNF_FT_S_RLQ_1 (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_1) ... ERROR
+test_WINNF_FT_S_RLQ_2 (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_2) ... ERROR
+test_WINNF_FT_S_RLQ_3 (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_3) ... ERROR
+test_WINNF_FT_S_RLQ_4 (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_4) ... ERROR
+test_WINNF_FT_S_RLQ_5 (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_5) ... ERROR
+test_WINNF_FT_S_RLQ_6_0_default (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_6_0_default)
+[Configurable] Multiple Relinquishments. ... ERROR
+
+======================================================================
+ERROR: test_WINNF_FT_S_RLQ_1 (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_RLQ_testcase.py", line 34, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_RLQ_2 (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_2)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_RLQ_testcase.py", line 34, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_RLQ_3 (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_3)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_RLQ_testcase.py", line 34, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_RLQ_4 (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_4)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_RLQ_testcase.py", line 34, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_RLQ_5 (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_5)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_RLQ_testcase.py", line 34, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_RLQ_6_0_default (testcases.WINNF_FT_S_RLQ_testcase.RelinquishmentTestcase.test_WINNF_FT_S_RLQ_6_0_default)
+[Configurable] Multiple Relinquishments.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_RLQ_testcase.py", line 34, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.030s
+
+FAILED (errors=6)

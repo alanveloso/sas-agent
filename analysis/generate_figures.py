@@ -29,7 +29,12 @@ sys.path.insert(0, str(REPO))
 
 import statistics as st  # noqa: E402
 
-from analysis.load_data import latest_campaign  # noqa: E402
+from analysis.load_data import (  # noqa: E402
+    DEFAULT_CAMPAIGN,
+    EXPERIMENTS,
+    ensure_experiments_staged,
+    latest_campaign,
+)
 from analysis.validate_campaign import discover_lifecycle_raw_csvs  # noqa: E402
 
 OPS = [
@@ -576,6 +581,8 @@ def main() -> int:
     if not campaign:
         print("no campaign under artifacts/raw/", file=sys.stderr)
         return 1
+    if campaign == DEFAULT_CAMPAIGN:
+        ensure_experiments_staged()
 
     try:
         import matplotlib
@@ -585,7 +592,10 @@ def main() -> int:
         print("matplotlib required: pip install matplotlib", file=sys.stderr)
         return 1
 
-    out = REPO / "artifacts" / "figures" / campaign
+    if campaign == DEFAULT_CAMPAIGN:
+        out = EXPERIMENTS / "analysis" / "figures"
+    else:
+        out = REPO / "artifacts" / "figures" / campaign
     out.mkdir(parents=True, exist_ok=True)
 
     # Drop superseded multi-panel / titled companions if present

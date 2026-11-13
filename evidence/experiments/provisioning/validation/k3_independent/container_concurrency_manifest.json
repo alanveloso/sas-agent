@@ -1,0 +1,116 @@
+{
+  "timestamp_utc": "2026-11-13T14:16:29Z",
+  "python_version": "3.12.3",
+  "platform": "Linux-6.17.0-1033-oem-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "machine": "x86_64",
+  "node": "alanveloso-ThinkPad-P14s-Gen-5-AMD",
+  "seed": 94242,
+  "n": 1500,
+  "warmup": 0,
+  "packages": {
+    "httpx": "0.28.1",
+    "psutil": "7.2.2",
+    "fastapi": "0.139.2",
+    "uvicorn": "0.51.0",
+    "sqlalchemy": "2.0.51"
+  },
+  "docker_version": "29.9.3",
+  "git": {
+    "commit": "310ed1e229cbb017341d00ec87fbf3b7593c2a29",
+    "dirty": false,
+    "dirty_file_count": 0
+  },
+  "host_load": {
+    "loadavg_1m": 0.92578125,
+    "loadavg_5m": 0.8203125,
+    "loadavg_15m": 1.005859375,
+    "cpu_percent_prior": 0.9,
+    "memory_used_percent_prior": 19.6,
+    "temperatures_c": {
+      "ath11k_hwmon:ath11k_hwmon_0": 48.0,
+      "acpitz:acpitz_0": 53.0,
+      "nvme:Composite": 39.85,
+      "nvme:Sensor 1": 47.85,
+      "nvme:Sensor 2": 39.85,
+      "k10temp:Tctl": 53.75,
+      "spd5118:spd5118_0": 50.5,
+      "thinkpad:CPU": 53.0,
+      "thinkpad:thinkpad_1": 53.0,
+      "thinkpad:thinkpad_2": 0.0,
+      "thinkpad:thinkpad_3": 53.0,
+      "thinkpad:thinkpad_4": 53.0,
+      "amdgpu:edge": 49.0
+    },
+    "temperature_max_c": 53.75,
+    "temperature_tctl_c": 53.75
+  },
+  "script_hashes": {
+    "container_concurrency_bench.py": "4c0628ba77f83b916e3f644b7047feba4698d75ff7ea5dafb08244cf6d93bbc0",
+    "common.py": "2d4c20e88643713f9bcdf1de2293565514e15dddc97b42abde02457063de8e93"
+  },
+  "lscpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           48 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  16\nOn-line CPU(s) list:                     0-15\nVendor ID:                               AuthenticAMD\nModel name:                              AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics\nCPU family:                              25\nModel:                                   117\nThread(s) per core:                      2\nCore(s) per socket:                      8\nSocket(s):                               1\nStepping:                                2\nFrequency boost:                         enabled\nCPU(s) scaling MHz:                      32%\nCPU max MHz:                             5134.8892\nCPU min MHz:                             419.1750\nBogoMIPS:                                6587.40\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good amd_lbr_v2 nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpuid_fault cpb cat_l3 cdp_l3 hw_pstate ssbd mba perfmon_v2 ibrs ibpb stibp ibrs_enhanced vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk avx512_bf16 clzero irperf xsaveerptr rdpru wbnoinvd cppc arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold vgif x2avic v_spec_ctrl vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid overflow_recov succor smca fsrm flush_l1d amd_lbr_pmc_freeze\nVirtualization:                          AMD-V\nL1d cache:                               256 KiB (8 instances)\nL1i cache:                               256 KiB (8 instances)\nL2 cache:                                8 MiB (8 instances)\nL3 cache:                                16 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-15\nVulnerability Gather data sampling:      Not affected\nVulnerability Ghostwrite:                Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Old microcode:             Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Mitigation; Safe RET\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; STIBP always-on; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Mitigation; Clear CPU buffers\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Mitigation; IBPB before exit to userspace\n",
+  "cpu_count": "16",
+  "cpu_model": "AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics",
+  "meminfo_total": "MemTotal:       28368668 kB",
+  "certs_dir": "evidence/tnsm-2026-12135-controlled-20261111T205011Z/meta/harness_certs",
+  "certs_fingerprint": "5e15918c74954fedeec436f4d370f2a67751e762be0f45d9f5531ae8a205489e",
+  "experiment": "container_concurrency",
+  "population": {
+    "mode": "fixed_total",
+    "n_semantics": "total devices split across K",
+    "devices_per_agent": null,
+    "total_devices_by_k": {
+      "3": 1500
+    }
+  },
+  "request_concurrency": {
+    "model": "one sequential HTTPS client per agent; batches of up to 100 items",
+    "max_inflight_requests_per_agent": 1,
+    "max_inflight_requests_total": "k_containers * 1"
+  },
+  "scenarios": [
+    "A"
+  ],
+  "k_values": [
+    3
+  ],
+  "k_schedules": [
+    [
+      3
+    ],
+    [
+      3
+    ],
+    [
+      3
+    ],
+    [
+      3
+    ],
+    [
+      3
+    ]
+  ],
+  "repeats": 5,
+  "grant_batch_max": 100,
+  "grant_latency_semantics": {
+    "grant_batch_latency_*_ms": "HTTP round-trip per Grant batch POST",
+    "grant_amortized_ms_per_item": "sum(batch time) / sum(items in batches)",
+    "grant_latency_*_ms": "legacy amortized (batch time / batch size per successful item); not individual Grant latency"
+  },
+  "memory_semantics": {
+    "ram_peak_mb_sum": "SAMPLED maximum of sum(docker stats MemUsage) over complete sweeps at interval=0.5s (enter + periodic + exit). Cgroup/RSS-like container memory; NOT process PSS; NOT an absolute peak between samples. Blank only if every complete sample failed (stats_sweeps = 0).",
+    "ram_after_load_mb_sum": "sum of docker-stats MemUsage per container once after load, before teardown; distinct from the sampled maximum",
+    "process_pss": "not measured here; see process concurrency ram_peak_pss_mb for host-process PSS"
+  },
+  "image": {
+    "tag": "sas-agent:article",
+    "digest": "sas-agent@sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+  },
+  "failures": 0,
+  "outputs": {
+    "runs": "evidence/tnsm-2026-12135-complementary-20261113T141440Z/12_provisioning/k3_validation/container_concurrency_runs.csv",
+    "summary": "evidence/tnsm-2026-12135-complementary-20261113T141440Z/12_provisioning/k3_validation/container_concurrency_summary.csv"
+  }
+}

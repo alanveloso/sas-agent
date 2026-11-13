@@ -1,0 +1,73 @@
+=== SAS Agent article preflight ===
+Repository: 
+Host:       alanveloso-ThinkPad-P14s-Gen-5-AMD
+Started:    2026-11-12T21:08:52Z
+
+[1/14] Git state
+  [OK]   Commit: 6676207df664b43c302accc558cf9a8e18ca3c0c
+  [OK]   Branch: develop
+  [OK]   Working tree is clean.
+
+[2/14] Power source
+  [OK]   AC power is connected.
+
+[3/14] Clock synchronization
+  [OK]   System clock is synchronized.
+
+[4/14] Docker
+  [OK]   Docker daemon is available (server 29.9.3).
+  [OK]   No unrelated Docker containers are running.
+  [OK]   Docker image found: sas-agent:article
+  [OK]   Image ID: sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e
+  [OK]   Image digest: sas-agent@sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e
+
+[5/14] CPU temperature
+  [OK]   CPU Tctl: 61.6°C (limit 65°C).
+
+[6/14] Host load
+  [OK]   1-minute load average: 0.92 (limit 1.0).
+  [OK]   CPU busy: 0.249% (limit 10%).
+
+[7/14] CPU frequency policy
+  [OK]   CPU governor: powersave
+  [OK]   Turbo/boost state: cpufreq_boost=1
+
+[8/14] Memory and swap
+  [OK]   Available memory: 25024 MB.
+  [OK]   No swap activity detected.
+
+[9/14] Disk capacity
+  [OK]   Repository filesystem free: 128.4 GB.
+  [OK]   Docker filesystem free: 128.4 GB.
+
+[10/14] Background updates
+  [FAIL] Background update services are active: unattended-upgrades.service,packagekit.service,snapd.service,fwupd.service
+  [OK]   No package-manager lock is in use.
+
+[11/14] Interfering user processes
+  [WARN] Potentially interfering processes were detected.
+
+[12/14] I/O pressure
+  [OK]   I/O pressure avg10: 0.00%.
+
+[13/14] Kernel warnings and throttling hints
+  [WARN] dmesg is not readable by the current user.
+
+[14/14] Reproducibility metadata
+  [OK]   CPU: unknown
+  [OK]   Logical CPUs: 16
+  [OK]   Kernel: 6.17.0-1033-oem
+  [OK]   OS: Ubuntu 24.04.5 LTS
+  [OK]   Python: Python 3.12.3
+
+=== Summary ===
+Report: artifacts/manifests/preflight-20261112T210852Z.json
+Warnings: 2
+Failures: 1
+
+Warnings:
+  - Potentially interfering processes were detected.
+  - dmesg is not readable by the current user.
+
+Preflight FAILED:
+  - Background update services are active: unattended-upgrades.service,packagekit.service,snapd.service,fwupd.service

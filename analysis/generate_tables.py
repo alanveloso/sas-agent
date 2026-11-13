@@ -15,6 +15,9 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
 from analysis.load_data import (  # noqa: E402
+    DEFAULT_CAMPAIGN,
+    EXPERIMENTS,
+    ensure_experiments_staged,
     latest_campaign,
     load_cert_matrix_summary,
     load_coldstart_summary,
@@ -55,9 +58,18 @@ def main() -> int:
     if not campaign:
         print("no campaign under artifacts/raw/", file=sys.stderr)
         return 1
+    if campaign == DEFAULT_CAMPAIGN:
+        ensure_experiments_staged()
 
-    out_dir = TABLES / campaign
+    # Prefer published collection for durable outputs; keep artifacts/tables mirror.
+    if campaign == DEFAULT_CAMPAIGN:
+        out_dir = EXPERIMENTS / "analysis" / "tables"
+    else:
+        out_dir = TABLES / campaign
     out_dir.mkdir(parents=True, exist_ok=True)
+    if campaign == DEFAULT_CAMPAIGN:
+        mirror = TABLES / campaign
+        mirror.mkdir(parents=True, exist_ok=True)
     md: list[str] = [
         f"# Tables — campaign `{campaign}`",
         "",

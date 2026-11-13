@@ -1,0 +1,281 @@
+[INFO] 2026-11-13 16:29:03,483 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_5:
+[INFO] 2026-11-13 16:29:03,483 util.py:77  SAS rejects GrantRequest if the CBSD already has a Grant from another SAS.
+
+    
+[INFO] 2026-11-13 16:29:03,483 util.py:127 test_WINNF_FT_S_GRA_5: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_GRA_5/default.config'
+[INFO] 2026-11-13 16:29:03,504 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_6:
+[INFO] 2026-11-13 16:29:03,504 util.py:77  SAS terminates Grant upon learning that the CBSD has a Grant from another SAS
+
+    The response should be 500 for HeartBeat Response.
+    
+[INFO] 2026-11-13 16:29:03,504 util.py:127 test_WINNF_FT_S_GRA_6: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_GRA_6/default.config'
+[INFO] 2026-11-13 16:29:03,506 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_17:
+[INFO] 2026-11-13 16:29:03,506 util.py:77 [Configurable] Array grant request.
+[INFO] 2026-11-13 16:29:03,506 util.py:127 test_WINNF_FT_S_GRA_17: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_GRA_17/default.config'
+test_WINNF_FT_S_GRA_1 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_1) ... ERROR
+test_WINNF_FT_S_GRA_10 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_10) ... ERROR
+test_WINNF_FT_S_GRA_11 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_11) ... ERROR
+test_WINNF_FT_S_GRA_12 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_12) ... ERROR
+test_WINNF_FT_S_GRA_13 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_13) ... ERROR
+test_WINNF_FT_S_GRA_15 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_15) ... ERROR
+test_WINNF_FT_S_GRA_16 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_16) ... ERROR
+test_WINNF_FT_S_GRA_17_0_default (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_17_0_default)
+[Configurable] Array grant request. ... ERROR
+test_WINNF_FT_S_GRA_2 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_2) ... ERROR
+test_WINNF_FT_S_GRA_3 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_3) ... ERROR
+test_WINNF_FT_S_GRA_4 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_4) ... ERROR
+test_WINNF_FT_S_GRA_5_0_default (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_5_0_default)
+SAS rejects GrantRequest if the CBSD already has a Grant from another SAS. ... ERROR
+test_WINNF_FT_S_GRA_6_0_default (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_6_0_default)
+SAS terminates Grant upon learning that the CBSD has a Grant from another SAS ... ERROR
+test_WINNF_FT_S_GRA_7 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_7) ... ERROR
+test_WINNF_FT_S_GRA_8 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_8) ... ERROR
+test_WINNF_FT_S_GRA_9 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_9) ... ERROR
+
+======================================================================
+ERROR: test_WINNF_FT_S_GRA_1 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_GRA_testcase.py", line 65, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_GRA_10 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_10)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_GRA_testcase.py", line 65, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_GRA_11 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_11)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_GRA_testcase.py", line 65, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_GRA_12 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_12)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_GRA_testcase.py", line 65, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_GRA_13 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_13)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_GRA_testcase.py", line 65, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_GRA_15 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_15)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_GRA_testcase.py", line 65, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_GRA_16 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_16)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_GRA_testcase.py", line 65, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_GRA_17_0_default (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_17_0_default)
+[Configurable] Array grant request.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_GRA_testcase.py", line 65, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_GRA_2 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_2)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_GRA_testcase.py", line 65, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_GRA_3 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_3)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_GRA_testcase.py", line 65, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_GRA_4 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_4)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_GRA_testcase.py", line 65, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_GRA_5_0_default (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_5_0_default)
+SAS rejects GrantRequest if the CBSD already has a Grant from another SAS.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_GRA_testcase.py", line 65, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_GRA_6_0_default (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_6_0_default)
+SAS terminates Grant upon learning that the CBSD has a Grant from another SAS
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_GRA_testcase.py", line 65, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_GRA_7 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_7)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_GRA_testcase.py", line 65, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_GRA_8 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_8)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_GRA_testcase.py", line 65, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_GRA_9 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_9)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_GRA_testcase.py", line 65, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.074s
+
+FAILED (errors=16)

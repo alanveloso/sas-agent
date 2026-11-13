@@ -1,0 +1,202 @@
+[INFO] 2026-11-13 16:29:02,784 util.py:76 Running WinnForum test case test_WINNF_FT_S_SIQ_12:
+[INFO] 2026-11-13 16:29:02,784 util.py:77 [Configurable] Spectrum inquiry in the presence of protected entities.
+[INFO] 2026-11-13 16:29:02,784 util.py:127 test_WINNF_FT_S_SIQ_12: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_SIQ_12/default.config'
+test_WINNF_FT_S_SIQ_10 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_10) ... ERROR
+test_WINNF_FT_S_SIQ_11 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_11) ... ERROR
+test_WINNF_FT_S_SIQ_12_0_default (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_12_0_default)
+[Configurable] Spectrum inquiry in the presence of protected entities. ... ERROR
+test_WINNF_FT_S_SIQ_13 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_13) ... ERROR
+test_WINNF_FT_S_SIQ_2 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_2) ... ERROR
+test_WINNF_FT_S_SIQ_3 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_3) ... ERROR
+test_WINNF_FT_S_SIQ_4 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_4) ... ERROR
+test_WINNF_FT_S_SIQ_5 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_5) ... ERROR
+test_WINNF_FT_S_SIQ_6 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_6) ... ERROR
+test_WINNF_FT_S_SIQ_7 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_7) ... ERROR
+test_WINNF_FT_S_SIQ_8 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_8) ... ERROR
+test_WINNF_FT_S_SIQ_9 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_9) ... ERROR
+
+======================================================================
+ERROR: test_WINNF_FT_S_SIQ_10 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_10)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_SIQ_testcase.py", line 36, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_SIQ_11 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_11)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_SIQ_testcase.py", line 36, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_SIQ_12_0_default (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_12_0_default)
+[Configurable] Spectrum inquiry in the presence of protected entities.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_SIQ_testcase.py", line 36, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_SIQ_13 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_13)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_SIQ_testcase.py", line 36, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_SIQ_2 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_2)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_SIQ_testcase.py", line 36, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_SIQ_3 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_3)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_SIQ_testcase.py", line 36, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_SIQ_4 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_4)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_SIQ_testcase.py", line 36, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_SIQ_5 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_5)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_SIQ_testcase.py", line 36, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_SIQ_6 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_6)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_SIQ_testcase.py", line 36, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_SIQ_7 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_7)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_SIQ_testcase.py", line 36, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_SIQ_8 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_8)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_SIQ_testcase.py", line 36, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_SIQ_9 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_9)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_SIQ_testcase.py", line 36, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.073s
+
+FAILED (errors=12)

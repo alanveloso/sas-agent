@@ -55,6 +55,20 @@ docker cp "$IMAGE_CONTAINER:/harness/src/harness/certs/." "$HARNESS_CERTS_DIR"
 docker rm "$IMAGE_CONTAINER" >/dev/null
 IMAGE_CONTAINER=""
 
+# UUT fail-closed on /admin unless the harness admin leaf is allowlisted.
+if [[ -z "${SAS_ADMIN_CERT_SHA256:-}" ]]; then
+  if [[ ! -f "$HARNESS_CERTS_DIR/admin.cert" ]]; then
+    fail "admin.cert ausente em $HARNESS_CERTS_DIR — impossível autorizar /admin/reset"
+    exit 1
+  fi
+  SAS_ADMIN_CERT_SHA256="$(
+    openssl x509 -noout -fingerprint -sha256 -in "$HARNESS_CERTS_DIR/admin.cert" \
+      | cut -d= -f2
+  )"
+  export SAS_ADMIN_CERT_SHA256
+fi
+log "SAS_ADMIN_CERT_SHA256=${SAS_ADMIN_CERT_SHA256:0:24}… (admin.cert allowlist)"
+
 HARNESS_RUN=(docker run --rm --network host -e HOME=/tmp
   -v "$SAS_CFG_FILE:/harness/src/harness/sas.cfg:ro"
   "$HARNESS_IMAGE")

@@ -1,0 +1,72 @@
+{
+  "tests": [
+    "test_admin_authorization.py",
+    "test_authorization_lifecycle.py",
+    "test_band_profile.py",
+    "test_band_profile_robustness.py",
+    "test_border_protection.py",
+    "test_boundary_enforcement.py",
+    "test_colocated_sustained.py",
+    "test_container_concurrency_latency.py",
+    "test_container_concurrency_population.py",
+    "test_federal_db_service.py",
+    "test_grant_service.py",
+    "test_http_mtls_sqlite_recovery.py",
+    "test_lifecycle_sustained.py",
+    "test_protection_decoupling.py",
+    "test_provisioning_selection.py",
+    "test_registration_service.py",
+    "test_sqlite_crash_recovery.py",
+    "test_statistical_uncertainty.py",
+    "test_tls_persistent_revocation.py",
+    "test_unified_coldstart_readiness.py",
+    "test_winnforum_evidence_parse.py"
+  ],
+  "benchmarks_load": [
+    "agent_isolation_bench.py",
+    "boundary_enforcement_bench.py",
+    "cert_matrix_bench.py",
+    "colocated_sustained_bench.py",
+    "common.py",
+    "container_concurrency_bench.py",
+    "factorial_provisioning_bench.py",
+    "http_mtls_sqlite_recovery_campaign.py",
+    "lifecycle_decomp_bench.py",
+    "persistence_modes_bench.py",
+    "tls_mtls_overhead_bench.py",
+    "unified_coldstart.py"
+  ],
+  "analysis": [
+    "__init__.py",
+    "generate_figures.py",
+    "generate_tables.py",
+    "investigate_wide_profile.py",
+    "load_data.py",
+    "provisioning_selection.py",
+    "statistics.py",
+    "uncertainty_report.py",
+    "validate_campaign.py"
+  ],
+  "scripts": [
+    "build_images.sh",
+    "preflight_article.sh",
+    "run_complementary_major_revision.sh",
+    "run_controlled_campaign.sh",
+    "run_full_evaluation.sh"
+  ],
+  "historical_corpus_dirs": [
+    "analysis_stage",
+    "coldstart",
+    "concurrency",
+    "factorial",
+    "functional",
+    "host_telemetry",
+    "lifecycle",
+    "meta",
+    "persistence",
+    "provisioning",
+    "scripts",
+    "sustained",
+    "tls"
+  ]
+}

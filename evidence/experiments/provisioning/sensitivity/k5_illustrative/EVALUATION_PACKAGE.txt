@@ -1,0 +1,6 @@
+evaluation_package=P4_k5_illustrative_sensitivity
+startup_sec=60
+provisioning_sec=1.5
+grant_batch_p95_ms=1000
+memory_mb=2048
+do_not_retune_after_results=true

@@ -33,12 +33,15 @@ docker build -f Dockerfile.harness -t sas-harness .
 Run the SIQ, GRA, and HBT suites against a temporary agent instance:
 
 ```bash
-./run_cbrs_tests.sh
+./scripts/evaluate.sh winnforum
+# equivalent low-level entry:
+# ./run_cbrs_tests.sh
 ```
 
 The runner generates and extracts temporary certificates, starts the agent with
 Docker Compose, runs the suites, and removes the temporary resources when it
-finishes.
+finishes. Prefer `./scripts/evaluate.sh` for the full laboratory evaluation
+workflow (host checks, campaign stages, validation, tables, and figures).
 
 ## Policy for third-party code
 

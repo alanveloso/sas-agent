@@ -1,0 +1,6 @@
+mode=harness_reexecution_FAILED
+failure=HTTP_403_on_admin_reset_setUp
+root_cause=SAS_ADMIN_CERT_SHA256 empty when composing sas-agent:article UUT
+result=all_65_cases_error_before_test_body
+note=Not a SAS protocol regression; admin allowlist missing. Re-run after run_cbrs_tests.sh sets fingerprint from harness admin.cert.
+Do_not_declare_certification=true

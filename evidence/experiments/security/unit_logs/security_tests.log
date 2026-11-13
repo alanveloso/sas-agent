@@ -1,0 +1,83 @@
+[21:09:07Z] RUN security_tests: .venv/bin/python -m unittest tests.test_admin_authorization tests.test_tls_persistent_revocation tests.test_authorization_lifecycle tests.test_http_mtls_sqlite_recovery tests.test_sqlite_crash_recovery -v
+.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+test_allowlisted_certificate_can_reset (tests.test_admin_authorization.AdminAuthorizationTests.test_allowlisted_certificate_can_reset) ... ok
+test_catch_all_admin_paths_are_protected (tests.test_admin_authorization.AdminAuthorizationTests.test_catch_all_admin_paths_are_protected) ... ok
+test_certificate_not_in_allowlist_is_rejected (tests.test_admin_authorization.AdminAuthorizationTests.test_certificate_not_in_allowlist_is_rejected) ... ok
+test_fingerprint_parsing (tests.test_admin_authorization.AdminAuthorizationTests.test_fingerprint_parsing) ... ok
+test_http_headers_are_not_client_identity (tests.test_admin_authorization.AdminAuthorizationTests.test_http_headers_are_not_client_identity) ... ok
+test_no_client_certificate_is_rejected (tests.test_admin_authorization.AdminAuthorizationTests.test_no_client_certificate_is_rejected) ... ok
+test_sha1_fingerprint_is_not_accepted (tests.test_admin_authorization.AdminAuthorizationTests.test_sha1_fingerprint_is_not_accepted) ... ok
+test_unset_allowlist_is_fail_closed (tests.test_admin_authorization.AdminAuthorizationTests.test_unset_allowlist_is_fail_closed) ... ok
+test_bench_client_cert_is_authorized_by_default (tests.test_admin_authorization.DockerRunAdminEnvTests.test_bench_client_cert_is_authorized_by_default) ... ok
+test_explicit_admin_env_is_respected (tests.test_admin_authorization.DockerRunAdminEnvTests.test_explicit_admin_env_is_respected) ... ok
+test_handshake_ssl_object_survives_closed_stream (tests.test_tls_persistent_revocation.BenchObservedFieldsTests.test_handshake_ssl_object_survives_closed_stream) ... ok
+test_new_connection_spans (tests.test_tls_persistent_revocation.BenchObservedFieldsTests.test_new_connection_spans) ... ok
+test_request_fields_cover_observed_columns (tests.test_tls_persistent_revocation.BenchObservedFieldsTests.test_request_fields_cover_observed_columns) ... ok
+test_reused_connection_has_no_connect_spans (tests.test_tls_persistent_revocation.BenchObservedFieldsTests.test_reused_connection_has_no_connect_spans) ... ok
+test_trace_keeps_first_event_time (tests.test_tls_persistent_revocation.BenchObservedFieldsTests.test_trace_keeps_first_event_time) ... ok
+test_context_built_after_crl_update_rejects_revoked_certificate (tests.test_tls_persistent_revocation.CrlSemanticsTests.test_context_built_after_crl_update_rejects_revoked_certificate) ... ok
+test_crl_update_on_disk_affects_neither_open_connection_nor_running_context (tests.test_tls_persistent_revocation.CrlSemanticsTests.test_crl_update_on_disk_affects_neither_open_connection_nor_running_context) ... ok
+test_peer_added_later_is_accepted_on_same_connection (tests.test_tls_persistent_revocation.PerRequestPeerAuthorizationTests.test_peer_added_later_is_accepted_on_same_connection) ... .venv/lib/python3.12/site-packages/sqlalchemy/sql/schema.py:3623: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore
+ok
+test_removed_peer_is_rejected_on_next_request_of_same_connection (tests.test_tls_persistent_revocation.PerRequestPeerAuthorizationTests.test_removed_peer_is_rejected_on_next_request_of_same_connection) ... ok
+test_gaa_grant_binds_global_policy (tests.test_authorization_lifecycle.AuthorizationLifecycleTests.test_gaa_grant_binds_global_policy) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+tests/test_authorization_lifecycle.py:93: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  self.future_exp = (datetime.utcnow() + timedelta(days=30)).strftime(
+ok
+test_heartbeat_renewal_never_exceeds_authorization_expires_at (tests.test_authorization_lifecycle.AuthorizationLifecycleTests.test_heartbeat_renewal_never_exceeds_authorization_expires_at) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+tests/test_authorization_lifecycle.py:249: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  near = datetime.utcnow() + timedelta(seconds=120)
+ok
+test_heartbeat_returns_500_after_revocation (tests.test_authorization_lifecycle.AuthorizationLifecycleTests.test_heartbeat_returns_500_after_revocation) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+tests/test_authorization_lifecycle.py:230: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  past = (datetime.utcnow() - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+tests/test_authorization_lifecycle.py:246: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  self.assertLess(tx, datetime.utcnow())
+ok
+test_missing_authorization_source_is_fail_closed (tests.test_authorization_lifecycle.AuthorizationLifecycleTests.test_missing_authorization_source_is_fail_closed) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+ok
+test_pal_grant_binds_authorization_source (tests.test_authorization_lifecycle.AuthorizationLifecycleTests.test_pal_grant_binds_authorization_source) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+ok
+test_pal_outside_narrowed_band_is_terminated (tests.test_authorization_lifecycle.AuthorizationLifecycleTests.test_pal_outside_narrowed_band_is_terminated) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+ok
+test_replaced_profile_does_not_carry_over_rights (tests.test_authorization_lifecycle.AuthorizationLifecycleTests.test_replaced_profile_does_not_carry_over_rights) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+tests/test_authorization_lifecycle.py:330: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  datetime.utcnow(),
+ok
+test_restart_with_same_profile_keeps_grant (tests.test_authorization_lifecycle.AuthorizationLifecycleTests.test_restart_with_same_profile_keeps_grant) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+ok
+test_revocation_cascade_terminates_derived_grants (tests.test_authorization_lifecycle.AuthorizationLifecycleTests.test_revocation_cascade_terminates_derived_grants) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+tests/test_authorization_lifecycle.py:206: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  past = (datetime.utcnow() - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+ok
+test_revocation_isolates_other_pal_grants (tests.test_authorization_lifecycle.AuthorizationLifecycleTests.test_revocation_isolates_other_pal_grants) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+tests/test_authorization_lifecycle.py:365: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  other_exp = (datetime.utcnow() + timedelta(days=30)).strftime(
+tests/test_authorization_lifecycle.py:430: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  past = (datetime.utcnow() - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+ok
+test_shortened_pal_expiration_clamps_existing_grant (tests.test_authorization_lifecycle.AuthorizationLifecycleTests.test_shortened_pal_expiration_clamps_existing_grant) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+tests/test_authorization_lifecycle.py:348: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  near = (datetime.utcnow() + timedelta(seconds=120)).replace(microsecond=0)
+ok
+test_sigkill_restart_same_db_then_https_heartbeat (tests.test_http_mtls_sqlite_recovery.HttpMtlsSqliteRecoverySmoke.test_sigkill_restart_same_db_then_https_heartbeat) ... ok
+test_sigkill_mid_transaction_keeps_committed_and_rolls_back_pending (tests.test_sqlite_crash_recovery.SqliteCrashRecoveryTests.test_sigkill_mid_transaction_keeps_committed_and_rolls_back_pending) ... ok
+test_default_journal_and_synchronous (tests.test_sqlite_crash_recovery.SqlitePragmaContractTests.test_default_journal_and_synchronous) ... ok
+
+----------------------------------------------------------------------
+Ran 33 tests in 5.363s
+
+OK

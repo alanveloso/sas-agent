@@ -1,0 +1,9 @@
+mode=harness_reexecution
+uut_image=sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e
+harness_image=sha256:94f3828b2fbe8555de5747ed6d7ae8879efc32f5d7a9c8ed49ee74c8457e21d7
+host_commit=310ed1e229cbb017341d00ec87fbf3b7593c2a29
+admin_allowlist=SAS_ADMIN_CERT_SHA256_from_harness_admin.cert
+result=65_pass
+note=Functional regression under frozen article image with admin fingerprint fix. NOT WInnForum certification.
+prior_failed_attempt=02_functional/winnforum_reexec (65 error, HTTP 403 admin reset)
+historical_corpus=evidence/2026-12135/functional/winnforum/ (commit 0119147)

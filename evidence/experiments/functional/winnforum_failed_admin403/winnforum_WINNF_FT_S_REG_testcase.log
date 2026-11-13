@@ -1,0 +1,228 @@
+[INFO] 2026-11-13 16:29:02,083 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_11:
+[INFO] 2026-11-13 16:29:02,083 util.py:77 [Configurable] One-time registration.
+[INFO] 2026-11-13 16:29:02,083 util.py:127 test_WINNF_FT_S_REG_11: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_REG_11/default.config'
+[INFO] 2026-11-13 16:29:02,104 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_12:
+[INFO] 2026-11-13 16:29:02,104 util.py:77 [Configurable] Re-registration (including intervening blacklist).
+[INFO] 2026-11-13 16:29:02,104 util.py:127 test_WINNF_FT_S_REG_12: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_REG_12/default.config'
+[INFO] 2026-11-13 16:29:02,107 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_13:
+[INFO] 2026-11-13 16:29:02,107 util.py:77 [Configurable] Unsupported SAS Protocol version.
+[INFO] 2026-11-13 16:29:02,107 util.py:127 test_WINNF_FT_S_REG_13: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_REG_13/default.config'
+test_WINNF_FT_S_REG_1 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_1) ... ERROR
+test_WINNF_FT_S_REG_10 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_10) ... ERROR
+test_WINNF_FT_S_REG_11_0_default (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_11_0_default)
+[Configurable] One-time registration. ... ERROR
+test_WINNF_FT_S_REG_12_0_default (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_12_0_default)
+[Configurable] Re-registration (including intervening blacklist). ... ERROR
+test_WINNF_FT_S_REG_13_0_default (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_13_0_default)
+[Configurable] Unsupported SAS Protocol version. ... ERROR
+test_WINNF_FT_S_REG_2 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_2) ... ERROR
+test_WINNF_FT_S_REG_3 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_3) ... ERROR
+test_WINNF_FT_S_REG_4 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_4) ... ERROR
+test_WINNF_FT_S_REG_5 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_5) ... ERROR
+test_WINNF_FT_S_REG_6 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_6) ... ERROR
+test_WINNF_FT_S_REG_7 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_7) ... ERROR
+test_WINNF_FT_S_REG_8 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_8) ... ERROR
+test_WINNF_FT_S_REG_9 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_9) ... ERROR
+
+======================================================================
+ERROR: test_WINNF_FT_S_REG_1 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_REG_testcase.py", line 38, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_REG_10 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_10)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_REG_testcase.py", line 38, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_REG_11_0_default (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_11_0_default)
+[Configurable] One-time registration.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_REG_testcase.py", line 38, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_REG_12_0_default (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_12_0_default)
+[Configurable] Re-registration (including intervening blacklist).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_REG_testcase.py", line 38, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_REG_13_0_default (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_13_0_default)
+[Configurable] Unsupported SAS Protocol version.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_REG_testcase.py", line 38, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_REG_2 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_2)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_REG_testcase.py", line 38, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_REG_3 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_3)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_REG_testcase.py", line 38, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_REG_4 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_4)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_REG_testcase.py", line 38, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_REG_5 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_5)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_REG_testcase.py", line 38, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_REG_6 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_6)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_REG_testcase.py", line 38, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_REG_7 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_7)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_REG_testcase.py", line 38, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_REG_8 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_8)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_REG_testcase.py", line 38, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_REG_9 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_9)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_REG_testcase.py", line 38, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.111s
+
+FAILED (errors=13)

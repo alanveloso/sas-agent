@@ -1,0 +1,8 @@
+[21:09:37Z] RUN robustness: .venv/bin/python -m unittest tests.test_band_profile_robustness -v
+test_invalid_profiles_rejected (tests.test_band_profile_robustness.BandProfileRobustnessTests.test_invalid_profiles_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+OK
+Wrote benchmarks/data/band_profile_robustness.csv (10 rows)

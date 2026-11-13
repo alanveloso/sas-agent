@@ -1,1 +1,0 @@
-certs_from=/home/alanveloso/Código/sas-agent/evidence/tnsm-2026-12135-controlled-20261111T205011Z/meta/harness_certs
