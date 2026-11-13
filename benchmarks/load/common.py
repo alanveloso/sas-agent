@@ -688,3 +688,40 @@ def docker_stats_sample(container: str) -> tuple[float | None, float | None]:
     if proc.returncode != 0:
         return None, None
     return parse_docker_stats_line(proc.stdout)
+
+
+def docker_stats_sample_many(
+    containers: list[str],
+) -> list[tuple[float | None, float | None]]:
+    """One ``docker stats --no-stream`` for all containers (avoids N serial RPCs).
+
+    Returns one (cpu, mem_mb) per input name, in order. Missing/failed lines
+    yield (None, None) for that slot. Empty input → empty list.
+    """
+    if not containers:
+        return []
+    proc = subprocess.run(
+        [
+            "docker",
+            "stats",
+            "--no-stream",
+            "--format",
+            "{{.Name}},{{.CPUPerc}},{{.MemUsage}}",
+            *containers,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=max(10, 5 * len(containers)),
+    )
+    if proc.returncode != 0:
+        return [(None, None)] * len(containers)
+    by_name: dict[str, tuple[float | None, float | None]] = {}
+    for line in proc.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        name, _, rest = line.partition(",")
+        cpu, mem = parse_docker_stats_line(rest)
+        by_name[name.strip()] = (cpu, mem)
+    return [by_name.get(n, (None, None)) for n in containers]

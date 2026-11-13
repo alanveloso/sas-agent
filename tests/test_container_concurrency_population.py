@@ -59,27 +59,26 @@ class StatsSamplerTests(unittest.TestCase):
     def test_partial_sweep_is_not_counted(self):
         sampler = ccb._DockerStatsSampler(["a", "b"], interval=0.0)
 
-        def stats(name):
-            if name == "b":
-                sampler._stop.set()   # load ends while the sweep is in progress
-            return 1.0, 100.0
+        def many(names):
+            sampler._stop.set()  # load ends during batched stats RPC
+            return [(1.0, 100.0), (1.0, 100.0)]
 
-        with mock.patch.object(ccb, "docker_stats_sample", side_effect=stats):
+        with mock.patch.object(ccb, "docker_stats_sample_many", side_effect=many):
             sampler._loop()
         self.assertEqual((sampler.sweeps, sampler.ram_peak_sum), (0, 0.0))
 
     def test_complete_sweep_sums_containers(self):
         sampler = ccb._DockerStatsSampler(["a", "b"], interval=0.0)
-        calls = iter([(1.0, 100.0), (2.0, 50.0)])
+        calls = iter([[(1.0, 100.0), (2.0, 50.0)]])
 
-        def stats(_name):
-            v = next(calls, None)
-            if v is None:
+        def many(_names):
+            try:
+                return next(calls)
+            except StopIteration:
                 sampler._stop.set()
-                return 0.0, 0.0
-            return v
+                return [(None, None), (None, None)]
 
-        with mock.patch.object(ccb, "docker_stats_sample", side_effect=stats):
+        with mock.patch.object(ccb, "docker_stats_sample_many", side_effect=many):
             sampler._loop()
         self.assertEqual((sampler.sweeps, sampler.ram_peak_sum, sampler.cpu_peak_sum),
                          (1, 150.0, 3.0))
@@ -88,7 +87,7 @@ class StatsSamplerTests(unittest.TestCase):
         """Short loads must not leave sweeps=0 when docker stats succeed."""
         sampler = ccb._DockerStatsSampler(["a", "b"], interval=10.0)
         with mock.patch.object(
-            ccb, "docker_stats_sample", return_value=(1.0, 40.0)
+            ccb, "docker_stats_sample_many", return_value=[(1.0, 40.0), (1.0, 40.0)]
         ):
             with sampler:
                 pass  # load shorter than interval
@@ -98,12 +97,9 @@ class StatsSamplerTests(unittest.TestCase):
 
     def test_failed_read_does_not_count_incomplete_enter_sample(self):
         sampler = ccb._DockerStatsSampler(["a", "b"], interval=10.0)
-        seq = iter([(1.0, 10.0), (None, None)])  # second container fails
-
-        def stats(_name):
-            return next(seq)
-
-        with mock.patch.object(ccb, "docker_stats_sample", side_effect=stats):
+        with mock.patch.object(
+            ccb, "docker_stats_sample_many", return_value=[(1.0, 10.0), (None, None)]
+        ):
             self.assertFalse(sampler._sample_complete())
         self.assertEqual((sampler.sweeps, sampler.ram_peak_sum), (0, 0.0))
 
@@ -125,6 +121,9 @@ class RunScenarioTests(unittest.TestCase):
             ccb,
             docker_run=mock.Mock(), docker_rm=mock.Mock(),
             docker_stats_sample=mock.Mock(return_value=(1.0, 100.0)),
+            docker_stats_sample_many=mock.Mock(
+                side_effect=lambda names: [(1.0, 100.0)] * len(names)
+            ),
             wait_http_200=mock.Mock(return_value=(True, 200, "")),
             host_load_snapshot=mock.Mock(return_value={}),
             _DockerStatsSampler=sampler, _load_one_container=fake_load,

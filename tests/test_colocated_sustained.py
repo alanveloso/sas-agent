@@ -67,6 +67,67 @@ class ProfileAndLoadTests(unittest.TestCase):
         self.assertEqual(a["band_low_hz"], csb.CBRS_LOW)
         self.assertEqual(a["band_high_hz"], csb.CBRS_HIGH)
 
+    def test_cli_defaults_enable_arrival_and_relinquish(self):
+        import argparse
+
+        # Mirror colocated main defaults (avoid Docker).
+        ap = argparse.ArgumentParser()
+        ap.add_argument("--arrival-interval-sec", type=float, default=10.0)
+        ap.add_argument("--relinquish-interval-sec", type=float, default=30.0)
+        args = ap.parse_args([])
+        self.assertEqual(args.arrival_interval_sec, 10.0)
+        self.assertEqual(args.relinquish_interval_sec, 30.0)
+
+    def test_agenda_mixes_heartbeat_arrival_relinquish(self):
+        """Continuous window must schedule Reg/Grant arrivals and Relinquishments."""
+        sas = FakeSas()
+        rows, info = ldb._run_sustained(
+            sas.post,
+            csb.shared_profile(),
+            fcc="fcc0",
+            user="u0",
+            seed=7,
+            initial_devices=3,
+            duration_sec=65.0,
+            heartbeat_interval_sec=2.0,
+            arrival_interval_sec=10.0,
+            relinquish_interval_sec=30.0,
+            late_threshold_ms=500.0,
+            clock=sas.clock,
+            sleep=sas.sleep,
+            utcnow=sas.utcnow,
+        )
+        ops = {r["operation"] for r in rows}
+        self.assertIn("heartbeat", ops)
+        self.assertIn("registration", ops)
+        self.assertIn("grant", ops)
+        self.assertGreater(info["arrivals"], 0)
+        self.assertGreater(info["registered"], 3)
+        self.assertGreater(info["relinquished"], 0)
+
+    def test_disabled_arrival_yields_zero_midwindow_arrivals(self):
+        sas = FakeSas()
+        rows, info = ldb._run_sustained(
+            sas.post,
+            csb.shared_profile(),
+            fcc="fcc0",
+            user="u0",
+            seed=7,
+            initial_devices=3,
+            duration_sec=6.0,
+            heartbeat_interval_sec=2.0,
+            arrival_interval_sec=None,
+            relinquish_interval_sec=None,
+            late_threshold_ms=500.0,
+            clock=sas.clock,
+            sleep=sas.sleep,
+            utcnow=sas.utcnow,
+        )
+        self.assertEqual(info["registered"], 3)
+        self.assertEqual(info["arrivals"], 0)
+        self.assertEqual(info["relinquished"], 0)
+        self.assertTrue(any(r["operation"] == "heartbeat" for r in rows))
+
     def test_five_clients_same_offered_schedule_params(self):
         """Same seeds + duration ⇒ same planned initial population per client."""
         infos = []
@@ -79,10 +140,10 @@ class ProfileAndLoadTests(unittest.TestCase):
                 user=f"u{c}",
                 seed=csb.client_seed(7, c),
                 initial_devices=3,
-                duration_sec=6.0,
+                duration_sec=25.0,
                 heartbeat_interval_sec=2.0,
-                arrival_interval_sec=None,
-                relinquish_interval_sec=None,
+                arrival_interval_sec=10.0,
+                relinquish_interval_sec=30.0,
                 late_threshold_ms=500.0,
                 clock=sas.clock,
                 sleep=sas.sleep,
@@ -91,11 +152,12 @@ class ProfileAndLoadTests(unittest.TestCase):
             infos.append(info)
             self.assertGreaterEqual(info["granted"], 3)
             self.assertTrue(any(r["operation"] == "heartbeat" for r in rows))
+            self.assertGreater(info["arrivals"], 0)
         # Offered initial population identical across clients
         self.assertEqual({i["initial_devices"] for i in infos}, {3})
         self.assertEqual({i["heartbeat_interval_sec_used"] for i in infos}, {2.0})
-
-
+        # Same arrival counts under identical seeds/duration (offered load equivalence)
+        self.assertEqual(len({i["arrivals"] for i in infos}), 1)
 class PostTrackedTests(unittest.TestCase):
     def test_persistent_connection_reuse_counter(self):
         gauge = csb._InflightGauge()

@@ -60,6 +60,7 @@ from common import (  # noqa: E402
     docker_rm,
     docker_run,
     docker_stats_sample,
+    docker_stats_sample_many,
     host_load_snapshot,
     image_digest,
     new_run_id,
@@ -267,15 +268,11 @@ class _DockerStatsSampler:
 
     def _sample_complete(self) -> bool:
         """One full pass over all containers; discard if any read fails mid-sweep."""
-        ram_sum = 0.0
-        cpu_sum = 0.0
-        for name in self.names:
-            cpu, ram = docker_stats_sample(name)
-            if ram is None:
-                return False
-            ram_sum += ram
-            if cpu is not None:
-                cpu_sum += cpu
+        samples = docker_stats_sample_many(self.names)
+        if len(samples) != len(self.names) or any(ram is None for _cpu, ram in samples):
+            return False
+        ram_sum = sum(ram for _cpu, ram in samples if ram is not None)
+        cpu_sum = sum(cpu for cpu, _ram in samples if cpu is not None)
         self.ram_peak_sum = max(self.ram_peak_sum, ram_sum)
         self.cpu_peak_sum = max(self.cpu_peak_sum, cpu_sum)
         self.sweeps += 1
@@ -286,16 +283,13 @@ class _DockerStatsSampler:
             # Wait first so enter/exit samples are not immediately duplicated.
             if self._stop.wait(self.interval):
                 break
-            ram_sum = 0.0
-            cpu_sum = 0.0
-            for name in self.names:
-                cpu, ram = docker_stats_sample(name)
-                if ram is not None:
-                    ram_sum += ram
-                if cpu is not None:
-                    cpu_sum += cpu
+            samples = docker_stats_sample_many(self.names)
             if self._stop.is_set():
-                break  # partial sweep: containers sampled at different load phases
+                break  # load ended during the batched stats RPC
+            if len(samples) != len(self.names) or any(ram is None for _c, ram in samples):
+                continue  # incomplete / failed sweep — do not count
+            ram_sum = sum(ram for _c, ram in samples if ram is not None)
+            cpu_sum = sum(cpu for cpu, _r in samples if cpu is not None)
             self.ram_peak_sum = max(self.ram_peak_sum, ram_sum)
             self.cpu_peak_sum = max(self.cpu_peak_sum, cpu_sum)
             self.sweeps += 1
@@ -303,13 +297,10 @@ class _DockerStatsSampler:
 
 def _ram_sum_mb(names: list[str]) -> float | None:
     """Sum of current container memory (docker stats); None if any read fails."""
-    total = 0.0
-    for name in names:
-        _cpu, ram = docker_stats_sample(name)
-        if ram is None:
-            return None
-        total += ram
-    return total
+    samples = docker_stats_sample_many(names)
+    if len(samples) != len(names) or any(ram is None for _c, ram in samples):
+        return None
+    return float(sum(ram for _c, ram in samples if ram is not None))
 
 
 def _load_one_container(

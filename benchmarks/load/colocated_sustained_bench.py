@@ -727,8 +727,22 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--devices-per-client", type=int, default=300)
     p.add_argument("--sustained-sec", type=float, required=True)
     p.add_argument("--heartbeat-interval-sec", type=float, default=None)
-    p.add_argument("--arrival-interval-sec", type=float, default=None)
-    p.add_argument("--relinquish-interval-sec", type=float, default=None)
+    # Defaults match lifecycle_decomp sustained: continuous Registration+Grant /
+    # Relinquish mix during the window (Reviewer 1 continuous workload).
+    # Pass 0 or a negative value via explicit override only if disabling; use
+    # None only when the CLI flag is omitted historically — now defaulted on.
+    p.add_argument(
+        "--arrival-interval-sec",
+        type=float,
+        default=10.0,
+        help="Periodic Registration+Grant during sustained window (0 disables)",
+    )
+    p.add_argument(
+        "--relinquish-interval-sec",
+        type=float,
+        default=30.0,
+        help="Periodic Relinquish during sustained window (0 disables)",
+    )
     p.add_argument("--late-threshold-ms", type=float, default=500.0)
     p.add_argument(
         "--heartbeat-schedule-mode",

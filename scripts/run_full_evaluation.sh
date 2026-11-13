@@ -27,16 +27,26 @@ SMOKE="${SMOKE:-0}"
 DRY_RUN="${DRY_RUN:-0}"
 STAMP="${STAMP:-$(date -u +%Y%m%dT%H%M%SZ)}"
 OUT_ROOT="${OUT_ROOT:-$REPO/evidence/tnsm-2026-12135-full-${STAMP}}"
+# Always absolute so staging symlinks under artifacts/raw/ resolve correctly.
+OUT_ROOT="$(cd "$REPO" && realpath -m "$OUT_ROOT")"
 CERTS_DIR="${CERTS_DIR:-$REPO/evidence/tnsm-2026-12135-controlled-20261111T205011Z/meta/harness_certs}"
 HARNESS_CERTS_DIR="${HARNESS_CERTS_DIR:-$CERTS_DIR}"
+CERTS_DIR="$(cd "$REPO" && realpath -m "$CERTS_DIR")"
+HARNESS_CERTS_DIR="$(cd "$REPO" && realpath -m "$HARNESS_CERTS_DIR")"
 
-# Complementary / selection (frozen before k5 validation)
+# Complementary / selection (limits frozen; do not retune after observing results)
 K5_SEED=84242
 K5_REPEATS=5
+# Independent K=3 validation seeds: disjoint from calib SEED and K5_SEED.
+K3_SEED=94242
+K3_REPEATS=5
 COLOCATED_PAIRS=5
 COLOCATED_CLIENTS=5
 COLOCATED_DPC=300
 COLOCATED_SEC=600
+# Match lifecycle_decomp sustained defaults (Registration+Grant / Relinquish mix).
+COLOCATED_ARRIVAL_SEC=10
+COLOCATED_RELINQUISH_SEC=30
 RECOVERY_CYCLES=30
 P4_STARTUP=60
 P4_PROV=1.5
@@ -55,7 +65,7 @@ Stages (run independently; resume via STAGE_*_DONE):
   coldstart lifecycle tls persistence factorial
   process_concurrency container_concurrency container_per_agent
   sustained colocated recovery
-  k5_validation offline_selection
+  k5_validation k3_validation offline_selection
   analyze validate checksums
   status dry-run all
 
@@ -94,11 +104,24 @@ mark_done() {
   local s="$1"
   mkdir -p "$OUT_ROOT/meta/stages"
   date -u +%Y-%m-%dT%H:%M:%SZ >"$OUT_ROOT/meta/stages/STAGE_${s}_DONE"
-  # Only mark done if marker validation hook succeeded (caller responsibility).
+  # Callers must only invoke after: exit 0 + required artifacts + integrity checks.
   log "STAGE $s DONE"
 }
 
+unmark_done() {
+  local s="$1"
+  rm -f "$OUT_ROOT/meta/stages/STAGE_${s}_DONE"
+}
+
 stage_done() { [[ -f "$OUT_ROOT/meta/stages/STAGE_${1}_DONE" ]]; }
+
+require_files() {
+  local label="$1"; shift
+  local f
+  for f in "$@"; do
+    [[ -e "$f" ]] || die "stage $label missing required artifact: $f"
+  done
+}
 
 record_attempt() {
   local stage="$1" status="$2" note="${3:-}"
@@ -218,6 +241,23 @@ PY
 stage_freeze() {
   refuse_canonical
   stage_done preflight || die "run preflight first"
+  # Idempotent: never overwrite a freeze after definitive experiments began.
+  if stage_done freeze && [[ -f "$OUT_ROOT/meta/protocol_frozen.json" ]]; then
+    log "freeze already recorded — refusing overwrite"
+    return 0
+  fi
+  if [[ -f "$OUT_ROOT/meta/protocol_frozen.json" ]]; then
+    die "protocol_frozen.json exists without STAGE_freeze_DONE — refuse overwrite"
+  fi
+  # Block freeze-after-measurement reordering (coldstart before formal freeze).
+  local early
+  for early in coldstart lifecycle tls persistence factorial \
+               process_concurrency container_concurrency container_per_agent \
+               sustained colocated recovery k5_validation k3_validation; do
+    if stage_done "$early"; then
+      die "cannot freeze after stage $early already DONE — freeze must precede definitive experiments"
+    fi
+  done
   mkdir -p "$OUT_ROOT/meta"
   local img
   img="$(image_id)"
@@ -279,7 +319,7 @@ proto = {
     "unittest","security_tests","isolation","cert_matrix","boundary","robustness","winnforum",
     "coldstart","lifecycle","tls","persistence","factorial",
     "process_concurrency","container_concurrency","container_per_agent",
-    "sustained","colocated","recovery","k5_validation","offline_selection","analyze"
+    "sustained","colocated","recovery","k5_validation","k3_validation","offline_selection","analyze"
   ],
   "params": {
     "lifecycle": {"profiles": 8, "reps": 5 if $SMOKE == 0 else 1, "n_cycles": 30 if $SMOKE == 0 else 3},
@@ -291,9 +331,16 @@ proto = {
     "container_concurrency": {"k": [1,2,3,5,10,15], "devices": 1500, "repeats": 5, "scenarios": ["A","B"]},
     "container_per_agent": {"devices_per_agent": 300, "k": [1,2,3,5,10,15], "repeats": 5},
     "sustained": {"populations": [300,1500], "seeds": [1,2,3], "sec": 600, "schedule": "respect_transmit_expire"},
-    "colocated": {"pairs": $COLOCATED_PAIRS, "clients": $COLOCATED_CLIENTS, "dpc": $COLOCATED_DPC, "sec": $COLOCATED_SEC, "seed": $SEED},
+    "colocated": {
+      "pairs": $COLOCATED_PAIRS, "clients": $COLOCATED_CLIENTS, "dpc": $COLOCATED_DPC,
+      "sec": $COLOCATED_SEC, "seed": $SEED,
+      "arrival_interval_sec": $COLOCATED_ARRIVAL_SEC,
+      "relinquish_interval_sec": $COLOCATED_RELINQUISH_SEC
+    },
     "recovery": {"cycles": $RECOVERY_CYCLES},
-    "k5_validation": {"seed": $K5_SEED, "repeats": $K5_REPEATS, "evaluation_package": "P4"},
+    "k5_validation": {"seed": $K5_SEED, "repeats": $K5_REPEATS, "evaluation_package": "P4_sensitivity_not_k_star"},
+    "k3_validation": {"seed": $K3_SEED, "repeats": $K3_REPEATS, "evaluation_package": "P4_selected_k_independent",
+                      "note": "disjoint seeds; validates selected K under frozen P4 limits"},
     "P4": {"startup_sec": $P4_STARTUP, "provisioning_sec": $P4_PROV, "grant_batch_p95_ms": $P4_GRANT_P95, "memory_mb": $P4_MEM,
            "kind": "illustrative_sensitivity_prior_calibration", "not_prospective_slo": True}
   },
@@ -410,18 +457,30 @@ stage_winnforum() {
   require_freeze
   stage_done winnforum && return 0
   mkdir -p "$OUT_ROOT/02_functional/winnforum"
-  # Prefer re-parse of local harness logs if present; else external harness required.
-  if [[ -d "$REPO/benchmarks/data" ]] && compgen -G "$REPO/benchmarks/data/winnforum_*.log" >/dev/null; then
-    run_cmd winnforum_parse "$PY" benchmarks/parse_winnforum_logs.py \
-      --logs-dir "$REPO/benchmarks/data" \
-      --out "$OUT_ROOT/02_functional/winnforum/lifecycle_validation.csv"
-    mark_done winnforum
-    return 0
-  fi
+  # Prefer re-execution under frozen image; parse-only is historical reuse, not a new run.
   if [[ -x "$REPO/run_cbrs_tests.sh" ]] && docker image inspect sas-harness >/dev/null 2>&1; then
     wait_gate winnforum
     run_cmd winnforum_harness env EVIDENCE_DIR="$OUT_ROOT/02_functional/winnforum" \
       bash "$REPO/run_cbrs_tests.sh"
+    require_files winnforum "$OUT_ROOT/02_functional/winnforum/lifecycle_validation.csv"
+    echo "mode=harness_reexecution" >"$OUT_ROOT/02_functional/winnforum/PROVENANCE.txt"
+    mark_done winnforum
+    return 0
+  fi
+  if [[ -d "$REPO/benchmarks/data" ]] && compgen -G "$REPO/benchmarks/data/winnforum_*.log" >/dev/null; then
+    run_cmd winnforum_parse "$PY" benchmarks/parse_winnforum_logs.py \
+      --logs-dir "$REPO/benchmarks/data" \
+      --out "$OUT_ROOT/02_functional/winnforum/lifecycle_validation.csv"
+    require_files winnforum "$OUT_ROOT/02_functional/winnforum/lifecycle_validation.csv"
+    cat >"$OUT_ROOT/02_functional/winnforum/PROVENANCE.txt" <<EOF
+mode=parse_only_historical_logs
+logs_dir=benchmarks/data
+note=NOT a fresh WInnForum harness execution under the frozen campaign image.
+Do not declare certification. Historical corpus: evidence/2026-12135/functional/winnforum/
+Re-run with sas-harness image for definitive re-execution of all 65 cases.
+EOF
+    # Parse-only satisfies artifact presence but is not certification; keep DONE for resume,
+    # with explicit provenance that execution was not repeated.
     mark_done winnforum
     return 0
   fi
@@ -615,9 +674,14 @@ stage_colocated() {
   run_cmd colocated "$PY" benchmarks/load/colocated_sustained_bench.py \
     --mode paired --pairs "$pairs" --n-clients "$COLOCATED_CLIENTS" \
     --devices-per-client "$COLOCATED_DPC" --sustained-sec "$sec" \
+    --arrival-interval-sec "$COLOCATED_ARRIVAL_SEC" \
+    --relinquish-interval-sec "$COLOCATED_RELINQUISH_SEC" \
     --seed "$SEED" --heartbeat-schedule-mode respect_transmit_expire \
     --image "$IMAGE_TAG" --certs-dir "$CERTS_DIR" \
     --out-dir "$OUT_ROOT/10_colocated"
+  require_files colocated \
+    "$OUT_ROOT/10_colocated/colocated_sustained_runs.csv" \
+    "$OUT_ROOT/10_colocated/colocated_sustained_raw.csv"
   mark_done colocated
 }
 
@@ -641,6 +705,7 @@ stage_k5_validation() {
   mkdir -p "$OUT_ROOT/12_provisioning/k5_validation"
   cat >"$OUT_ROOT/12_provisioning/k5_validation/EVALUATION_PACKAGE.txt" <<EOF
 evaluation_package=P4_k5_illustrative_sensitivity
+role=additional_sensitivity_evidence_NOT_validation_of_selected_k
 startup_sec=$P4_STARTUP
 provisioning_sec=$P4_PROV
 grant_batch_p95_ms=$P4_GRANT_P95
@@ -654,7 +719,51 @@ EOF
     --k-values 5 --devices 1500 --repeats "$repeats" --seed "$K5_SEED" \
     --scenarios A --image "$IMAGE_TAG" --certs-dir "$CERTS_DIR" \
     --out-dir "$OUT_ROOT/12_provisioning/k5_validation"
+  require_files k5_validation \
+    "$OUT_ROOT/12_provisioning/k5_validation/container_concurrency_runs.csv"
   mark_done k5_validation
+}
+
+stage_k3_validation() {
+  # Independent validation of P4-selected K=3. Does NOT retune P4 limits.
+  # Seeds disjoint from calibration (SEED) and K5_SEED. Do not reuse calib rows.
+  require_freeze
+  stage_done k3_validation && return 0
+  mkdir -p "$OUT_ROOT/12_provisioning/k3_validation"
+  cat >"$OUT_ROOT/12_provisioning/k3_validation/EVALUATION_PACKAGE.txt" <<EOF
+evaluation_package=P4_selected_k_independent_validation
+selected_k=3
+startup_sec=$P4_STARTUP
+provisioning_sec=$P4_PROV
+grant_batch_p95_ms=$P4_GRANT_P95
+memory_mb=$P4_MEM
+seed=$K3_SEED
+repeats=$K3_REPEATS
+devices=1500
+scenario=A
+persistence=sqlite_default_as_container_concurrency_bench
+thermal_gate=required
+disjoint_from_calib_seed=$SEED
+disjoint_from_k5_seed=$K5_SEED
+do_not_retune_limits=true
+do_not_reuse_calibration_observations=true
+k5_validation_is_additional_sensitivity_only=true
+EOF
+  if [[ "${PREPARE_ONLY:-0}" == "1" ]]; then
+    log "PREPARE_ONLY: wrote k3_validation protocol; not executing"
+    record_attempt k3_validation "prepared_only" "seed=$K3_SEED"
+    return 0
+  fi
+  local repeats=$K3_REPEATS
+  [[ "$SMOKE" == "1" ]] && repeats=1
+  wait_gate k3_validation
+  run_cmd k3_validation "$PY" benchmarks/load/container_concurrency_bench.py \
+    --k-values 3 --devices 1500 --repeats "$repeats" --seed "$K3_SEED" \
+    --scenarios A --image "$IMAGE_TAG" --certs-dir "$CERTS_DIR" \
+    --out-dir "$OUT_ROOT/12_provisioning/k3_validation"
+  require_files k3_validation \
+    "$OUT_ROOT/12_provisioning/k3_validation/container_concurrency_runs.csv"
+  mark_done k3_validation
 }
 
 stage_offline_selection() {
@@ -667,6 +776,8 @@ stage_offline_selection() {
   [[ -f "$val_hist" ]] && val_args+=(--validation "$val_hist")
   local val_k5="$OUT_ROOT/12_provisioning/k5_validation/container_concurrency_runs.csv"
   [[ -f "$val_k5" ]] && val_args+=(--validation "$val_k5")
+  local val_k3="$OUT_ROOT/12_provisioning/k3_validation/container_concurrency_runs.csv"
+  [[ -f "$val_k3" ]] && val_args+=(--validation "$val_k3")
   # Prefer new calibration if present
   local cal_new="$OUT_ROOT/08_concurrency/containers/container_concurrency_runs.csv"
   [[ -f "$cal_new" ]] && calib="$cal_new"
@@ -693,48 +804,100 @@ stage_offline_selection() {
     --limit-startup-sec "$P4_STARTUP" --limit-provisioning-sec "$P4_PROV" \
     --limit-grant-batch-p95-ms "$P4_GRANT_P95" --limit-memory-mb "$P4_MEM"
   cat >"$OUT_ROOT/12_provisioning/offline_selection/README_LIMITS.txt" <<EOF
-P0–P3: illustrative sensitivity. P4: illustrative with prior calibration knowledge; anticipated K=5; NOT a prospective SLO.
-Limits frozen before k5_validation; do not retune after observing validation.
+P0–P3: illustrative sensitivity.
+P4: frozen illustrative limits (startup=${P4_STARTUP}s, provisioning=${P4_PROV}s,
+    grant_p95=${P4_GRANT_P95}ms, mem=${P4_MEM}MB). Do NOT retune after observing results.
+New calibration under these limits may select K≠5; keep selection rule and limits.
+Independent validation of selected K uses k3_validation (disjoint seeds).
+k5_validation remains additional sensitivity evidence only.
 EOF
   mark_done offline_selection
 }
 
 stage_analyze() {
   require_freeze
-  stage_done analyze && return 0
+  # Allow re-run after staging/validator fixes: clear prior DONE only if present.
+  # Never mark DONE unless validate exits 0.
   mkdir -p "$OUT_ROOT/13_analysis"
   local cid
   cid="$(basename "$OUT_ROOT")"
   local stage="$REPO/artifacts/raw/$cid"
   mkdir -p "$stage"
-  # Symlink layout compatible with analysis tools when artifacts exist.
+  # Symlink layout compatible with validate_campaign / analysis tools.
+  # Do not move or rewrite raw CSVs under OUT_ROOT.
   [[ -d "$OUT_ROOT/03_coldstart" ]] && ln -sfn "$OUT_ROOT/03_coldstart" "$stage/instrumented_cold_start"
+  [[ -d "$OUT_ROOT/04_lifecycle" ]] && ln -sfn "$OUT_ROOT/04_lifecycle" "$stage/lifecycle_decomposition"
   [[ -d "$OUT_ROOT/05_tls" ]] && ln -sfn "$OUT_ROOT/05_tls" "$stage/mtls_correctness_overhead"
+  [[ -d "$OUT_ROOT/02_functional/cert_matrix" ]] && ln -sfn "$OUT_ROOT/02_functional/cert_matrix" "$stage/cert_matrix"
   [[ -d "$OUT_ROOT/06_persistence" ]] && ln -sfn "$OUT_ROOT/06_persistence" "$stage/persistence_decomposition"
   [[ -d "$OUT_ROOT/07_factorial" ]] && ln -sfn "$OUT_ROOT/07_factorial" "$stage/factorial_provisioning"
   [[ -d "$OUT_ROOT/08_concurrency/processes" ]] && ln -sfn "$OUT_ROOT/08_concurrency/processes" "$stage/concurrent_slicing_v2"
+  [[ -d "$OUT_ROOT/08_concurrency/containers" ]] && ln -sfn "$OUT_ROOT/08_concurrency/containers" "$stage/container_concurrency"
   "$PY" - <<PY
 import json
 from pathlib import Path
 from datetime import datetime, timezone
 cid = Path("$OUT_ROOT").name
+out_root = Path("$OUT_ROOT")
 stage = Path("artifacts/raw") / cid
 man = {
   "campaign_id": cid,
   "campaign_type": "full_evaluation",
-  "sas_agent_sha": Path("$OUT_ROOT/meta/agent_sha.txt").read_text().strip(),
-  "image_id": Path("$OUT_ROOT/meta/image_id.txt").read_text().strip(),
+  "sas_agent_sha": (out_root / "meta/agent_sha.txt").read_text().strip(),
+  "image_id": (out_root / "meta/image_id.txt").read_text().strip(),
   "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+  "experiments": {
+    "coldstart": "03_coldstart",
+    "lifecycle": "04_lifecycle",
+    "tls_mtls": "05_tls",
+    "cert_matrix": "02_functional/cert_matrix",
+    "persistence": "06_persistence",
+    "factorial": "07_factorial",
+    "process_concurrency": "08_concurrency/processes",
+    "container_concurrency": "08_concurrency/containers",
+    "sustained": "09_sustained",
+    "colocated": "10_colocated",
+    "recovery": "11_recovery",
+    "k5_validation": "12_provisioning/k5_validation",
+    "k3_validation": "12_provisioning/k3_validation",
+    "offline_selection": "12_provisioning/offline_selection",
+  },
+  "phases": [
+    "functional", "coldstart", "lifecycle", "tls", "persistence", "factorial",
+    "concurrency", "sustained", "colocated", "recovery", "provisioning", "analysis"
+  ],
+  "evidence_root": str(out_root),
+  "staging_note": "artifacts/raw/<id> holds symlinks into OUT_ROOT; raw CSVs are not moved",
 }
 (stage / "campaign_manifest.json").write_text(json.dumps(man, indent=2) + "\n")
 print("wrote", stage / "campaign_manifest.json")
 PY
+  local vec=0
+  set +e
   run_cmd validate "$PY" analysis/validate_campaign.py --campaign-id "$cid" \
-    >"$OUT_ROOT/13_analysis/validate.log" 2>&1 || true
+    >"$OUT_ROOT/13_analysis/validate.log" 2>&1
+  vec=$?
+  set -e
+  if [[ "$vec" -ne 0 ]]; then
+    unmark_done analyze
+    log "VALIDATE FAILED — STAGE analyze NOT marked DONE (see 13_analysis/validate.log)"
+    record_attempt analyze "validate_failed" "exit=$vec"
+    return "$vec"
+  fi
+  # Confirm report status is success (never mark DONE on artificial/partial PASS).
+  "$PY" -c "
+import json, sys
+from pathlib import Path
+rep = json.loads((Path('artifacts/raw') / '$cid' / 'validation_report.json').read_text())
+sys.exit(0 if rep.get('status') == 'success' else 1)
+" || { unmark_done analyze; die "validation_report status != success"; }
   run_cmd tables "$PY" analysis/generate_tables.py --campaign-id "$cid" \
     >"$OUT_ROOT/13_analysis/tables.log" 2>&1 || true
   run_cmd uncertainty "$PY" analysis/uncertainty_report.py --campaign-id "$cid" \
     --out "$OUT_ROOT/13_analysis/uncertainty_catalog.json" || true
+  require_files analyze \
+    "$REPO/artifacts/raw/$cid/validation_report.json" \
+    "$OUT_ROOT/13_analysis/validate.log"
   mark_done analyze
 }
 
@@ -764,7 +927,8 @@ stage_status() {
   for s in preflight freeze inventory unittest security_tests isolation cert_matrix \
            boundary robustness winnforum coldstart lifecycle tls persistence factorial \
            process_concurrency container_concurrency container_per_agent \
-           sustained colocated recovery k5_validation offline_selection analyze checksums; do
+           sustained colocated recovery k5_validation k3_validation offline_selection \
+           analyze checksums; do
     if stage_done "$s"; then echo "DONE $s"; else echo "TODO $s"; fi
   done
 }
@@ -801,6 +965,8 @@ stage_all() {
   stage_colocated
   stage_recovery
   stage_k5_validation
+  # k3_validation is opt-in after P4 selects K=3; not part of default `all`
+  # (prepare with: PREPARE_ONLY=1 ... k3_validation). Run when selected K known.
   stage_offline_selection
   stage_analyze
   stage_checksums
@@ -831,6 +997,7 @@ case "$STAGE" in
   colocated) stage_colocated ;;
   recovery) stage_recovery ;;
   k5_validation) stage_k5_validation ;;
+  k3_validation) stage_k3_validation ;;
   offline_selection) stage_offline_selection ;;
   analyze|validate) stage_analyze ;;
   checksums) stage_checksums ;;
