@@ -25,3 +25,6 @@ bash benchmarks/load/build_images.sh
 Saídas em `artifacts/raw/<campaign_id>/` e `artifacts/manifests/<campaign_id>.json`.
 
 Instrumentação de latência: `SAS_TIMING=1` (desligada por padrão na app).
+
+
+> Prefer `./scripts/evaluate.sh` for the laboratory evaluation workflow. `run_campaign.py` remains a low-level benchkit runner writing under `artifacts/raw/`.

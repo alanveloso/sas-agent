@@ -1,0 +1,74 @@
+{
+  "loadavg_1m": 0.43701171875,
+  "loadavg_5m": 0.78759765625,
+  "loadavg_15m": 1.0263671875,
+  "cpu_percent_prior": 1.4,
+  "memory_used_percent_prior": 19.2,
+  "temperatures_c": {
+    "ath11k_hwmon:ath11k_hwmon_0": 47.0,
+    "acpitz:acpitz_0": 54.0,
+    "nvme:Composite": 39.85,
+    "nvme:Sensor 1": 48.85,
+    "nvme:Sensor 2": 39.85,
+    "k10temp:Tctl": 55.5,
+    "spd5118:spd5118_0": 51.25,
+    "thinkpad:CPU": 54.0,
+    "thinkpad:thinkpad_1": 54.0,
+    "thinkpad:thinkpad_2": 0.0,
+    "thinkpad:thinkpad_3": 54.0,
+    "thinkpad:thinkpad_4": 54.0,
+    "amdgpu:edge": 48.0
+  },
+  "temperature_max_c": 55.5,
+  "temperature_tctl_c": 55.5,
+  "cpu_freq": {
+    "freq_mhz_mean": 1336.3685,
+    "freq_mhz_min": 1100.334,
+    "freq_mhz_max": 3243.672,
+    "freq_mhz_per_cpu": [
+      1100.334,
+      1297.407,
+      1100.334,
+      1100.334,
+      1298.885,
+      1100.334,
+      1296.696,
+      1527.541,
+      1311.423,
+      1295.992,
+      3243.672,
+      1100.334,
+      1307.608,
+      1100.334,
+      1100.334,
+      1100.334
+    ],
+    "governor": "powersave"
+  },
+  "throttling_hints": {
+    "sources": [
+      "powercap",
+      "sysfs_thermal"
+    ],
+    "powercap_zones": [
+      "intel-rapl",
+      "intel-rapl:0",
+      "intel-rapl:0:0"
+    ],
+    "thermal_zones": [
+      {
+        "zone": "thermal_zone0",
+        "type": "acpitz",
+        "temp_c": 54.0
+      }
+    ]
+  },
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "platform": "Linux-6.17.0-1033-oem-x86_64-with-glibc2.39",
+  "docker": "29.9.3",
+  "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e",
+  "host_commit": "310ed1e229cbb017341d00ec87fbf3b7593c2a29",
+  "ac_power": true,
+  "disk_free_gb": 127,
+  "gate_admit": true
+}

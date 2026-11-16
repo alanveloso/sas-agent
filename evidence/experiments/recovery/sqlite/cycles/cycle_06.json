@@ -1,0 +1,70 @@
+{
+  "cycle": 6,
+  "clock": "CLOCK_MONOTONIC+UTC",
+  "events": [
+    {
+      "name": "start_container_1",
+      "mono_s": 20332.902596143,
+      "wall_utc": "2026-11-13T01:41:35.508075Z"
+    },
+    {
+      "name": "http_ready",
+      "mono_s": 20333.607789803,
+      "wall_utc": "2026-11-13T01:41:36.213268Z",
+      "polls": 11
+    },
+    {
+      "name": "pre_kill_heartbeat_ok",
+      "mono_s": 20333.659667343,
+      "wall_utc": "2026-11-13T01:41:36.265145Z",
+      "cbsd_id": "rec_fcc/rec_sn_0006",
+      "grant_id": "grant/940853b66c614d93b9850307e2baba4e"
+    },
+    {
+      "name": "sigkill",
+      "mono_s": 20333.659792488,
+      "wall_utc": "2026-11-13T01:41:36.265268Z"
+    },
+    {
+      "name": "container_removed",
+      "mono_s": 20333.835375644,
+      "wall_utc": "2026-11-13T01:41:36.440854Z"
+    },
+    {
+      "name": "start_container_2",
+      "mono_s": 20333.835410971,
+      "wall_utc": "2026-11-13T01:41:36.440887Z"
+    },
+    {
+      "name": "http_ready",
+      "mono_s": 20334.482771999,
+      "wall_utc": "2026-11-13T01:41:37.088250Z",
+      "polls": 10
+    },
+    {
+      "name": "first_https_heartbeat_after_restart",
+      "mono_s": 20334.49790316,
+      "wall_utc": "2026-11-13T01:41:37.103381Z",
+      "http_status": 200
+    }
+  ],
+  "ok": true,
+  "failure_class": "",
+  "artifacts_exclude": [
+    "*.key",
+    "private cert PEM material",
+    "harness_certs copy"
+  ],
+  "db_bytes_before_kill": 217088,
+  "cbsd_id": "rec_fcc/rec_sn_0006",
+  "grant_id": "grant/940853b66c614d93b9850307e2baba4e",
+  "dt_sigkill_to_ready2_mono_s": 0.822979510998266,
+  "dt_sigkill_to_first_https_sas_mono_s": 0.8381106720007665,
+  "dt_ready2_to_first_https_sas_mono_s": 0.015131161002500448,
+  "first_valid_sas_op": "https_heartbeat_responseCode_0",
+  "not_claimed": [
+    "power_loss",
+    "media_failure",
+    "statistical_sla"
+  ]
+}

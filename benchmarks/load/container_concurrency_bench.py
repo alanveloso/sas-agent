@@ -60,6 +60,7 @@ from common import (  # noqa: E402
     docker_rm,
     docker_run,
     docker_stats_sample,
+    docker_stats_sample_many,
     host_load_snapshot,
     image_digest,
     new_run_id,
@@ -101,6 +102,7 @@ SUMMARY_FIELDS = [
 FIXED_TOTAL = "fixed_total"
 FIXED_PER_AGENT = "fixed_per_agent"
 INFLIGHT_PER_AGENT = 1
+DEFAULT_STATS_INTERVAL_SEC = 0.5
 
 
 def _resolve_certs(cli: Path | None) -> Path:
@@ -231,7 +233,17 @@ def _iqr(values: list[float]) -> float | None:
 
 
 class _DockerStatsSampler:
-    def __init__(self, names: list[str], interval: float = 0.5):
+    """Periodic docker-stats sampler during load.
+
+    ``ram_peak_sum`` is the **maximum over complete sweeps** of the sum of
+    per-container ``docker stats`` MemUsage (cgroup memory, RSS-like — **not**
+    process PSS). It is a *sampled* maximum at ``interval`` seconds, **not** an
+    absolute peak. Short loads previously often recorded ``sweeps=0`` because
+    the background loop discarded incomplete sweeps; we now take a synchronous
+    complete sample on enter and on exit so short loads still get ≥1 sample.
+    """
+
+    def __init__(self, names: list[str], interval: float = DEFAULT_STATS_INTERVAL_SEC):
         self.names = names
         self.interval = interval
         self._stop = threading.Event()
@@ -239,8 +251,11 @@ class _DockerStatsSampler:
         self.ram_peak_sum = 0.0
         self.cpu_peak_sum = 0.0
         self.sweeps = 0
+        self.metric_kind = "docker_stats_memusage_cgroup_mb_sum"
+        self.not_pss = True
 
     def __enter__(self) -> "_DockerStatsSampler":
+        self._sample_complete()  # baseline before / at load start
         self._thread = threading.Thread(target=self._loop, daemon=True)
         self._thread.start()
         return self
@@ -249,34 +264,43 @@ class _DockerStatsSampler:
         self._stop.set()
         if self._thread:
             self._thread.join(timeout=5.0)
+        self._sample_complete()  # final complete sample after load
+
+    def _sample_complete(self) -> bool:
+        """One full pass over all containers; discard if any read fails mid-sweep."""
+        samples = docker_stats_sample_many(self.names)
+        if len(samples) != len(self.names) or any(ram is None for _cpu, ram in samples):
+            return False
+        ram_sum = sum(ram for _cpu, ram in samples if ram is not None)
+        cpu_sum = sum(cpu for cpu, _ram in samples if cpu is not None)
+        self.ram_peak_sum = max(self.ram_peak_sum, ram_sum)
+        self.cpu_peak_sum = max(self.cpu_peak_sum, cpu_sum)
+        self.sweeps += 1
+        return True
 
     def _loop(self) -> None:
         while not self._stop.is_set():
-            ram_sum = 0.0
-            cpu_sum = 0.0
-            for name in self.names:
-                cpu, ram = docker_stats_sample(name)
-                if ram is not None:
-                    ram_sum += ram
-                if cpu is not None:
-                    cpu_sum += cpu
+            # Wait first so enter/exit samples are not immediately duplicated.
+            if self._stop.wait(self.interval):
+                break
+            samples = docker_stats_sample_many(self.names)
             if self._stop.is_set():
-                break  # partial sweep: containers sampled at different load phases
+                break  # load ended during the batched stats RPC
+            if len(samples) != len(self.names) or any(ram is None for _c, ram in samples):
+                continue  # incomplete / failed sweep — do not count
+            ram_sum = sum(ram for _c, ram in samples if ram is not None)
+            cpu_sum = sum(cpu for cpu, _r in samples if cpu is not None)
             self.ram_peak_sum = max(self.ram_peak_sum, ram_sum)
             self.cpu_peak_sum = max(self.cpu_peak_sum, cpu_sum)
             self.sweeps += 1
-            self._stop.wait(self.interval)
 
 
 def _ram_sum_mb(names: list[str]) -> float | None:
     """Sum of current container memory (docker stats); None if any read fails."""
-    total = 0.0
-    for name in names:
-        _cpu, ram = docker_stats_sample(name)
-        if ram is None:
-            return None
-        total += ram
-    return total
+    samples = docker_stats_sample_many(names)
+    if len(samples) != len(names) or any(ram is None for _c, ram in samples):
+        return None
+    return float(sum(ram for _c, ram in samples if ram is not None))
 
 
 def _load_one_container(
@@ -710,12 +734,21 @@ def main() -> int:
                     "grant_latency_*_ms": "legacy amortized (batch time / batch size per successful item); not individual Grant latency",
                 },
                 "memory_semantics": {
-                    "ram_peak_mb_sum": "max over complete docker-stats sweeps (containers "
-                                       "read sequentially) during load; blank if no sweep "
-                                       "completed (stats_sweeps = 0)",
-                    "ram_after_load_mb_sum": "sum of docker-stats memory per container read "
-                                             "once after load, before teardown; outside "
-                                             "the timed windows",
+                    "ram_peak_mb_sum": (
+                        "SAMPLED maximum of sum(docker stats MemUsage) over complete "
+                        f"sweeps at interval={DEFAULT_STATS_INTERVAL_SEC}s "
+                        "(enter + periodic + exit). Cgroup/RSS-like container memory; "
+                        "NOT process PSS; NOT an absolute peak between samples. "
+                        "Blank only if every complete sample failed (stats_sweeps = 0)."
+                    ),
+                    "ram_after_load_mb_sum": (
+                        "sum of docker-stats MemUsage per container once after load, "
+                        "before teardown; distinct from the sampled maximum"
+                    ),
+                    "process_pss": (
+                        "not measured here; see process concurrency "
+                        "ram_peak_pss_mb for host-process PSS"
+                    ),
                 },
                 "image": {"tag": args.image, "digest": image_digest(args.image)},
                 "failures": failures,

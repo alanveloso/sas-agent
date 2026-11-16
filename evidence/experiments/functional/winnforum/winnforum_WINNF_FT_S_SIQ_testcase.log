@@ -1,0 +1,80 @@
+[INFO] 2026-11-13 16:31:40,551 util.py:76 Running WinnForum test case test_WINNF_FT_S_SIQ_12:
+[INFO] 2026-11-13 16:31:40,551 util.py:77 [Configurable] Spectrum inquiry in the presence of protected entities.
+[INFO] 2026-11-13 16:31:40,551 util.py:127 test_WINNF_FT_S_SIQ_12: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_SIQ_12/default.config'
+test_WINNF_FT_S_SIQ_10 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_10) ... [INFO] 2026-11-13 16:31:40,678 util.py:76 Running WinnForum test case test_WINNF_FT_S_SIQ_10:
+[INFO] 2026-11-13 16:31:40,678 util.py:77 Send Spectrum Inquiry with Array request with successful and unsuccessful responses.
+     The response codes will vary
+    
+ok
+test_WINNF_FT_S_SIQ_11 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_11) ... [INFO] 2026-11-13 16:31:40,847 util.py:76 Running WinnForum test case test_WINNF_FT_S_SIQ_11:
+[INFO] 2026-11-13 16:31:40,847 util.py:77 Unsupported frequency range inquiry array.
+
+    The response for Inquiry #2 and #3 should be UNSUPPORTED_SPECTRUM, code 300
+    
+ok
+test_WINNF_FT_S_SIQ_12_0_default (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_12_0_default)
+[Configurable] Spectrum inquiry in the presence of protected entities. ... [INFO] 2026-11-13 16:31:40,990 util.py:76 Running WinnForum test case test_WINNF_FT_S_SIQ_12_0_default:
+[INFO] 2026-11-13 16:31:40,990 util.py:77 [Configurable] Spectrum inquiry in the presence of protected entities.
+ok
+test_WINNF_FT_S_SIQ_13 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_13) ... [INFO] 2026-11-13 16:31:51,187 util.py:76 Running WinnForum test case test_WINNF_FT_S_SIQ_13:
+[INFO] 2026-11-13 16:31:51,187 util.py:77 Blacklisted CBSD in Array request.
+
+    The response for Inquiry #3 (blacklisted) should be code 101.
+    
+ok
+test_WINNF_FT_S_SIQ_2 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_2) ... [INFO] 2026-11-13 16:31:51,335 util.py:76 Running WinnForum test case test_WINNF_FT_S_SIQ_2:
+[INFO] 2026-11-13 16:31:51,335 util.py:77 Response has no available channel
+    with responseCode = 0 successful 
+    
+ok
+test_WINNF_FT_S_SIQ_3 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_3) ... [INFO] 2026-11-13 16:32:01,479 util.py:76 Running WinnForum test case test_WINNF_FT_S_SIQ_3:
+[INFO] 2026-11-13 16:32:01,479 util.py:77 Multiple CBSDs inside and outside the Exclusion Zone.
+
+    Response codes will vary depending on conditions.
+    This test assumes some distance criteria between points and zones.
+    If testdata records are changed, check again these criteria.
+    
+ok
+test_WINNF_FT_S_SIQ_4 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_4) ... [INFO] 2026-11-13 16:32:11,682 util.py:76 Running WinnForum test case test_WINNF_FT_S_SIQ_4:
+[INFO] 2026-11-13 16:32:11,682 util.py:77 Tests related to DPA activated for some channels
+    
+    SAS sending responseCode = 0 successful response
+    and including all channels within frequency range FR.
+    
+ok
+test_WINNF_FT_S_SIQ_5 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_5) ... [INFO] 2026-11-13 16:37:11,813 util.py:76 Running WinnForum test case test_WINNF_FT_S_SIQ_5:
+[INFO] 2026-11-13 16:37:11,813 util.py:77 Tests related to PAL Protection Area (PPA)
+
+	SAS sending responseCode = 0 successful response
+	without include the frequency range of PPA
+    
+ok
+test_WINNF_FT_S_SIQ_6 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_6) ... [INFO] 2026-11-13 16:37:21,967 util.py:76 Running WinnForum test case test_WINNF_FT_S_SIQ_6:
+[INFO] 2026-11-13 16:37:21,967 util.py:77 cbsdId sent in Spectrum Inquiry is non-existent and not the assigned one.
+
+    The response should be INVALID_VALUE, code 103.
+    
+ok
+test_WINNF_FT_S_SIQ_7 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_7) ... [INFO] 2026-11-13 16:37:22,075 util.py:76 Running WinnForum test case test_WINNF_FT_S_SIQ_7:
+[INFO] 2026-11-13 16:37:22,075 util.py:77 cbsdId different from its assigned cbsdId and the cbsdId exists in the SAS.
+
+    SAS rejects the request by sending responseCode = 103 or 105 
+    
+ok
+test_WINNF_FT_S_SIQ_8 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_8) ... [INFO] 2026-11-13 16:37:22,196 util.py:76 Running WinnForum test case test_WINNF_FT_S_SIQ_8:
+[INFO] 2026-11-13 16:37:22,196 util.py:77 Parameters in Inquired Spectrum mutually invalid.
+
+    The response should be INVALID_VALUE, code 103.
+    
+ok
+test_WINNF_FT_S_SIQ_9 (testcases.WINNF_FT_S_SIQ_testcase.SpectrumInquiryTestcase.test_WINNF_FT_S_SIQ_9) ... [INFO] 2026-11-13 16:37:22,303 util.py:76 Running WinnForum test case test_WINNF_FT_S_SIQ_9:
+[INFO] 2026-11-13 16:37:22,303 util.py:77 Multiple SIQ requests as claimed PPAs or as GAAs.
+
+    Response Code must be 0 for all CBSDs.
+    
+ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 341.817s
+
+OK

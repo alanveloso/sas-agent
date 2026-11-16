@@ -559,6 +559,19 @@ def _run_sustained(
                 counts["relinquished"] += int(row["success"])
             push(due + relinquish_interval_sec, "relinquish")
 
+    # Planned cadence counts (deterministic schedule), independent of success.
+    planned_arrivals = 0
+    if arrival_interval_sec and arrival_interval_sec > 0:
+        t = t0 + arrival_interval_sec
+        while t < end - 1e-9:
+            planned_arrivals += 1
+            t += arrival_interval_sec
+    planned_relinquishments = 0
+    if relinquish_interval_sec and relinquish_interval_sec > 0:
+        t = t0 + relinquish_interval_sec
+        while t < end - 1e-9:
+            planned_relinquishments += 1
+            t += relinquish_interval_sec
     info = {
         **counts,
         "initial_devices": initial_devices,
@@ -567,6 +580,15 @@ def _run_sustained(
         "server_heartbeat_interval_sec": next((v for v in server_hbi if v), None),
         "heartbeat_schedule_mode": heartbeat_schedule_mode,
         "heartbeat_safety_margin_sec": heartbeat_safety_margin_sec,
+        "arrival_interval_sec": arrival_interval_sec,
+        "relinquish_interval_sec": relinquish_interval_sec,
+        "planned_arrivals": planned_arrivals,
+        "planned_relinquishments": planned_relinquishments,
+        "arrivals_executed": counts["arrivals"],
+        "relinquishments_executed": counts["relinquished"],
+        "arrival_admit_failures": max(0, counts["arrivals"] - (
+            counts["registered"] - initial_devices
+        )),
         "window_sec_configured": duration_sec,
         "window_sec_measured": round(clock() - t0, 4),
     }

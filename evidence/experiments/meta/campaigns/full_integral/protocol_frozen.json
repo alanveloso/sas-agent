@@ -1,0 +1,211 @@
+{
+  "campaign_id": "tnsm-2026-12135-full",
+  "out_root": "evidence/tnsm-2026-12135-full-20261112T200619Z",
+  "frozen_at_utc": "2026-11-12T21:08:55Z",
+  "host_commit": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+  "branch": "develop",
+  "image_tag": "sas-agent:article",
+  "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e",
+  "agent_image_file_match": {
+    "main.py": {
+      "host": "9a32083464c69c42737a60ca5da3610049f1c407d7bf1d3f46c029e75a232438",
+      "image": "9a32083464c69c42737a60ca5da3610049f1c407d7bf1d3f46c029e75a232438",
+      "match": true
+    },
+    "database.py": {
+      "host": "393eebaa735c295b085a25921bc9b084dffa670003aaba3cd22cd844dcf47127",
+      "image": "393eebaa735c295b085a25921bc9b084dffa670003aaba3cd22cd844dcf47127",
+      "match": true
+    },
+    "services/heartbeat_service.py": {
+      "host": "e4058e3d1b742c9848b1602dc793e4c01f4b328c8b9e53e9be62f668956b2fab",
+      "image": "e4058e3d1b742c9848b1602dc793e4c01f4b328c8b9e53e9be62f668956b2fab",
+      "match": true
+    },
+    "services/mtls_auth.py": {
+      "host": "4f0ed1b655bfefbe6721eb6a074b6e6c7ec4cb980ed7b61b3e267594d70d03a4",
+      "image": "4f0ed1b655bfefbe6721eb6a074b6e6c7ec4cb980ed7b61b3e267594d70d03a4",
+      "match": true
+    }
+  },
+  "script_sha256": {
+    "main.py": "9a32083464c69c42737a60ca5da3610049f1c407d7bf1d3f46c029e75a232438",
+    "database.py": "393eebaa735c295b085a25921bc9b084dffa670003aaba3cd22cd844dcf47127",
+    "services/heartbeat_service.py": "e4058e3d1b742c9848b1602dc793e4c01f4b328c8b9e53e9be62f668956b2fab",
+    "services/mtls_auth.py": "4f0ed1b655bfefbe6721eb6a074b6e6c7ec4cb980ed7b61b3e267594d70d03a4",
+    "services/authorization_service.py": "f85a95a6b47588cb759e33a40ddc032c4ae803ca11573ec2a55ea3ea81f61530",
+    "services/profile_manager.py": "5410f6dbf1c3785106fc815bbfc6e0efd96fd3b9488d8ced392d6d26c913b1d9",
+    "requirements.txt": "a6800a493c5afa78326409fc8de4c8cf87c45882872a2ef5e0e2d196d8341054",
+    "benchmarks/load/common.py": "c7a3201f04722a1aba643b9840e107f7352c3a5b25be4a0c149f376579d20fdc",
+    "benchmarks/load/colocated_sustained_bench.py": "560579324f057d7c5a4cdfb0be8e1eb638e1f509191888fb1b884ea0dfaf629b",
+    "benchmarks/load/container_concurrency_bench.py": "681d9051a993f473bc790cdf6d84392b7ba5577231115d221e4df07a6256bea2",
+    "benchmarks/load/lifecycle_decomp_bench.py": "352564917abfc243b6b9b23a2fa86e8d5804a7349a15c3fefd86c4a35973b307",
+    "benchmarks/load/unified_coldstart.py": "e51a01201bbd51a03bb78d72da35fd2e69e3930d1671fff06fd9ca780ce676ae",
+    "benchmarks/load/http_mtls_sqlite_recovery_campaign.py": "c242fa092b156d7fa4f0c52bc0f5966524cab89e4c2f1e2cf1d2a9f6cbd38a57",
+    "benchmarks/load/factorial_provisioning_bench.py": "73f4020e06fb372bd8b8993ba9298996b355183d1d050c8e3b1156c46d667992",
+    "benchmarks/load/persistence_modes_bench.py": "7121bd91400ebcd85d00a5630bdac88afa8843d8b9b073d683fed10b71b2245e",
+    "benchmarks/load/tls_mtls_overhead_bench.py": "5b2dbe4e2cc16d5c313b4ecdfb623cf28549ffbfa53258f914cc934dde50830a",
+    "analysis/provisioning_selection.py": "9a53e7ffbcc1a2c523816bad6d1917c7c76f105b0946dadb37de5acf67b99905",
+    "analysis/uncertainty_report.py": "6fb37bfbf88fca80bf05d79b74a20bba367158f67e9573bd348bfa99295f0cb2",
+    "scripts/run_full_evaluation.sh": "0ba692f3a913aa5c23cc6aa743e9a122262c3ef5e04e6dbbe982953465d18154",
+    "scripts/run_complementary_major_revision.sh": "bde8cc9c67d7aeb6b1b66888f915c266186a3a756b5a5747118746b6bd051e0c"
+  },
+  "seed": 42,
+  "smoke": 0,
+  "thermal_gate": {
+    "tctl_c_max": 65.0,
+    "load1_max": 1.0,
+    "cpu_pct_prior_max": 10.0
+  },
+  "certs_dir": "evidence/tnsm-2026-12135-controlled-20261111T205011Z/meta/harness_certs",
+  "certs_policy": "runtime mount only; never archive *.key into OUT_ROOT",
+  "canonical_corpus_readonly": "evidence/2026-12135",
+  "failure_policy": {
+    "retain": [
+      "measured_sas",
+      "functional failures under load"
+    ],
+    "may_invalidate": [
+      "infrastructure",
+      "harness",
+      "thermal_gate_fail"
+    ],
+    "no_selective_deletion": true,
+    "no_STAGE_DONE_before_artifact_check": true
+  },
+  "stages_planned": [
+    "unittest",
+    "security_tests",
+    "isolation",
+    "cert_matrix",
+    "boundary",
+    "robustness",
+    "winnforum",
+    "coldstart",
+    "lifecycle",
+    "tls",
+    "persistence",
+    "factorial",
+    "process_concurrency",
+    "container_concurrency",
+    "container_per_agent",
+    "sustained",
+    "colocated",
+    "recovery",
+    "k5_validation",
+    "offline_selection",
+    "analyze"
+  ],
+  "params": {
+    "lifecycle": {
+      "profiles": 8,
+      "reps": 5,
+      "n_cycles": 30
+    },
+    "coldstart": {
+      "n_per_profile": 30,
+      "profiles": 8
+    },
+    "tls": {
+      "blocks": 30,
+      "requests_per_block": 100
+    },
+    "persistence": {
+      "repeats": 20,
+      "modes": [
+        "sqlite_commit",
+        "sqlite_batch",
+        "sqlite_memory"
+      ],
+      "populations": [
+        133,
+        1000
+      ]
+    },
+    "factorial": {
+      "repeats": 20,
+      "probe_n": 10
+    },
+    "process_concurrency": {
+      "k": [
+        1,
+        2,
+        3,
+        5,
+        10,
+        15
+      ],
+      "devices": 1500,
+      "repeats": 5
+    },
+    "container_concurrency": {
+      "k": [
+        1,
+        2,
+        3,
+        5,
+        10,
+        15
+      ],
+      "devices": 1500,
+      "repeats": 5,
+      "scenarios": [
+        "A",
+        "B"
+      ]
+    },
+    "container_per_agent": {
+      "devices_per_agent": 300,
+      "k": [
+        1,
+        2,
+        3,
+        5,
+        10,
+        15
+      ],
+      "repeats": 5
+    },
+    "sustained": {
+      "populations": [
+        300,
+        1500
+      ],
+      "seeds": [
+        1,
+        2,
+        3
+      ],
+      "sec": 600,
+      "schedule": "respect_transmit_expire"
+    },
+    "colocated": {
+      "pairs": 5,
+      "clients": 5,
+      "dpc": 300,
+      "sec": 600,
+      "seed": 42
+    },
+    "recovery": {
+      "cycles": 30
+    },
+    "k5_validation": {
+      "seed": 84242,
+      "repeats": 5,
+      "evaluation_package": "P4"
+    },
+    "P4": {
+      "startup_sec": 60,
+      "provisioning_sec": 1.5,
+      "grant_batch_p95_ms": 1000,
+      "memory_mb": 2048,
+      "kind": "illustrative_sensitivity_prior_calibration",
+      "not_prospective_slo": true
+    }
+  },
+  "do_not_use": [
+    "scripts/run_controlled_campaign.sh without reviewing pin to d3aaa3d",
+    "benchmarks/run_campaign.py as primary corpus protocol",
+    "pilot evidence/2026-12135-r18-*"
+  ]
+}

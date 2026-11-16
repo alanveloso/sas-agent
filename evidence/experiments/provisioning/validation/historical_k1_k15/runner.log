@@ -1,0 +1,19 @@
+=== scenario=A repeat=1/5 K-order=[1, 15] ===
+  K=1 devices=1500 wall=4.2128s grant_batch_p95=214.8081ms grant_amortized=1.9515ms/item ok
+  K=15 devices=1500 wall=0.9718s grant_batch_p95=658.5324ms grant_amortized=6.1699ms/item ok
+=== scenario=A repeat=2/5 K-order=[1, 15] ===
+  K=1 devices=1500 wall=4.3027s grant_batch_p95=216.4281ms grant_amortized=2.0021ms/item ok
+  K=15 devices=1500 wall=0.9518s grant_batch_p95=636.2363ms grant_amortized=5.9311ms/item ok
+=== scenario=A repeat=3/5 K-order=[1, 15] ===
+  K=1 devices=1500 wall=4.2809s grant_batch_p95=220.7814ms grant_amortized=1.9785ms/item ok
+  K=15 devices=1500 wall=0.9662s grant_batch_p95=648.9811ms grant_amortized=5.7428ms/item ok
+=== scenario=A repeat=4/5 K-order=[1, 15] ===
+  K=1 devices=1500 wall=4.1803s grant_batch_p95=211.9358ms grant_amortized=1.93ms/item ok
+  K=15 devices=1500 wall=0.9371s grant_batch_p95=626.6783ms grant_amortized=5.9604ms/item ok
+=== scenario=A repeat=5/5 K-order=[15, 1] ===
+  K=15 devices=1500 wall=0.9885s grant_batch_p95=633.9116ms grant_amortized=5.8936ms/item ok
+  K=1 devices=1500 wall=4.2603s grant_batch_p95=213.599ms grant_amortized=1.9828ms/item ok
+Wrote evidence/tnsm-2026-12135-rev1-20261110T124131Z/03_concurrency/validation/container_concurrency_runs.csv
+Wrote evidence/tnsm-2026-12135-rev1-20261110T124131Z/03_concurrency/validation/container_concurrency_summary.csv
+Wrote evidence/tnsm-2026-12135-rev1-20261110T124131Z/03_concurrency/validation/container_concurrency_manifest.json
+EXIT:0

@@ -1,0 +1,166 @@
+{
+  "rule": "smallest calibrated K whose every repeat meets every limit; ties: lower worst-case memory, then config_id; else infeasible",
+  "limits": {
+    "startup_sec": 60.0,
+    "provisioning_sec": 1.5,
+    "grant_batch_p95_ms": 1000.0,
+    "memory_mb": 2048.0
+  },
+  "limits_are_illustrative": true,
+  "persistence": "sqlite_file_full",
+  "scenario": "A",
+  "total_devices": 1500,
+  "calibration_files": [
+    "/home/alanveloso/C\u00f3digo/sas-agent/evidence/experiments/provisioning/calibration/container_concurrency_runs.csv"
+  ],
+  "calibration": [
+    {
+      "config_id": "k1",
+      "k_containers": 1,
+      "n_repeats": 5,
+      "worst": {
+        "startup_sec": 0.7183,
+        "provisioning_sec": 3.7219,
+        "grant_batch_p95_ms": 192.1763,
+        "memory_mb": 71.54
+      },
+      "median": {
+        "startup_sec": 0.7144,
+        "provisioning_sec": 3.6495,
+        "grant_batch_p95_ms": 185.3624,
+        "memory_mb": 71.39
+      },
+      "feasible": false,
+      "violations": [
+        "provisioning_sec:3.722>1.5"
+      ]
+    },
+    {
+      "config_id": "k2",
+      "k_containers": 2,
+      "n_repeats": 5,
+      "worst": {
+        "startup_sec": 0.9296,
+        "provisioning_sec": 2.0553,
+        "grant_batch_p95_ms": 207.0156,
+        "memory_mb": 141.97
+      },
+      "median": {
+        "startup_sec": 0.9174,
+        "provisioning_sec": 2.0003,
+        "grant_batch_p95_ms": 200.5614,
+        "memory_mb": 141.83
+      },
+      "feasible": false,
+      "violations": [
+        "provisioning_sec:2.055>1.5"
+      ]
+    },
+    {
+      "config_id": "k3",
+      "k_containers": 3,
+      "n_repeats": 5,
+      "worst": {
+        "startup_sec": 1.0976,
+        "provisioning_sec": 1.3862,
+        "grant_batch_p95_ms": 212.1221,
+        "memory_mb": 213.5
+      },
+      "median": {
+        "startup_sec": 1.0838,
+        "provisioning_sec": 1.366,
+        "grant_batch_p95_ms": 211.34,
+        "memory_mb": 213.15
+      },
+      "feasible": true,
+      "violations": []
+    },
+    {
+      "config_id": "k5",
+      "k_containers": 5,
+      "n_repeats": 5,
+      "worst": {
+        "startup_sec": 1.4407,
+        "provisioning_sec": 0.9236,
+        "grant_batch_p95_ms": 229.0415,
+        "memory_mb": 354.66
+      },
+      "median": {
+        "startup_sec": 1.4313,
+        "provisioning_sec": 0.9015,
+        "grant_batch_p95_ms": 223.3158,
+        "memory_mb": 353.94
+      },
+      "feasible": true,
+      "violations": []
+    },
+    {
+      "config_id": "k10",
+      "k_containers": 10,
+      "n_repeats": 5,
+      "worst": {
+        "startup_sec": 2.3508,
+        "provisioning_sec": 0.7937,
+        "grant_batch_p95_ms": 439.5803,
+        "memory_mb": 704.27
+      },
+      "median": {
+        "startup_sec": 2.3276,
+        "provisioning_sec": 0.7816,
+        "grant_batch_p95_ms": 382.5745,
+        "memory_mb": 703.71
+      },
+      "feasible": true,
+      "violations": []
+    },
+    {
+      "config_id": "k15",
+      "k_containers": 15,
+      "n_repeats": 5,
+      "worst": {
+        "startup_sec": 3.399,
+        "provisioning_sec": 0.8316,
+        "grant_batch_p95_ms": 577.4924,
+        "memory_mb": 1052.28
+      },
+      "median": {
+        "startup_sec": 3.2808,
+        "provisioning_sec": 0.8032,
+        "grant_batch_p95_ms": 546.4194,
+        "memory_mb": 1050.74
+      },
+      "feasible": true,
+      "violations": []
+    }
+  ],
+  "selected": {
+    "config_id": "k3",
+    "k_containers": 3
+  },
+  "infeasible": false,
+  "reference_k": 15,
+  "validation_files": [
+    "/home/alanveloso/C\u00f3digo/sas-agent/evidence/experiments/provisioning/validation/k3_independent/container_concurrency_runs.csv"
+  ],
+  "validation": [
+    {
+      "config_id": "k3",
+      "k_containers": 3,
+      "n_repeats": 5,
+      "worst": {
+        "startup_sec": 1.1396,
+        "provisioning_sec": 1.438,
+        "grant_batch_p95_ms": 221.719,
+        "memory_mb": 211.85
+      },
+      "median": {
+        "startup_sec": 1.1249,
+        "provisioning_sec": 1.3989,
+        "grant_batch_p95_ms": 220.3211,
+        "memory_mb": 211.2
+      },
+      "feasible": true,
+      "violations": []
+    }
+  ]
+}

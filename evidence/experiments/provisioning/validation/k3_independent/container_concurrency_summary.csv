@@ -1,0 +1,12 @@
+scenario,k_containers,n_repeats,metric,median,iqr,min,max,mean,ci95_low,ci95_high,population_mode,total_devices,experimental_unit,ci95_of
+A,3,5,scenario_wall_sec,1.3989,0.035,1.3969,1.438,1.4127,1.3871,1.4383,fixed_total,1500,independent_deployment_repeat,mean_across_repeats
+A,3,5,load_wall_sec,1.3989,0.035,1.3969,1.438,1.4127,1.3871,1.4383,fixed_total,1500,independent_deployment_repeat,mean_across_repeats
+A,3,5,create_ready_sec,1.1249,0.0005,1.0979,1.1396,1.1224,1.1036,1.1411,fixed_total,1500,independent_deployment_repeat,mean_across_repeats
+A,3,5,throughput_devices_per_sec,1072.257,26.237,1043.109,1073.838,1062.0066,1042.8599,1081.1533,fixed_total,1500,independent_deployment_repeat,mean_across_repeats
+A,3,5,grant_latency_p95_ms,2.2032,0.0706,2.1305,2.2172,2.1776,2.1253,2.2299,fixed_total,1500,independent_deployment_repeat,mean_across_repeats
+A,3,5,grant_latency_mean_ms,1.8642,0.0244,1.8405,1.8775,1.861,1.8413,1.8806,fixed_total,1500,independent_deployment_repeat,mean_across_repeats
+A,3,5,grant_batch_latency_median_ms,178.9997,2.7041,174.3918,179.7663,177.7428,174.9281,180.5576,fixed_total,1500,independent_deployment_repeat,mean_across_repeats
+A,3,5,grant_batch_latency_p95_ms,220.3211,7.0589,213.0489,221.719,217.7607,212.5313,222.99,fixed_total,1500,independent_deployment_repeat,mean_across_repeats
+A,3,5,grant_amortized_ms_per_item,1.8642,0.0244,1.8405,1.8775,1.861,1.8413,1.8806,fixed_total,1500,independent_deployment_repeat,mean_across_repeats
+A,3,5,ram_peak_mb_sum,211.2,0.49,210.99,211.85,211.35,210.9014,211.7986,fixed_total,1500,independent_deployment_repeat,mean_across_repeats
+A,3,5,ram_after_load_mb_sum,211.07,0.12,210.68,211.23,211.016,210.7592,211.2728,fixed_total,1500,independent_deployment_repeat,mean_across_repeats

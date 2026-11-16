@@ -1,0 +1,59 @@
+{
+  "created_at_utc": "2026-11-13T14:16:59Z",
+  "pairs": 5,
+  "n_clients": 5,
+  "devices_per_client": 300,
+  "duration_sec": 600.0,
+  "arrival_interval_sec": 10.0,
+  "relinquish_interval_sec": 30.0,
+  "mix_semantics": {
+    "scope": "per_client",
+    "arrival": "each client independently schedules Registration+Grant every arrival_interval_sec during the sustained window",
+    "relinquish": "each client independently picks one of its active CBSDs uniformly (seeded) every relinquish_interval_sec; victim stops heartbeating",
+    "heartbeat": "per CBSD; continues until Relinquish removes it",
+    "does_not_stop_after_bootstrap": true
+  },
+  "schedule": [
+    {
+      "pair_id": 1,
+      "seed": 75242,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "pair_id": 2,
+      "seed": 76242,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "pair_id": 3,
+      "seed": 77242,
+      "order": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "pair_id": 4,
+      "seed": 78242,
+      "order": [
+        "B",
+        "A"
+      ]
+    },
+    {
+      "pair_id": 5,
+      "seed": 79242,
+      "order": [
+        "A",
+        "B"
+      ]
+    }
+  ],
+  "note": "Paired seeds; A=K1/B=K=n_clients; client count and offered mix fixed"
+}

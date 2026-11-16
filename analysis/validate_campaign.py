@@ -15,6 +15,8 @@ from pathlib import Path
 from typing import Any
 
 REPO = Path(__file__).resolve().parents[1]
+if str(REPO) not in sys.path:
+    sys.path.insert(0, str(REPO))
 RAW = REPO / "artifacts" / "raw"
 
 # Exclusive lifecycle stack (article bars)
@@ -330,6 +332,10 @@ def validate_manifest(root: Path, checks: list[Check]) -> None:
 
 
 def validate_campaign(campaign_id: str) -> int:
+    if campaign_id == "experiments":
+        from analysis.load_data import ensure_experiments_staged
+
+        ensure_experiments_staged()
     root = RAW / campaign_id
     checks: list[Check] = []
     if not root.is_dir():

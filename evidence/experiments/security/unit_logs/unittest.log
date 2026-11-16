@@ -1,0 +1,214 @@
+.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+test_allowlisted_certificate_can_reset (test_admin_authorization.AdminAuthorizationTests.test_allowlisted_certificate_can_reset) ... ok
+test_catch_all_admin_paths_are_protected (test_admin_authorization.AdminAuthorizationTests.test_catch_all_admin_paths_are_protected) ... ok
+test_certificate_not_in_allowlist_is_rejected (test_admin_authorization.AdminAuthorizationTests.test_certificate_not_in_allowlist_is_rejected) ... ok
+test_fingerprint_parsing (test_admin_authorization.AdminAuthorizationTests.test_fingerprint_parsing) ... ok
+test_http_headers_are_not_client_identity (test_admin_authorization.AdminAuthorizationTests.test_http_headers_are_not_client_identity) ... ok
+test_no_client_certificate_is_rejected (test_admin_authorization.AdminAuthorizationTests.test_no_client_certificate_is_rejected) ... ok
+test_sha1_fingerprint_is_not_accepted (test_admin_authorization.AdminAuthorizationTests.test_sha1_fingerprint_is_not_accepted) ... ok
+test_unset_allowlist_is_fail_closed (test_admin_authorization.AdminAuthorizationTests.test_unset_allowlist_is_fail_closed) ... ok
+test_bench_client_cert_is_authorized_by_default (test_admin_authorization.DockerRunAdminEnvTests.test_bench_client_cert_is_authorized_by_default) ... ok
+test_explicit_admin_env_is_respected (test_admin_authorization.DockerRunAdminEnvTests.test_explicit_admin_env_is_respected) ... ok
+test_gaa_grant_binds_global_policy (test_authorization_lifecycle.AuthorizationLifecycleTests.test_gaa_grant_binds_global_policy) ... .venv/lib/python3.12/site-packages/sqlalchemy/sql/schema.py:3623: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore
+services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+tests/test_authorization_lifecycle.py:93: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  self.future_exp = (datetime.utcnow() + timedelta(days=30)).strftime(
+ok
+test_heartbeat_renewal_never_exceeds_authorization_expires_at (test_authorization_lifecycle.AuthorizationLifecycleTests.test_heartbeat_renewal_never_exceeds_authorization_expires_at) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+tests/test_authorization_lifecycle.py:249: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  near = datetime.utcnow() + timedelta(seconds=120)
+ok
+test_heartbeat_returns_500_after_revocation (test_authorization_lifecycle.AuthorizationLifecycleTests.test_heartbeat_returns_500_after_revocation) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+tests/test_authorization_lifecycle.py:230: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  past = (datetime.utcnow() - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+tests/test_authorization_lifecycle.py:246: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  self.assertLess(tx, datetime.utcnow())
+ok
+test_missing_authorization_source_is_fail_closed (test_authorization_lifecycle.AuthorizationLifecycleTests.test_missing_authorization_source_is_fail_closed) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+ok
+test_pal_grant_binds_authorization_source (test_authorization_lifecycle.AuthorizationLifecycleTests.test_pal_grant_binds_authorization_source) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+ok
+test_pal_outside_narrowed_band_is_terminated (test_authorization_lifecycle.AuthorizationLifecycleTests.test_pal_outside_narrowed_band_is_terminated) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+ok
+test_replaced_profile_does_not_carry_over_rights (test_authorization_lifecycle.AuthorizationLifecycleTests.test_replaced_profile_does_not_carry_over_rights) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+tests/test_authorization_lifecycle.py:330: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  datetime.utcnow(),
+ok
+test_restart_with_same_profile_keeps_grant (test_authorization_lifecycle.AuthorizationLifecycleTests.test_restart_with_same_profile_keeps_grant) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+ok
+test_revocation_cascade_terminates_derived_grants (test_authorization_lifecycle.AuthorizationLifecycleTests.test_revocation_cascade_terminates_derived_grants) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+tests/test_authorization_lifecycle.py:206: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  past = (datetime.utcnow() - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+ok
+test_revocation_isolates_other_pal_grants (test_authorization_lifecycle.AuthorizationLifecycleTests.test_revocation_isolates_other_pal_grants) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+tests/test_authorization_lifecycle.py:365: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  other_exp = (datetime.utcnow() + timedelta(days=30)).strftime(
+tests/test_authorization_lifecycle.py:430: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  past = (datetime.utcnow() - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+ok
+test_shortened_pal_expiration_clamps_existing_grant (test_authorization_lifecycle.AuthorizationLifecycleTests.test_shortened_pal_expiration_clamps_existing_grant) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+tests/test_authorization_lifecycle.py:348: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  near = (datetime.utcnow() + timedelta(seconds=120)).replace(microsecond=0)
+ok
+test_alternate_raster (test_band_profile.BandProfileModelTests.test_alternate_raster) ... ok
+test_br_anatel_privativa_profile (test_band_profile.BandProfileModelTests.test_br_anatel_privativa_profile) ... ok
+test_cbrs_defaults_match_legacy (test_band_profile.BandProfileModelTests.test_cbrs_defaults_match_legacy) ... ok
+test_immutable (test_band_profile.BandProfileModelTests.test_immutable) ... ok
+test_invalid_band_rejected (test_band_profile.BandProfileModelTests.test_invalid_band_rejected) ... ok
+test_profile_from_mapping (test_band_profile.BandProfileModelTests.test_profile_from_mapping) ... ok
+test_profile_from_mapping_with_policies (test_band_profile.BandProfileModelTests.test_profile_from_mapping_with_policies) ... ok
+test_validate_uses_profile_bandwidth (test_band_profile.MeasReportProfileTests.test_validate_uses_profile_bandwidth) ... ok
+test_anatel_profile_selected_from_environment (test_band_profile.ProfileManagerTests.test_anatel_profile_selected_from_environment) ... ok
+test_band_env_override (test_band_profile.ProfileManagerTests.test_band_env_override) ... ok
+test_default_is_cbrs (test_band_profile.ProfileManagerTests.test_default_is_cbrs) ... ok
+test_missing_profile_file_raises (test_band_profile.ProfileManagerTests.test_missing_profile_file_raises) ... ok
+test_profile_file_env_takes_precedence (test_band_profile.ProfileManagerTests.test_profile_file_env_takes_precedence) ... ok
+test_register_custom_profile (test_band_profile.ProfileManagerTests.test_register_custom_profile) ... ok
+test_resolve_optional_fallback (test_band_profile.ProfileManagerTests.test_resolve_optional_fallback) ... ok
+test_unknown_profile_raises (test_band_profile.ProfileManagerTests.test_unknown_profile_raises) ... ok
+test_spectrum_inquiry_accepts_explicit_profile (test_band_profile.ServiceInjectionTests.test_spectrum_inquiry_accepts_explicit_profile) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+ok
+test_invalid_profiles_rejected (test_band_profile_robustness.BandProfileRobustnessTests.test_invalid_profiles_rejected) ... ok
+test_all_cases_pass (test_boundary_enforcement.BoundaryEnforcementIntegrationTests.test_all_cases_pass) ... tests/test_boundary_enforcement.py:34: ResourceWarning: unclosed file <_io.TextIOWrapper name='benchmarks/data/boundary_enforcement.csv' mode='r' encoding='utf-8'>
+  rows = list(csv.DictReader(CSV.open(encoding="utf-8")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_csv_written (test_boundary_enforcement.BoundaryEnforcementIntegrationTests.test_csv_written) ... ok
+test_five_parallel_clients_reach_inflight_five (test_colocated_sustained.InflightGaugeTests.test_five_parallel_clients_reach_inflight_five) ... ok
+test_devices_total_1500 (test_colocated_sustained.MappingTests.test_devices_total_1500) ... ok
+test_k1_all_clients_share_agent_zero (test_colocated_sustained.MappingTests.test_k1_all_clients_share_agent_zero) ... ok
+test_k5_one_client_per_agent (test_colocated_sustained.MappingTests.test_k5_one_client_per_agent) ... ok
+test_k5_rejects_client_out_of_range (test_colocated_sustained.MappingTests.test_k5_rejects_client_out_of_range) ... ok
+test_paired_client_seeds_stable (test_colocated_sustained.MappingTests.test_paired_client_seeds_stable) ... ok
+test_persistent_connection_reuse_counter (test_colocated_sustained.PostTrackedTests.test_persistent_connection_reuse_counter) ... ok
+test_five_clients_same_offered_schedule_params (test_colocated_sustained.ProfileAndLoadTests.test_five_clients_same_offered_schedule_params)
+Same seeds + duration ⇒ same planned initial population per client. ... ok
+test_shared_profile_identical_for_fairness (test_colocated_sustained.ProfileAndLoadTests.test_shared_profile_identical_for_fairness) ... ok
+test_scenario_a_single_db (test_colocated_sustained.SqliteIsolationContractTests.test_scenario_a_single_db) ... ok
+test_scenario_b_uses_one_db_path_per_agent (test_colocated_sustained.SqliteIsolationContractTests.test_scenario_b_uses_one_db_path_per_agent) ... ok
+test_batch_and_amortized_are_separate (test_container_concurrency_latency.GrantLatencyFieldsTests.test_batch_and_amortized_are_separate) ... ok
+test_empty_inputs_yield_blank_cells (test_container_concurrency_latency.GrantLatencyFieldsTests.test_empty_inputs_yield_blank_cells) ... ok
+test_run_fields_keep_legacy_columns (test_container_concurrency_latency.GrantLatencyFieldsTests.test_run_fields_keep_legacy_columns) ... ok
+test_records_one_sample_per_batch_post (test_container_concurrency_latency.LoadOneContainerTimingTests.test_records_one_sample_per_batch_post) ... ok
+test_fixed_per_agent_scales_total (test_container_concurrency_population.AgentPopulationTests.test_fixed_per_agent_scales_total) ... ok
+test_historical_split_is_unchanged (test_container_concurrency_population.AgentPopulationTests.test_historical_split_is_unchanged) ... ok
+test_uneven_split_differs_by_at_most_one (test_container_concurrency_population.AgentPopulationTests.test_uneven_split_differs_by_at_most_one) ... ok
+test_default_is_historical (test_container_concurrency_population.CliTests.test_default_is_historical) ... ok
+test_modes_are_mutually_exclusive_and_validated (test_container_concurrency_population.CliTests.test_modes_are_mutually_exclusive_and_validated) ... ok
+test_per_agent_uses_separate_outputs (test_container_concurrency_population.CliTests.test_per_agent_uses_separate_outputs) ... ok
+test_aggregate_accepts_rows_without_new_columns (test_container_concurrency_population.RunScenarioTests.test_aggregate_accepts_rows_without_new_columns) ... ok
+test_fixed_per_agent_row (test_container_concurrency_population.RunScenarioTests.test_fixed_per_agent_row) ... ok
+test_historical_row (test_container_concurrency_population.RunScenarioTests.test_historical_row) ... ok
+test_complete_sweep_sums_containers (test_container_concurrency_population.StatsSamplerTests.test_complete_sweep_sums_containers) ... ok
+test_enter_exit_sample_covers_short_loads (test_container_concurrency_population.StatsSamplerTests.test_enter_exit_sample_covers_short_loads)
+Short loads must not leave sweeps=0 when docker stats succeed. ... ok
+test_failed_read_does_not_count_incomplete_enter_sample (test_container_concurrency_population.StatsSamplerTests.test_failed_read_does_not_count_incomplete_enter_sample) ... ok
+test_partial_sweep_is_not_counted (test_container_concurrency_population.StatsSamplerTests.test_partial_sweep_is_not_counted) ... ok
+test_sigkill_restart_same_db_then_https_heartbeat (test_http_mtls_sqlite_recovery.HttpMtlsSqliteRecoverySmoke.test_sigkill_restart_same_db_then_https_heartbeat) ... ok
+test_http_and_sas_outcomes_are_separate (test_lifecycle_sustained.MetricTests.test_http_and_sas_outcomes_are_separate) ... ok
+test_overload_marks_late_and_missed (test_lifecycle_sustained.MetricTests.test_overload_marks_late_and_missed) ... ok
+test_summary_latency_is_per_request (test_lifecycle_sustained.MetricTests.test_summary_latency_is_per_request) ... ok
+test_transport_error_is_recorded_and_run_continues (test_lifecycle_sustained.MetricTests.test_transport_error_is_recorded_and_run_continues) ... ok
+test_heartbeat_state_period_and_stop_after_relinquish (test_lifecycle_sustained.SequenceTests.test_heartbeat_state_period_and_stop_after_relinquish) ... ok
+test_initial_heartbeats_are_staggered (test_lifecycle_sustained.SequenceTests.test_initial_heartbeats_are_staggered) ... ok
+test_initial_population_then_mixed_window (test_lifecycle_sustained.SequenceTests.test_initial_population_then_mixed_window) ... ok
+test_reproducible_with_same_seed (test_lifecycle_sustained.SequenceTests.test_reproducible_with_same_seed) ... ok
+test_explicit_send_after_expire_is_true_missed (test_lifecycle_sustained.TransmitExpireScheduleTests.test_explicit_send_after_expire_is_true_missed) ... ok
+test_fixed_rate_with_truncated_tx_marks_missed_but_rc0 (test_lifecycle_sustained.TransmitExpireScheduleTests.test_fixed_rate_with_truncated_tx_marks_missed_but_rc0) ... ok
+test_next_due_helper_caps_to_transmit_deadline (test_lifecycle_sustained.TransmitExpireScheduleTests.test_next_due_helper_caps_to_transmit_deadline) ... ok
+test_respect_transmit_expire_avoids_false_window_breach (test_lifecycle_sustained.TransmitExpireScheduleTests.test_respect_transmit_expire_avoids_false_window_breach) ... ok
+test_send_before_expire_is_not_missed (test_lifecycle_sustained.TransmitExpireScheduleTests.test_send_before_expire_is_not_missed) ... ok
+test_sequential_multicbsd_fixed_rate_still_misses_under_truncation (test_lifecycle_sustained.TransmitExpireScheduleTests.test_sequential_multicbsd_fixed_rate_still_misses_under_truncation) ... ok
+test_cbrs_fss_policy_matches_legacy_subband (test_protection_decoupling.CbrsPolicyRegressionTests.test_cbrs_fss_policy_matches_legacy_subband) ... ok
+test_cbrs_ntia_policy_matches_legacy_gbs (test_protection_decoupling.CbrsPolicyRegressionTests.test_cbrs_ntia_policy_matches_legacy_gbs) ... ok
+test_cbrs_and_anatel_use_distinct_source_ids (test_protection_decoupling.GaaIdentityTests.test_cbrs_and_anatel_use_distinct_source_ids) ... ok
+test_ensure_gaa_migrates_legacy_cbrs_row (test_protection_decoupling.GaaIdentityTests.test_ensure_gaa_migrates_legacy_cbrs_row) ... services/authorization_service.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return datetime.utcnow().replace(microsecond=0)
+ok
+test_border_bypassed_for_anatel (test_protection_decoupling.ProtectionBypassTests.test_border_bypassed_for_anatel) ... ok
+test_esc_conflict_bypassed_when_esc_disabled (test_protection_decoupling.ProtectionBypassTests.test_esc_conflict_bypassed_when_esc_disabled) ... ok
+test_fss_gwbl_bypassed_when_flag_false (test_protection_decoupling.ProtectionBypassTests.test_fss_gwbl_bypassed_when_flag_false) ... ok
+test_heartbeat_federal_skips_dpa_when_disabled (test_protection_decoupling.ProtectionBypassTests.test_heartbeat_federal_skips_dpa_when_disabled) ... ok
+test_cli_writes_result_and_never_overwrites (test_provisioning_selection.FileTests.test_cli_writes_result_and_never_overwrites) ... refusing to overwrite /tmp/prov_sel_t3bc2vg9/sel.json
+ok
+test_legacy_csv_without_batch_p95_is_rejected (test_provisioning_selection.FileTests.test_legacy_csv_without_batch_p95_is_rejected) ... ok
+test_mixed_populations_are_rejected (test_provisioning_selection.FileTests.test_mixed_populations_are_rejected) ... ok
+test_runs_as_script (test_provisioning_selection.FileTests.test_runs_as_script) ... ok
+test_validation_is_independent_and_reports_selected_and_reference (test_provisioning_selection.FileTests.test_validation_is_independent_and_reports_selected_and_reference) ... ok
+test_every_repeat_must_pass (test_provisioning_selection.SelectionTests.test_every_repeat_must_pass) ... ok
+test_failed_run_missing_memory_and_non_durable_are_infeasible (test_provisioning_selection.SelectionTests.test_failed_run_missing_memory_and_non_durable_are_infeasible) ... ok
+test_infeasible_when_limits_conflict (test_provisioning_selection.SelectionTests.test_infeasible_when_limits_conflict) ... ok
+test_memory_uses_worse_of_after_load_and_peak (test_provisioning_selection.SelectionTests.test_memory_uses_worse_of_after_load_and_peak) ... ok
+test_smallest_feasible_k_is_selected (test_provisioning_selection.SelectionTests.test_smallest_feasible_k_is_selected) ... ok
+test_tie_on_k_broken_by_memory_then_id (test_provisioning_selection.SelectionTests.test_tie_on_k_broken_by_memory_then_id) ... ok
+test_sigkill_mid_transaction_keeps_committed_and_rolls_back_pending (test_sqlite_crash_recovery.SqliteCrashRecoveryTests.test_sigkill_mid_transaction_keeps_committed_and_rolls_back_pending) ... ok
+test_default_journal_and_synchronous (test_sqlite_crash_recovery.SqlitePragmaContractTests.test_default_journal_and_synchronous) ... ok
+test_catalog_flags_lifecycle_pseudoreplication (test_statistical_uncertainty.CatalogAndReportTests.test_catalog_flags_lifecycle_pseudoreplication) ... ok
+test_k_sensitivity_absent_without_calibration_data (test_statistical_uncertainty.CatalogAndReportTests.test_k_sensitivity_absent_without_calibration_data) ... ok
+test_report_cli_writes_json_without_overwrite (test_statistical_uncertainty.CatalogAndReportTests.test_report_cli_writes_json_without_overwrite) ... refusing to overwrite /tmp/uncert_bjwhsqc3/uncertainty.json
+ok
+test_report_refuses_mean_ci_on_correlated_cycles (test_statistical_uncertainty.CatalogAndReportTests.test_report_refuses_mean_ci_on_correlated_cycles) ... ok
+test_runs_as_script (test_statistical_uncertainty.CatalogAndReportTests.test_runs_as_script) ... ok
+test_concurrency_ci_matches_analysis_helper (test_statistical_uncertainty.MeanCiTests.test_concurrency_ci_matches_analysis_helper) ... ok
+test_known_t_critical_and_width (test_statistical_uncertainty.MeanCiTests.test_known_t_critical_and_width) ... ok
+test_refuses_n_less_than_2 (test_statistical_uncertainty.MeanCiTests.test_refuses_n_less_than_2) ... ok
+test_n30_rank_is_29th_order_statistic (test_statistical_uncertainty.P95ReportTests.test_n30_rank_is_29th_order_statistic) ... ok
+test_small_n_is_point_estimate_without_ci (test_statistical_uncertainty.P95ReportTests.test_small_n_is_point_estimate_without_ci) ... ok
+test_coldstart_summary_has_mean_ci_and_independent_unit (test_statistical_uncertainty.SummaryAnnotationTests.test_coldstart_summary_has_mean_ci_and_independent_unit) ... ok
+test_concurrency_aggregate_documents_ci_of_mean (test_statistical_uncertainty.SummaryAnnotationTests.test_concurrency_aggregate_documents_ci_of_mean) ... ok
+test_lifecycle_summary_marks_within_container_unit (test_statistical_uncertainty.SummaryAnnotationTests.test_lifecycle_summary_marks_within_container_unit) ... ok
+test_handshake_ssl_object_survives_closed_stream (test_tls_persistent_revocation.BenchObservedFieldsTests.test_handshake_ssl_object_survives_closed_stream) ... ok
+test_new_connection_spans (test_tls_persistent_revocation.BenchObservedFieldsTests.test_new_connection_spans) ... ok
+test_request_fields_cover_observed_columns (test_tls_persistent_revocation.BenchObservedFieldsTests.test_request_fields_cover_observed_columns) ... ok
+test_reused_connection_has_no_connect_spans (test_tls_persistent_revocation.BenchObservedFieldsTests.test_reused_connection_has_no_connect_spans) ... ok
+test_trace_keeps_first_event_time (test_tls_persistent_revocation.BenchObservedFieldsTests.test_trace_keeps_first_event_time) ... ok
+test_context_built_after_crl_update_rejects_revoked_certificate (test_tls_persistent_revocation.CrlSemanticsTests.test_context_built_after_crl_update_rejects_revoked_certificate) ... ok
+test_crl_update_on_disk_affects_neither_open_connection_nor_running_context (test_tls_persistent_revocation.CrlSemanticsTests.test_crl_update_on_disk_affects_neither_open_connection_nor_running_context) ... ok
+test_peer_added_later_is_accepted_on_same_connection (test_tls_persistent_revocation.PerRequestPeerAuthorizationTests.test_peer_added_later_is_accepted_on_same_connection) ... .venv/lib/python3.12/site-packages/sqlalchemy/sql/schema.py:3623: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore
+ok
+test_removed_peer_is_rejected_on_next_request_of_same_connection (test_tls_persistent_revocation.PerRequestPeerAuthorizationTests.test_removed_peer_is_rejected_on_next_request_of_same_connection) ... ok
+test_missing_ip_is_reported_not_raised (test_unified_coldstart_readiness.ProbeEcdsaTests.test_missing_ip_is_reported_not_raised) ... ok
+test_polls_port_9001_on_container_ip (test_unified_coldstart_readiness.ProbeEcdsaTests.test_polls_port_9001_on_container_ip) ... ok
+test_window_relative_to_t0 (test_unified_coldstart_readiness.ReadyWindowTests.test_window_relative_to_t0) ... ok
+test_signed_residual_exposes_overlap_hidden_by_clipped_gap (test_unified_coldstart_readiness.RunOnceUsesFirstReadyResponseTests.test_signed_residual_exposes_overlap_hidden_by_clipped_gap) ... ok
+test_stages_come_from_first_200_and_window_is_recorded (test_unified_coldstart_readiness.RunOnceUsesFirstReadyResponseTests.test_stages_come_from_first_200_and_window_is_recorded) ... ok
+test_first_attempt_success_has_no_failed_start (test_unified_coldstart_readiness.WaitHttp200TraceTests.test_first_attempt_success_has_no_failed_start) ... ok
+test_record_attempts_lists_failed_and_success (test_unified_coldstart_readiness.WaitHttp200TraceTests.test_record_attempts_lists_failed_and_success) ... ok
+test_trace_brackets_first_success_and_keeps_body (test_unified_coldstart_readiness.WaitHttp200TraceTests.test_trace_brackets_first_success_and_keeps_body) ... ok
+test_without_trace_return_contract_unchanged (test_unified_coldstart_readiness.WaitHttp200TraceTests.test_without_trace_return_contract_unchanged) ... ok
+test_article_evidence_has_65_passing_cases (test_winnforum_evidence_parse.WinnForumEvidenceParseTests.test_article_evidence_has_65_passing_cases) ... ok
+test_parser_round_trip_to_csv (test_winnforum_evidence_parse.WinnForumEvidenceParseTests.test_parser_round_trip_to_csv) ... ok
+
+----------------------------------------------------------------------
+Ran 138 tests in 10.889s
+
+OK
+Wrote benchmarks/data/band_profile_robustness.csv (10 rows)
+calib K=  1       k1 NO  provisioning_sec:8>5
+calib K=  3       k3 NO  memory_mb:300>250
+calib K=  5       k5 NO  memory_mb:500>250
+selected: INFEASIBLE
+Wrote /tmp/prov_sel_t3bc2vg9/sel.json
+Wrote /tmp/uncert_bjwhsqc3/uncertainty.json
+winnforum_WINNF_FT_S_DRG_testcase.log: 6 cases {'pass': 6}
+winnforum_WINNF_FT_S_GRA_testcase.log: 16 cases {'pass': 16}
+winnforum_WINNF_FT_S_HBT_testcase.log: 12 cases {'pass': 12}
+winnforum_WINNF_FT_S_REG_testcase.log: 13 cases {'pass': 13}
+winnforum_WINNF_FT_S_RLQ_testcase.log: 6 cases {'pass': 6}
+winnforum_WINNF_FT_S_SIQ_testcase.log: 12 cases {'pass': 12}
+Wrote /tmp/winnforum_parse_79b250xx/lifecycle.csv (65 rows)

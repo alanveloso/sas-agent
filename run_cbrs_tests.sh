@@ -3,10 +3,18 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-HARNESS_IMAGE="sas-harness"
+HARNESS_IMAGE="${HARNESS_IMAGE:-sas-harness}"
+# Optional: pin UUT to a frozen image instead of rebuilding from Dockerfile.
+#   SAS_IMAGE=sas-agent:article SKIP_UUT_BUILD=1 bash run_cbrs_tests.sh
+SAS_IMAGE="${SAS_IMAGE:-}"
+SKIP_UUT_BUILD="${SKIP_UUT_BUILD:-0}"
 TEST_DIR=""
 IMAGE_CONTAINER=""
 COMPOSE=(docker compose -f "$SCRIPT_DIR/docker-compose.yml" -f "$SCRIPT_DIR/docker-compose.host.yml")
+if [[ -n "$SAS_IMAGE" && -f "$SCRIPT_DIR/docker-compose.frozen-article.yml" ]]; then
+  COMPOSE+=(-f "$SCRIPT_DIR/docker-compose.frozen-article.yml")
+  export SAS_IMAGE
+fi
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -47,6 +55,20 @@ docker cp "$IMAGE_CONTAINER:/harness/src/harness/certs/." "$HARNESS_CERTS_DIR"
 docker rm "$IMAGE_CONTAINER" >/dev/null
 IMAGE_CONTAINER=""
 
+# UUT fail-closed on /admin unless the harness admin leaf is allowlisted.
+if [[ -z "${SAS_ADMIN_CERT_SHA256:-}" ]]; then
+  if [[ ! -f "$HARNESS_CERTS_DIR/admin.cert" ]]; then
+    fail "admin.cert ausente em $HARNESS_CERTS_DIR — impossível autorizar /admin/reset"
+    exit 1
+  fi
+  SAS_ADMIN_CERT_SHA256="$(
+    openssl x509 -noout -fingerprint -sha256 -in "$HARNESS_CERTS_DIR/admin.cert" \
+      | cut -d= -f2
+  )"
+  export SAS_ADMIN_CERT_SHA256
+fi
+log "SAS_ADMIN_CERT_SHA256=${SAS_ADMIN_CERT_SHA256:0:24}… (admin.cert allowlist)"
+
 HARNESS_RUN=(docker run --rm --network host -e HOME=/tmp
   -v "$SAS_CFG_FILE:/harness/src/harness/sas.cfg:ro"
   "$HARNESS_IMAGE")
@@ -82,7 +104,12 @@ pick_host_ports
 write_sas_cfg
 
 log "Subindo sas-agent (faixa CBRS 3550–3700 MHz)..."
-"${COMPOSE[@]}" up -d --build
+if [[ "$SKIP_UUT_BUILD" == "1" || -n "$SAS_IMAGE" ]]; then
+  log "Using frozen UUT image (SKIP_UUT_BUILD=$SKIP_UUT_BUILD SAS_IMAGE=${SAS_IMAGE:-unset}); no --build"
+  "${COMPOSE[@]}" up -d --no-build
+else
+  "${COMPOSE[@]}" up -d --build
+fi
 
 log "Aguardando listeners HTTPS (9000/9001)..."
 ready=0

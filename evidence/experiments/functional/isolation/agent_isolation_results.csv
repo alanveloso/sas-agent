@@ -1,0 +1,12 @@
+run_id,timestamp_utc,scenario,step,agent,expected,obtained,pass,detail
+355154739a84,2026-11-12T21:09:20Z,grant_isolation,register_both,A+B,ok,True,1,
+1f41d5ca287b,2026-11-12T21:09:20Z,grant_isolation,grant_on_A,A,ok,True,1,grant/d70ad7a71561422784e0389fec682322
+7dc39fbb958d,2026-11-12T21:09:20Z,grant_isolation,B_has_A_grant,B,found=False,found=False,1,
+a0ffbac9162a,2026-11-12T21:09:20Z,grant_isolation,heartbeat_A,A,ok,True,1,
+3748be4cfd3d,2026-11-12T21:09:21Z,concurrent_lifecycle,grants,A+B,both ok,A=True B=True,1,
+ad019621791e,2026-11-12T21:09:21Z,concurrent_lifecycle,counts_independent,A+B,each count==1,A=1 B=1,1,
+a8a18258fa5a,2026-11-12T21:09:21Z,concurrent_lifecycle,full_cycle,A+B,ok,completed,1,
+91de5b99965a,2026-11-12T21:09:22Z,crash_isolation,A_alive_after_B_kill,A,ok,True,1,
+68baa974c658,2026-11-12T21:09:22Z,crash_isolation,A_heartbeat_after_B_kill,A,ok,True,1,
+20bbee73428b,2026-11-12T21:09:22Z,crash_isolation,B_restart,B,ok,True,1,
+92eca28c15be,2026-11-12T21:09:22Z,crash_isolation,A_state_intact,A,count>=1,count=1,1,

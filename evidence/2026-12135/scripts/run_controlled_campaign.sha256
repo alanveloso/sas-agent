@@ -1,3 +1,0 @@
-d4a3b808cd421fc979b35aac7d46e7c27b639b001f984adddb0ee0dfc4cdbe27  scripts/run_controlled_campaign.sh
-source_path=scripts/run_controlled_campaign.sh
-note=Original script used for controlled campaign; absolute CERTS default and ThinkPad-oriented gates preserved.

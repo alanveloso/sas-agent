@@ -1,0 +1,87 @@
+{
+  "timestamp_utc": "2026-11-12T21:11:07Z",
+  "python_version": "3.12.3",
+  "platform": "Linux-6.17.0-1033-oem-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "machine": "x86_64",
+  "node": "alanveloso-ThinkPad-P14s-Gen-5-AMD",
+  "seed": 55,
+  "n": 30,
+  "warmup": 3,
+  "packages": {
+    "httpx": "0.28.1",
+    "psutil": "7.2.2",
+    "fastapi": "0.139.2",
+    "uvicorn": "0.51.0",
+    "sqlalchemy": "2.0.51"
+  },
+  "docker_version": "29.9.3",
+  "git": {
+    "commit": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+    "dirty": true,
+    "dirty_file_count": 3
+  },
+  "host_load": {
+    "loadavg_1m": 0.43798828125,
+    "loadavg_5m": 0.64404296875,
+    "loadavg_15m": 0.361328125,
+    "cpu_percent_prior": 0.1,
+    "memory_used_percent_prior": 9.7,
+    "temperatures_c": {
+      "amdgpu:edge": 49.0,
+      "ath11k_hwmon:ath11k_hwmon_0": 50.0,
+      "acpitz:acpitz_0": 72.0,
+      "nvme:Composite": 39.85,
+      "nvme:Sensor 1": 55.85,
+      "nvme:Sensor 2": 39.85,
+      "k10temp:Tctl": 69.875,
+      "spd5118:spd5118_0": 49.5,
+      "thinkpad:CPU": 72.0,
+      "thinkpad:thinkpad_1": 72.0,
+      "thinkpad:thinkpad_2": 0.0,
+      "thinkpad:thinkpad_3": 72.0,
+      "thinkpad:thinkpad_4": 72.0
+    },
+    "temperature_max_c": 72.0,
+    "temperature_tctl_c": 69.875
+  },
+  "script_hashes": {
+    "lifecycle_decomp_bench.py": "352564917abfc243b6b9b23a2fa86e8d5804a7349a15c3fefd86c4a35973b307"
+  },
+  "lscpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           48 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  16\nOn-line CPU(s) list:                     0-15\nVendor ID:                               AuthenticAMD\nModel name:                              AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics\nCPU family:                              25\nModel:                                   117\nThread(s) per core:                      2\nCore(s) per socket:                      8\nSocket(s):                               1\nStepping:                                2\nFrequency boost:                         enabled\nCPU(s) scaling MHz:                      26%\nCPU max MHz:                             5134.8892\nCPU min MHz:                             419.1750\nBogoMIPS:                                6587.65\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good amd_lbr_v2 nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpuid_fault cpb cat_l3 cdp_l3 hw_pstate ssbd mba perfmon_v2 ibrs ibpb stibp ibrs_enhanced vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk avx512_bf16 clzero irperf xsaveerptr rdpru wbnoinvd cppc arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold vgif x2avic v_spec_ctrl vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid overflow_recov succor smca fsrm flush_l1d amd_lbr_pmc_freeze\nVirtualization:                          AMD-V\nL1d cache:                               256 KiB (8 instances)\nL1i cache:                               256 KiB (8 instances)\nL2 cache:                                8 MiB (8 instances)\nL3 cache:                                16 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-15\nVulnerability Gather data sampling:      Not affected\nVulnerability Ghostwrite:                Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Old microcode:             Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Mitigation; Safe RET\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; STIBP always-on; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Mitigation; Clear CPU buffers\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Mitigation; IBPB before exit to userspace\n",
+  "cpu_count": "16",
+  "cpu_model": "AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics",
+  "meminfo_total": "MemTotal:       28368672 kB",
+  "certs_dir": "evidence/tnsm-2026-12135-controlled-20261111T205011Z/meta/harness_certs",
+  "certs_fingerprint": "5e15918c74954fedeec436f4d370f2a67751e762be0f45d9f5531ae8a205489e",
+  "experiment": "lifecycle_decomp",
+  "operations": [
+    "registration",
+    "spectrumInquiry",
+    "grant",
+    "heartbeat",
+    "relinquishment",
+    "deregistration"
+  ],
+  "model": "client ≈ application_total + external; application_total ≈ sum(stage_*); application_non_db = application_total − database",
+  "stages_exclusive": [
+    "stage_handler_ms",
+    "stage_database_ms",
+    "stage_serialization_ms",
+    "stage_other_ms"
+  ],
+  "stage_semantics": "exclusive stack: handler+database+serialization+other; auth/validation omitted (FastAPI/Pydantic before _run_op)",
+  "nested_diagnostics": [
+    "nested_decision_ms",
+    "nested_database_ms",
+    "nested_serialization_ms"
+  ],
+  "image": {
+    "tag": "sas-agent:article",
+    "digest": "sas-agent@sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+  },
+  "profiles": [
+    "lab_custom_3p8"
+  ],
+  "failures": 0
+}

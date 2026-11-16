@@ -1,0 +1,84 @@
+{
+  "label": "tls_mtls_overhead",
+  "timestamp_utc": "2026-11-12T21:14:19Z",
+  "passed": true,
+  "timed_out": false,
+  "sensor": "k10temp:Tctl",
+  "max_tctl_c_threshold": 65.0,
+  "max_load1_threshold": 1.0,
+  "max_cpu_pct_threshold": 10.0,
+  "wait_sec": 0.54,
+  "final": {
+    "loadavg_1m": 0.40869140625,
+    "loadavg_5m": 0.55126953125,
+    "loadavg_15m": 0.37548828125,
+    "cpu_percent_prior": 0.7,
+    "memory_used_percent_prior": 9.4,
+    "temperatures_c": {
+      "amdgpu:edge": 47.0,
+      "ath11k_hwmon:ath11k_hwmon_0": 49.0,
+      "acpitz:acpitz_0": 53.0,
+      "nvme:Composite": 40.85,
+      "nvme:Sensor 1": 51.85,
+      "nvme:Sensor 2": 40.85,
+      "k10temp:Tctl": 52.75,
+      "spd5118:spd5118_0": 49.75,
+      "thinkpad:CPU": 53.0,
+      "thinkpad:thinkpad_1": 53.0,
+      "thinkpad:thinkpad_2": 0.0,
+      "thinkpad:thinkpad_3": 53.0,
+      "thinkpad:thinkpad_4": 53.0
+    },
+    "temperature_max_c": 53.0,
+    "temperature_tctl_c": 52.75,
+    "cpu_freq": {
+      "freq_mhz_mean": 1300.3754375,
+      "freq_mhz_min": 1100.334,
+      "freq_mhz_max": 3243.528,
+      "freq_mhz_per_cpu": [
+        1100.334,
+        1629.173,
+        1100.334,
+        1100.334,
+        1100.334,
+        1377.535,
+        1100.334,
+        1100.334,
+        1100.334,
+        1351.763,
+        3243.528,
+        1100.334,
+        1100.334,
+        1100.334,
+        1100.334,
+        1100.334
+      ],
+      "governor": "powersave"
+    },
+    "throttling_hints": {
+      "sources": [
+        "powercap",
+        "sysfs_thermal"
+      ],
+      "powercap_zones": [
+        "intel-rapl",
+        "intel-rapl:0",
+        "intel-rapl:0:0"
+      ],
+      "thermal_zones": [
+        {
+          "zone": "thermal_zone0",
+          "type": "acpitz",
+          "temp_c": 53.0
+        }
+      ]
+    },
+    "elapsed_wait_sec": 0.54
+  },
+  "n_samples": 1,
+  "git": {
+    "commit": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+    "dirty": true,
+    "dirty_file_count": 3
+  }
+}

@@ -1,0 +1,203 @@
+[INFO] 2026-11-13 16:29:04,143 util.py:76 Running WinnForum test case test_WINNF_FT_S_HBT_10:
+[INFO] 2026-11-13 16:29:04,143 util.py:77 [Configurable] Heartbeat with optional intervening grant termination
+       or blacklist.
+[INFO] 2026-11-13 16:29:04,144 util.py:127 test_WINNF_FT_S_HBT_10: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_HBT_10/default.config'
+test_WINNF_FT_S_HBT_1 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_1) ... ERROR
+test_WINNF_FT_S_HBT_10_0_default (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_10_0_default)
+[Configurable] Heartbeat with optional intervening grant termination ... ERROR
+test_WINNF_FT_S_HBT_11 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_11) ... ERROR
+test_WINNF_FT_S_HBT_12 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_12) ... ERROR
+test_WINNF_FT_S_HBT_2 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_2) ... ERROR
+test_WINNF_FT_S_HBT_3 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_3) ... ERROR
+test_WINNF_FT_S_HBT_4 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_4) ... ERROR
+test_WINNF_FT_S_HBT_5 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_5) ... ERROR
+test_WINNF_FT_S_HBT_6 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_6) ... ERROR
+test_WINNF_FT_S_HBT_7 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_7) ... ERROR
+test_WINNF_FT_S_HBT_8 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_8) ... ERROR
+test_WINNF_FT_S_HBT_9 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_9) ... ERROR
+
+======================================================================
+ERROR: test_WINNF_FT_S_HBT_1 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_HBT_testcase.py", line 39, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_HBT_10_0_default (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_10_0_default)
+[Configurable] Heartbeat with optional intervening grant termination
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_HBT_testcase.py", line 39, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_HBT_11 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_11)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_HBT_testcase.py", line 39, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_HBT_12 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_12)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_HBT_testcase.py", line 39, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_HBT_2 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_2)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_HBT_testcase.py", line 39, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_HBT_3 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_3)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_HBT_testcase.py", line 39, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_HBT_4 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_4)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_HBT_testcase.py", line 39, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_HBT_5 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_5)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_HBT_testcase.py", line 39, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_HBT_6 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_6)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_HBT_testcase.py", line 39, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_HBT_7 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_7)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_HBT_testcase.py", line 39, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_HBT_8 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_8)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_HBT_testcase.py", line 39, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+======================================================================
+ERROR: test_WINNF_FT_S_HBT_9 (testcases.WINNF_FT_S_HBT_testcase.HeartbeatTestcase.test_WINNF_FT_S_HBT_9)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/harness/src/harness/testcases/WINNF_FT_S_HBT_testcase.py", line 39, in setUp
+    self._sas_admin.Reset()
+  File "/harness/src/harness/sas.py", line 159, in Reset
+    RequestPost('https://%s/admin/reset' % self._base_url, None,
+  File "/harness/src/harness/request_handler.py", line 88, in RequestPost
+    return _Request(url, request, config, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/harness/src/harness/request_handler.py", line 172, in _Request
+    raise HTTPError(http_code)
+request_handler.HTTPError: HTTP code 403
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.059s
+
+FAILED (errors=12)

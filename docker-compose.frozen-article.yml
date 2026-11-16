@@ -1,0 +1,7 @@
+# Overlay: pin WInnForum UUT to a pre-built image (no Dockerfile rebuild).
+# Requires Compose that supports clearing `build` via empty override, or use
+# scripts/evaluate.sh winnforum (SAS_IMAGE + SKIP_UUT_BUILD) runs compose without rebuilding the UUT.
+services:
+  sas-agent:
+    image: ${SAS_IMAGE:-sas-agent:article}
+    pull_policy: never

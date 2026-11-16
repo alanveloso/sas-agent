@@ -1,0 +1,84 @@
+{
+  "label": "lifecycle_synth_short_timers_rep5",
+  "timestamp_utc": "2026-11-12T21:13:35Z",
+  "passed": true,
+  "timed_out": false,
+  "sensor": "k10temp:Tctl",
+  "max_tctl_c_threshold": 65.0,
+  "max_load1_threshold": 1.0,
+  "max_cpu_pct_threshold": 10.0,
+  "wait_sec": 0.54,
+  "final": {
+    "loadavg_1m": 0.61474609375,
+    "loadavg_5m": 0.60595703125,
+    "loadavg_15m": 0.3857421875,
+    "cpu_percent_prior": 0.4,
+    "memory_used_percent_prior": 9.4,
+    "temperatures_c": {
+      "amdgpu:edge": 48.0,
+      "ath11k_hwmon:ath11k_hwmon_0": 50.0,
+      "acpitz:acpitz_0": 68.0,
+      "nvme:Composite": 40.85,
+      "nvme:Sensor 1": 54.85,
+      "nvme:Sensor 2": 40.85,
+      "k10temp:Tctl": 63.625,
+      "spd5118:spd5118_0": 49.75,
+      "thinkpad:CPU": 68.0,
+      "thinkpad:thinkpad_1": 68.0,
+      "thinkpad:thinkpad_2": 0.0,
+      "thinkpad:thinkpad_3": 68.0,
+      "thinkpad:thinkpad_4": 68.0
+    },
+    "temperature_max_c": 68.0,
+    "temperature_tctl_c": 63.625,
+    "cpu_freq": {
+      "freq_mhz_mean": 1305.00375,
+      "freq_mhz_min": 1100.334,
+      "freq_mhz_max": 3243.852,
+      "freq_mhz_per_cpu": [
+        1100.334,
+        1579.505,
+        1100.334,
+        1100.334,
+        1296.858,
+        1100.334,
+        1100.334,
+        1100.334,
+        1296.225,
+        1359.946,
+        3243.852,
+        1100.334,
+        1100.334,
+        1100.334,
+        1100.334,
+        1100.334
+      ],
+      "governor": "powersave"
+    },
+    "throttling_hints": {
+      "sources": [
+        "powercap",
+        "sysfs_thermal"
+      ],
+      "powercap_zones": [
+        "intel-rapl",
+        "intel-rapl:0",
+        "intel-rapl:0:0"
+      ],
+      "thermal_zones": [
+        {
+          "zone": "thermal_zone0",
+          "type": "acpitz",
+          "temp_c": 68.0
+        }
+      ]
+    },
+    "elapsed_wait_sec": 0.54
+  },
+  "n_samples": 1,
+  "git": {
+    "commit": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+    "dirty": true,
+    "dirty_file_count": 3
+  }
+}

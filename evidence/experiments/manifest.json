@@ -1,0 +1,610 @@
+{
+  "schema_version": "2.0",
+  "collection_id": "experiments",
+  "generated_at_utc": "2026-11-13T17:22:55Z",
+  "purpose": "Single published experimental collection for the SAS Agent",
+  "layout": "evidence/experiments/<category>/...",
+  "sources": {
+    "full_integral": {
+      "path": "evidence/tnsm-2026-12135-full-20261112T200619Z",
+      "agent_sha": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+      "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+    },
+    "complementary": {
+      "path": "evidence/tnsm-2026-12135-complementary-20261113T141440Z",
+      "agent_sha": "310ed1e229cbb017341d00ec87fbf3b7593c2a29",
+      "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+    },
+    "historical": {
+      "path": "evidence/2026-12135",
+      "note": "used only for boundary/robustness gaps and historical K1/K15 validation"
+    }
+  },
+  "relations": {
+    "calibration_to_validation": {
+      "calibration": "provisioning/calibration (and concurrency/containers/calibration)",
+      "validation_selected_k": "provisioning/validation/k3_independent",
+      "do_not_pool_as_one_campaign": true
+    },
+    "illustrative_limits": {
+      "startup_sec": 60,
+      "provisioning_sec": 1.5,
+      "grant_batch_p95_ms": 1000,
+      "memory_mb": 2048,
+      "note": "Illustrative limits originally studied with historical calibration; new calibration may select K\u22605. Limits are not retuned after observing validation."
+    }
+  },
+  "experiments": {
+    "winnforum": {
+      "category": "functional",
+      "unit": "WInnForum test case",
+      "n_expected": 65,
+      "files": [
+        "functional/winnforum/PROVENANCE.txt",
+        "functional/winnforum/lifecycle_validation.csv",
+        "functional/winnforum/winnforum_WINNF_FT_S_DRG_testcase.log",
+        "functional/winnforum/winnforum_WINNF_FT_S_GRA_testcase.log",
+        "functional/winnforum/winnforum_WINNF_FT_S_HBT_testcase.log",
+        "functional/winnforum/winnforum_WINNF_FT_S_REG_testcase.log",
+        "functional/winnforum/winnforum_WINNF_FT_S_RLQ_testcase.log",
+        "functional/winnforum/winnforum_WINNF_FT_S_SIQ_testcase.log"
+      ],
+      "provenance": {
+        "source_id": "complementary",
+        "agent_sha": "310ed1e229cbb017341d00ec87fbf3b7593c2a29",
+        "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e",
+        "executed_at_utc_meta": "see meta/campaigns/complementary/",
+        "note": "Re-execution under frozen article image; not certification"
+      },
+      "n_observed": 65,
+      "results": {
+        "pass": 65
+      }
+    },
+    "winnforum_failed_admin403": {
+      "category": "functional",
+      "unit": "failed harness attempt (provenance)",
+      "files": [
+        "functional/winnforum_failed_admin403/PROVENANCE_FAILED_403.txt",
+        "functional/winnforum_failed_admin403/lifecycle_validation.csv",
+        "functional/winnforum_failed_admin403/winnforum_WINNF_FT_S_DRG_testcase.log",
+        "functional/winnforum_failed_admin403/winnforum_WINNF_FT_S_GRA_testcase.log",
+        "functional/winnforum_failed_admin403/winnforum_WINNF_FT_S_HBT_testcase.log",
+        "functional/winnforum_failed_admin403/winnforum_WINNF_FT_S_REG_testcase.log",
+        "functional/winnforum_failed_admin403/winnforum_WINNF_FT_S_RLQ_testcase.log",
+        "functional/winnforum_failed_admin403/winnforum_WINNF_FT_S_SIQ_testcase.log"
+      ],
+      "provenance": {
+        "source_id": "complementary",
+        "note": "HTTP 403 on /admin/reset before admin fingerprint fix; retained"
+      }
+    },
+    "isolation": {
+      "category": "functional",
+      "files": [
+        "functional/isolation/agent_isolation_manifest.json",
+        "functional/isolation/agent_isolation_results.csv"
+      ],
+      "provenance": {
+        "source_id": "full_integral",
+        "agent_sha": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+        "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+      }
+    },
+    "cert_matrix": {
+      "category": "functional",
+      "files": [
+        "functional/cert_matrix/cert_matrix_manifest.json",
+        "functional/cert_matrix/cert_matrix_results.csv",
+        "functional/cert_matrix/cert_matrix_summary.csv",
+        "functional/cert_matrix/certs_note.txt"
+      ],
+      "provenance": {
+        "source_id": "full_integral",
+        "agent_sha": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+        "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+      }
+    },
+    "boundary": {
+      "category": "functional",
+      "files": [
+        "functional/boundary/boundary_enforcement.csv",
+        "functional/boundary/boundary_enforcement_manifest.json"
+      ],
+      "provenance": {
+        "source_id": "full_integral_or_historical"
+      }
+    },
+    "robustness": {
+      "category": "functional",
+      "files": [
+        "functional/robustness/band_profile_robustness_note.csv",
+        "functional/robustness/unittest.log"
+      ],
+      "provenance": {
+        "source_id": "full_integral_or_historical"
+      }
+    },
+    "lifecycle": {
+      "category": "lifecycle",
+      "independent_unit": "Docker deployment (profile \u00d7 rep)",
+      "files": [
+        "lifecycle/br_anatel_privativa/rep1/lifecycle_decomp_manifest.json",
+        "lifecycle/br_anatel_privativa/rep1/lifecycle_decomp_raw.csv",
+        "lifecycle/br_anatel_privativa/rep1/lifecycle_decomp_summary.csv",
+        "lifecycle/br_anatel_privativa/rep1/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/br_anatel_privativa/rep2/lifecycle_decomp_manifest.json",
+        "lifecycle/br_anatel_privativa/rep2/lifecycle_decomp_raw.csv",
+        "lifecycle/br_anatel_privativa/rep2/lifecycle_decomp_summary.csv",
+        "lifecycle/br_anatel_privativa/rep2/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/br_anatel_privativa/rep3/lifecycle_decomp_manifest.json",
+        "lifecycle/br_anatel_privativa/rep3/lifecycle_decomp_raw.csv",
+        "lifecycle/br_anatel_privativa/rep3/lifecycle_decomp_summary.csv",
+        "lifecycle/br_anatel_privativa/rep3/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/br_anatel_privativa/rep4/lifecycle_decomp_manifest.json",
+        "lifecycle/br_anatel_privativa/rep4/lifecycle_decomp_raw.csv",
+        "lifecycle/br_anatel_privativa/rep4/lifecycle_decomp_summary.csv",
+        "lifecycle/br_anatel_privativa/rep4/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/br_anatel_privativa/rep5/lifecycle_decomp_manifest.json",
+        "lifecycle/br_anatel_privativa/rep5/lifecycle_decomp_raw.csv",
+        "lifecycle/br_anatel_privativa/rep5/lifecycle_decomp_summary.csv",
+        "lifecycle/br_anatel_privativa/rep5/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/cbrs_winnforum/rep1/lifecycle_decomp_manifest.json",
+        "lifecycle/cbrs_winnforum/rep1/lifecycle_decomp_raw.csv",
+        "lifecycle/cbrs_winnforum/rep1/lifecycle_decomp_summary.csv",
+        "lifecycle/cbrs_winnforum/rep1/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/cbrs_winnforum/rep2/lifecycle_decomp_manifest.json",
+        "lifecycle/cbrs_winnforum/rep2/lifecycle_decomp_raw.csv",
+        "lifecycle/cbrs_winnforum/rep2/lifecycle_decomp_summary.csv",
+        "lifecycle/cbrs_winnforum/rep2/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/cbrs_winnforum/rep3/lifecycle_decomp_manifest.json",
+        "lifecycle/cbrs_winnforum/rep3/lifecycle_decomp_raw.csv",
+        "lifecycle/cbrs_winnforum/rep3/lifecycle_decomp_summary.csv",
+        "lifecycle/cbrs_winnforum/rep3/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/cbrs_winnforum/rep4/lifecycle_decomp_manifest.json",
+        "lifecycle/cbrs_winnforum/rep4/lifecycle_decomp_raw.csv",
+        "lifecycle/cbrs_winnforum/rep4/lifecycle_decomp_summary.csv",
+        "lifecycle/cbrs_winnforum/rep4/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/cbrs_winnforum/rep5/lifecycle_decomp_manifest.json",
+        "lifecycle/cbrs_winnforum/rep5/lifecycle_decomp_raw.csv",
+        "lifecycle/cbrs_winnforum/rep5/lifecycle_decomp_summary.csv",
+        "lifecycle/cbrs_winnforum/rep5/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/lab_custom_3p8/rep1/lifecycle_decomp_manifest.json",
+        "lifecycle/lab_custom_3p8/rep1/lifecycle_decomp_raw.csv",
+        "lifecycle/lab_custom_3p8/rep1/lifecycle_decomp_summary.csv",
+        "lifecycle/lab_custom_3p8/rep1/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/lab_custom_3p8/rep2/lifecycle_decomp_manifest.json",
+        "lifecycle/lab_custom_3p8/rep2/lifecycle_decomp_raw.csv",
+        "lifecycle/lab_custom_3p8/rep2/lifecycle_decomp_summary.csv",
+        "lifecycle/lab_custom_3p8/rep2/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/lab_custom_3p8/rep3/lifecycle_decomp_manifest.json",
+        "lifecycle/lab_custom_3p8/rep3/lifecycle_decomp_raw.csv",
+        "lifecycle/lab_custom_3p8/rep3/lifecycle_decomp_summary.csv",
+        "lifecycle/lab_custom_3p8/rep3/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/lab_custom_3p8/rep4/lifecycle_decomp_manifest.json",
+        "lifecycle/lab_custom_3p8/rep4/lifecycle_decomp_raw.csv",
+        "lifecycle/lab_custom_3p8/rep4/lifecycle_decomp_summary.csv",
+        "lifecycle/lab_custom_3p8/rep4/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/lab_custom_3p8/rep5/lifecycle_decomp_manifest.json",
+        "lifecycle/lab_custom_3p8/rep5/lifecycle_decomp_raw.csv",
+        "lifecycle/lab_custom_3p8/rep5/lifecycle_decomp_summary.csv",
+        "lifecycle/lab_custom_3p8/rep5/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_narrow_5mhz/rep1/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_narrow_5mhz/rep1/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_narrow_5mhz/rep1/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_narrow_5mhz/rep1/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_narrow_5mhz/rep2/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_narrow_5mhz/rep2/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_narrow_5mhz/rep2/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_narrow_5mhz/rep2/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_narrow_5mhz/rep3/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_narrow_5mhz/rep3/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_narrow_5mhz/rep3/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_narrow_5mhz/rep3/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_narrow_5mhz/rep4/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_narrow_5mhz/rep4/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_narrow_5mhz/rep4/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_narrow_5mhz/rep4/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_narrow_5mhz/rep5/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_narrow_5mhz/rep5/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_narrow_5mhz/rep5/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_narrow_5mhz/rep5/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_protections_all_off/rep1/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_protections_all_off/rep1/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_protections_all_off/rep1/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_protections_all_off/rep1/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_protections_all_off/rep2/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_protections_all_off/rep2/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_protections_all_off/rep2/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_protections_all_off/rep2/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_protections_all_off/rep3/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_protections_all_off/rep3/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_protections_all_off/rep3/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_protections_all_off/rep3/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_protections_all_off/rep4/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_protections_all_off/rep4/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_protections_all_off/rep4/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_protections_all_off/rep4/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_protections_all_off/rep5/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_protections_all_off/rep5/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_protections_all_off/rep5/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_protections_all_off/rep5/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_protections_all_on/rep1/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_protections_all_on/rep1/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_protections_all_on/rep1/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_protections_all_on/rep1/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_protections_all_on/rep2/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_protections_all_on/rep2/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_protections_all_on/rep2/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_protections_all_on/rep2/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_protections_all_on/rep3/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_protections_all_on/rep3/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_protections_all_on/rep3/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_protections_all_on/rep3/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_protections_all_on/rep4/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_protections_all_on/rep4/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_protections_all_on/rep4/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_protections_all_on/rep4/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_protections_all_on/rep5/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_protections_all_on/rep5/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_protections_all_on/rep5/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_protections_all_on/rep5/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_short_timers/rep1/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_short_timers/rep1/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_short_timers/rep1/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_short_timers/rep1/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_short_timers/rep2/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_short_timers/rep2/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_short_timers/rep2/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_short_timers/rep2/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_short_timers/rep3/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_short_timers/rep3/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_short_timers/rep3/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_short_timers/rep3/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_short_timers/rep4/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_short_timers/rep4/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_short_timers/rep4/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_short_timers/rep4/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_short_timers/rep5/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_short_timers/rep5/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_short_timers/rep5/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_short_timers/rep5/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_wide_20mhz/rep1/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_wide_20mhz/rep1/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_wide_20mhz/rep1/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_wide_20mhz/rep1/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_wide_20mhz/rep2/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_wide_20mhz/rep2/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_wide_20mhz/rep2/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_wide_20mhz/rep2/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_wide_20mhz/rep3/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_wide_20mhz/rep3/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_wide_20mhz/rep3/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_wide_20mhz/rep3/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_wide_20mhz/rep4/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_wide_20mhz/rep4/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_wide_20mhz/rep4/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_wide_20mhz/rep4/thermal_gate_lifecycle_decomp.json",
+        "lifecycle/synth_wide_20mhz/rep5/lifecycle_decomp_manifest.json",
+        "lifecycle/synth_wide_20mhz/rep5/lifecycle_decomp_raw.csv",
+        "lifecycle/synth_wide_20mhz/rep5/lifecycle_decomp_summary.csv",
+        "lifecycle/synth_wide_20mhz/rep5/thermal_gate_lifecycle_decomp.json"
+      ],
+      "provenance": {
+        "source_id": "full_integral",
+        "agent_sha": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+        "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+      }
+    },
+    "coldstart": {
+      "category": "coldstart",
+      "independent_unit": "container cold start",
+      "files": [
+        "coldstart/thermal_gate_unified_coldstart.json",
+        "coldstart/unified_coldstart_manifest.json",
+        "coldstart/unified_coldstart_runs.csv",
+        "coldstart/unified_coldstart_summary.csv"
+      ],
+      "provenance": {
+        "source_id": "full_integral",
+        "agent_sha": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+        "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+      }
+    },
+    "tls_mtls": {
+      "category": "security",
+      "independent_unit": "TLS/mTLS request block",
+      "files": [
+        "security/tls_mtls/thermal_gate_tls_mtls_overhead.json",
+        "security/tls_mtls/tls_mtls_overhead_manifest.json",
+        "security/tls_mtls/tls_mtls_overhead_runs.csv",
+        "security/tls_mtls/tls_mtls_overhead_summary.csv",
+        "security/tls_mtls/tls_mtls_requests.csv"
+      ],
+      "provenance": {
+        "source_id": "full_integral",
+        "agent_sha": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+        "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+      }
+    },
+    "persistence": {
+      "category": "persistence",
+      "files": [
+        "persistence/persistence_modes_manifest.json",
+        "persistence/persistence_modes_runs.csv",
+        "persistence/persistence_modes_summary.csv",
+        "persistence/thermal_gate_persistence_modes.json"
+      ],
+      "provenance": {
+        "source_id": "full_integral",
+        "agent_sha": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+        "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+      }
+    },
+    "factorial": {
+      "category": "factorial",
+      "files": [
+        "factorial/factorial_provisioning_manifest.json",
+        "factorial/factorial_provisioning_runs.csv",
+        "factorial/factorial_provisioning_summary.csv"
+      ],
+      "provenance": {
+        "source_id": "full_integral",
+        "agent_sha": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+        "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+      }
+    },
+    "process_concurrency": {
+      "category": "concurrency",
+      "files": [
+        "concurrency/processes/concurrent_slicing_v2_manifest.json",
+        "concurrency/processes/concurrent_slicing_v2_raw.csv",
+        "concurrency/processes/concurrent_slicing_v2_runs.csv",
+        "concurrency/processes/concurrent_slicing_v2_summary.csv",
+        "concurrency/processes/thermal_gate_concurrent_repeat_1.json",
+        "concurrency/processes/thermal_gate_concurrent_repeat_2.json",
+        "concurrency/processes/thermal_gate_concurrent_repeat_3.json",
+        "concurrency/processes/thermal_gate_concurrent_repeat_4.json",
+        "concurrency/processes/thermal_gate_concurrent_repeat_5.json"
+      ],
+      "provenance": {
+        "source_id": "full_integral",
+        "agent_sha": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+        "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+      }
+    },
+    "container_concurrency_calibration": {
+      "category": "concurrency",
+      "role": "calibration",
+      "files": [
+        "concurrency/containers/calibration/container_concurrency_manifest.json",
+        "concurrency/containers/calibration/container_concurrency_runs.csv",
+        "concurrency/containers/calibration/container_concurrency_summary.csv",
+        "concurrency/containers/calibration/thermal_gate_container_concurrency.json"
+      ],
+      "provenance": {
+        "source_id": "full_integral",
+        "agent_sha": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+        "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+      }
+    },
+    "container_per_agent": {
+      "category": "concurrency",
+      "files": [
+        "concurrency/per_agent/container_concurrency_per_agent_manifest.json",
+        "concurrency/per_agent/container_concurrency_per_agent_runs.csv",
+        "concurrency/per_agent/container_concurrency_per_agent_summary.csv",
+        "concurrency/per_agent/thermal_gate_container_concurrency_per_agent.json"
+      ],
+      "provenance": {
+        "source_id": "full_integral",
+        "agent_sha": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+        "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+      }
+    },
+    "provisioning_calibration": {
+      "category": "provisioning",
+      "role": "calibration",
+      "same_files_as": "concurrency/containers/calibration",
+      "files": [
+        "provisioning/calibration/container_concurrency_manifest.json",
+        "provisioning/calibration/container_concurrency_runs.csv",
+        "provisioning/calibration/container_concurrency_summary.csv",
+        "provisioning/calibration/thermal_gate_container_concurrency.json"
+      ],
+      "provenance": {
+        "source_id": "full_integral",
+        "agent_sha": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+        "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+      }
+    },
+    "k3_independent_validation": {
+      "category": "provisioning",
+      "role": "independent_validation",
+      "selected_k": 3,
+      "seed_base": 94242,
+      "n_repeats": 5,
+      "files": [
+        "provisioning/validation/k3_independent/EVALUATION_PACKAGE.txt",
+        "provisioning/validation/k3_independent/container_concurrency_manifest.json",
+        "provisioning/validation/k3_independent/container_concurrency_runs.csv",
+        "provisioning/validation/k3_independent/container_concurrency_summary.csv",
+        "provisioning/validation/k3_independent/thermal_gate_container_concurrency.json"
+      ],
+      "provenance": {
+        "source_id": "complementary",
+        "agent_sha": "310ed1e229cbb017341d00ec87fbf3b7593c2a29",
+        "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+      },
+      "limits_package": {
+        "name": "illustrative_P4",
+        "startup_sec": 60,
+        "provisioning_sec": 1.5,
+        "grant_batch_p95_ms": 1000,
+        "memory_mb": 2048,
+        "limits_are_illustrative": true,
+        "do_not_retune_after_observation": true
+      }
+    },
+    "historical_k1_k15_validation": {
+      "category": "provisioning",
+      "role": "historical_independent_validation",
+      "files": [
+        "provisioning/validation/historical_k1_k15/container_concurrency_manifest.json",
+        "provisioning/validation/historical_k1_k15/container_concurrency_runs.csv",
+        "provisioning/validation/historical_k1_k15/container_concurrency_summary.csv",
+        "provisioning/validation/historical_k1_k15/runner.log"
+      ],
+      "provenance": {
+        "source_id": "historical",
+        "note": "Preserved; not merged with K=3 validation rows"
+      }
+    },
+    "k5_illustrative_sensitivity": {
+      "category": "provisioning",
+      "role": "sensitivity_not_selected_k",
+      "files": [
+        "provisioning/sensitivity/k5_illustrative/EVALUATION_PACKAGE.txt",
+        "provisioning/sensitivity/k5_illustrative/container_concurrency_manifest.json",
+        "provisioning/sensitivity/k5_illustrative/container_concurrency_runs.csv",
+        "provisioning/sensitivity/k5_illustrative/container_concurrency_summary.csv",
+        "provisioning/sensitivity/k5_illustrative/thermal_gate_container_concurrency.json"
+      ],
+      "provenance": {
+        "source_id": "full_integral",
+        "agent_sha": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+        "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+      }
+    },
+    "sustained_single_agent": {
+      "category": "sustained",
+      "independent_unit": "seeded sustained window (not individual HTTP requests)",
+      "files": [
+        "sustained/single_agent/n1500_s1/lifecycle_sustained_manifest.json",
+        "sustained/single_agent/n1500_s1/lifecycle_sustained_raw.csv",
+        "sustained/single_agent/n1500_s1/lifecycle_sustained_summary.csv",
+        "sustained/single_agent/n1500_s1/thermal_gate_lifecycle_sustained.json",
+        "sustained/single_agent/n1500_s2/lifecycle_sustained_manifest.json",
+        "sustained/single_agent/n1500_s2/lifecycle_sustained_raw.csv",
+        "sustained/single_agent/n1500_s2/lifecycle_sustained_summary.csv",
+        "sustained/single_agent/n1500_s2/thermal_gate_lifecycle_sustained.json",
+        "sustained/single_agent/n1500_s3/lifecycle_sustained_manifest.json",
+        "sustained/single_agent/n1500_s3/lifecycle_sustained_raw.csv",
+        "sustained/single_agent/n1500_s3/lifecycle_sustained_summary.csv",
+        "sustained/single_agent/n1500_s3/thermal_gate_lifecycle_sustained.json",
+        "sustained/single_agent/n300_s1/lifecycle_sustained_manifest.json",
+        "sustained/single_agent/n300_s1/lifecycle_sustained_raw.csv",
+        "sustained/single_agent/n300_s1/lifecycle_sustained_summary.csv",
+        "sustained/single_agent/n300_s1/thermal_gate_lifecycle_sustained.json",
+        "sustained/single_agent/n300_s2/lifecycle_sustained_manifest.json",
+        "sustained/single_agent/n300_s2/lifecycle_sustained_raw.csv",
+        "sustained/single_agent/n300_s2/lifecycle_sustained_summary.csv",
+        "sustained/single_agent/n300_s2/thermal_gate_lifecycle_sustained.json",
+        "sustained/single_agent/n300_s3/lifecycle_sustained_manifest.json",
+        "sustained/single_agent/n300_s3/lifecycle_sustained_raw.csv",
+        "sustained/single_agent/n300_s3/lifecycle_sustained_summary.csv",
+        "sustained/single_agent/n300_s3/thermal_gate_lifecycle_sustained.json"
+      ],
+      "provenance": {
+        "source_id": "full_integral",
+        "agent_sha": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+        "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+      }
+    },
+    "colocated_mixed": {
+      "category": "sustained",
+      "independent_unit": "paired scenario (A=K1 vs B=K5), five pairs",
+      "n_pairs": 5,
+      "arrival_interval_sec": 10,
+      "relinquish_interval_sec": 30,
+      "files": [
+        "sustained/colocated/campaign_schedule.json",
+        "sustained/colocated/colocated_sustained_clients.csv",
+        "sustained/colocated/colocated_sustained_raw.csv",
+        "sustained/colocated/colocated_sustained_runs.csv",
+        "sustained/colocated/colocated_sustained_summary.csv",
+        "sustained/colocated/manifest_A_p1_r1.json",
+        "sustained/colocated/manifest_A_p2_r2.json",
+        "sustained/colocated/manifest_A_p3_r3.json",
+        "sustained/colocated/manifest_A_p4_r4.json",
+        "sustained/colocated/manifest_A_p5_r5.json",
+        "sustained/colocated/manifest_B_p1_r1.json",
+        "sustained/colocated/manifest_B_p2_r2.json",
+        "sustained/colocated/manifest_B_p3_r3.json",
+        "sustained/colocated/manifest_B_p4_r4.json",
+        "sustained/colocated/manifest_B_p5_r5.json",
+        "sustained/colocated/thermal_gate_A_p1_r1.json",
+        "sustained/colocated/thermal_gate_A_p2_r2.json",
+        "sustained/colocated/thermal_gate_A_p3_r3.json",
+        "sustained/colocated/thermal_gate_A_p4_r4.json",
+        "sustained/colocated/thermal_gate_A_p5_r5.json",
+        "sustained/colocated/thermal_gate_B_p1_r1.json",
+        "sustained/colocated/thermal_gate_B_p2_r2.json",
+        "sustained/colocated/thermal_gate_B_p3_r3.json",
+        "sustained/colocated/thermal_gate_B_p4_r4.json",
+        "sustained/colocated/thermal_gate_B_p5_r5.json"
+      ],
+      "provenance": {
+        "source_id": "complementary",
+        "agent_sha": "310ed1e229cbb017341d00ec87fbf3b7593c2a29",
+        "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+      }
+    },
+    "sqlite_recovery": {
+      "category": "recovery",
+      "independent_unit": "recovery cycle",
+      "files": [
+        "recovery/sqlite/campaign_manifest.json",
+        "recovery/sqlite/cycles/cycle_01.json",
+        "recovery/sqlite/cycles/cycle_02.json",
+        "recovery/sqlite/cycles/cycle_03.json",
+        "recovery/sqlite/cycles/cycle_04.json",
+        "recovery/sqlite/cycles/cycle_05.json",
+        "recovery/sqlite/cycles/cycle_06.json",
+        "recovery/sqlite/cycles/cycle_07.json",
+        "recovery/sqlite/cycles/cycle_08.json",
+        "recovery/sqlite/cycles/cycle_09.json",
+        "recovery/sqlite/cycles/cycle_10.json",
+        "recovery/sqlite/cycles/cycle_11.json",
+        "recovery/sqlite/cycles/cycle_12.json",
+        "recovery/sqlite/cycles/cycle_13.json",
+        "recovery/sqlite/cycles/cycle_14.json",
+        "recovery/sqlite/cycles/cycle_15.json",
+        "recovery/sqlite/cycles/cycle_16.json",
+        "recovery/sqlite/cycles/cycle_17.json",
+        "recovery/sqlite/cycles/cycle_18.json",
+        "recovery/sqlite/cycles/cycle_19.json",
+        "recovery/sqlite/cycles/cycle_20.json",
+        "recovery/sqlite/cycles/cycle_21.json",
+        "recovery/sqlite/cycles/cycle_22.json",
+        "recovery/sqlite/cycles/cycle_23.json",
+        "recovery/sqlite/cycles/cycle_24.json",
+        "recovery/sqlite/cycles/cycle_25.json",
+        "recovery/sqlite/cycles/cycle_26.json",
+        "recovery/sqlite/cycles/cycle_27.json",
+        "recovery/sqlite/cycles/cycle_28.json",
+        "recovery/sqlite/cycles/cycle_29.json",
+        "recovery/sqlite/cycles/cycle_30.json",
+        "recovery/sqlite/cycles_done.txt",
+        "recovery/sqlite/recovery_cycles_summary.csv"
+      ],
+      "provenance": {
+        "source_id": "full_integral",
+        "agent_sha": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+        "image_id": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e"
+      }
+    }
+  },
+  "analysis_stage": "analysis_stage/",
+  "derived_outputs": "analysis/",
+  "exclusions": [
+    {
+      "item": "full_integral/10_colocated",
+      "reason": "lacks mid-window Registration/Grant/Relinquish mix (arrivals_sum=0); replaced by complementary colocated"
+    },
+    {
+      "item": "pilots/smoke colocated",
+      "reason": "not definitive evaluation units"
+    }
+  ]
+}

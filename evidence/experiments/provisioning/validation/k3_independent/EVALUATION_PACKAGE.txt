@@ -1,0 +1,17 @@
+evaluation_package=P4_selected_k_independent_validation
+selected_k=3
+startup_sec=60
+provisioning_sec=1.5
+grant_batch_p95_ms=1000
+memory_mb=2048
+seed=94242
+repeats=5
+devices=1500
+scenario=A
+persistence=sqlite_default_as_container_concurrency_bench
+thermal_gate=required
+disjoint_from_calib_seed=42
+disjoint_from_k5_seed=84242
+do_not_retune_limits=true
+do_not_reuse_calibration_observations=true
+k5_validation_is_additional_sensitivity_only=true

@@ -92,6 +92,18 @@ docker compose -p sas-cbrs down
 docker compose -p sas-anatel down
 ```
 
+## Laboratory evaluation
+
+Single entrypoint for host checks, campaign stages, validation of published
+results, and regeneration of tables/figures:
+
+```bash
+./scripts/evaluate.sh help
+./scripts/evaluate.sh validate
+./scripts/evaluate.sh tables
+./scripts/evaluate.sh figures
+```
+
 ## WInnForum conformance suite
 
 The official harness is downloaded automatically during the Docker image build,

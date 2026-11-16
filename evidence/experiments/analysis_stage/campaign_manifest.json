@@ -1,0 +1,30 @@
+{
+  "campaign_id": "experiments",
+  "campaign_type": "published_experimental_collection",
+  "experiments": {
+    "lifecycle_decomposition": "lifecycle",
+    "instrumented_cold_start": "coldstart",
+    "mtls_correctness_overhead": "security/tls_mtls",
+    "cert_matrix": "functional/cert_matrix",
+    "persistence_decomposition": "persistence",
+    "factorial_provisioning": "factorial",
+    "concurrent_slicing_v2": "concurrency/processes",
+    "container_concurrency": "concurrency/containers/calibration"
+  },
+  "phases": [
+    "analysis",
+    "coldstart",
+    "concurrency",
+    "factorial",
+    "functional",
+    "lifecycle",
+    "persistence",
+    "provisioning",
+    "recovery",
+    "security",
+    "sustained"
+  ],
+  "sas_agent_sha_primary": "6676207df664b43c302accc558cf9a8e18ca3c0c",
+  "image_id_primary": "sha256:43923a1c64a3944143eeccf093654af15b54de88e63754774394b42359b42e4e",
+  "note": "Multiple source commits; see manifest.json experiments[].provenance"
+}

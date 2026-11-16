@@ -1,0 +1,20 @@
+{
+  "A": {
+    "n": 5,
+    "arrivals_sum_median": 295,
+    "relinquished_sum_median": 95,
+    "missed_sum_max": 0,
+    "ram_peak_mb_median": 74.5,
+    "stats_sweeps_median": 308,
+    "note": "independent unit = pair; not individual HTTP requests"
+  },
+  "B": {
+    "n": 5,
+    "arrivals_sum_median": 295,
+    "relinquished_sum_median": 95,
+    "missed_sum_max": 0,
+    "ram_peak_mb_median": 357.74,
+    "stats_sweeps_median": 301,
+    "note": "independent unit = pair; not individual HTTP requests"
+  }
+}

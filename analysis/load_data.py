@@ -8,20 +8,37 @@ from typing import Any
 
 REPO = Path(__file__).resolve().parents[1]
 RAW = REPO / "artifacts" / "raw"
+EXPERIMENTS = REPO / "evidence" / "experiments"
+DEFAULT_CAMPAIGN = "experiments"
+
+
+def ensure_experiments_staged() -> None:
+    """Link ``artifacts/raw/experiments`` → ``evidence/experiments/analysis_stage``."""
+    if not (EXPERIMENTS / "analysis_stage").is_dir():
+        return
+    from analysis.stage_experiments import stage_experiments
+
+    stage_experiments()
 
 
 def list_campaigns() -> list[str]:
+    ensure_experiments_staged()
     if not RAW.is_dir():
         return []
     return sorted(p.name for p in RAW.iterdir() if p.is_dir() and not p.name.startswith("."))
 
 
 def latest_campaign() -> str | None:
+    ensure_experiments_staged()
+    if (RAW / DEFAULT_CAMPAIGN).is_dir() or (RAW / DEFAULT_CAMPAIGN).is_symlink():
+        return DEFAULT_CAMPAIGN
     cams = list_campaigns()
     return cams[-1] if cams else None
 
 
 def campaign_dir(campaign_id: str) -> Path:
+    if campaign_id == DEFAULT_CAMPAIGN:
+        ensure_experiments_staged()
     return RAW / campaign_id
 
 
@@ -36,7 +53,17 @@ def find_csvs(campaign_id: str, name_substr: str) -> list[Path]:
     root = campaign_dir(campaign_id)
     if not root.is_dir():
         return []
-    return sorted(root.rglob(f"*{name_substr}*.csv"))
+    # pathlib.Path.rglob may not descend into symlink children of a symlink farm
+    # (analysis_stage). Walk with followlinks=True instead.
+    import os
+
+    found: list[Path] = []
+    root_res = root.resolve()
+    for dirpath, _dirnames, filenames in os.walk(root_res, followlinks=True):
+        for name in filenames:
+            if name_substr in name and name.endswith(".csv"):
+                found.append(Path(dirpath) / name)
+    return sorted(found)
 
 
 def load_lifecycle_summary(campaign_id: str) -> list[dict[str, str]]:

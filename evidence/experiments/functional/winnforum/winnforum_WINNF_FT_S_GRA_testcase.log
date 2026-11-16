@@ -1,0 +1,179 @@
+[INFO] 2026-11-13 16:37:22,981 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_5:
+[INFO] 2026-11-13 16:37:22,981 util.py:77  SAS rejects GrantRequest if the CBSD already has a Grant from another SAS.
+
+    
+[INFO] 2026-11-13 16:37:22,981 util.py:127 test_WINNF_FT_S_GRA_5: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_GRA_5/default.config'
+[INFO] 2026-11-13 16:37:23,001 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_6:
+[INFO] 2026-11-13 16:37:23,001 util.py:77  SAS terminates Grant upon learning that the CBSD has a Grant from another SAS
+
+    The response should be 500 for HeartBeat Response.
+    
+[INFO] 2026-11-13 16:37:23,001 util.py:127 test_WINNF_FT_S_GRA_6: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_GRA_6/default.config'
+[INFO] 2026-11-13 16:37:23,003 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_17:
+[INFO] 2026-11-13 16:37:23,003 util.py:77 [Configurable] Array grant request.
+[INFO] 2026-11-13 16:37:23,003 util.py:127 test_WINNF_FT_S_GRA_17: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_GRA_17/default.config'
+test_WINNF_FT_S_GRA_1 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_1) ... [INFO] 2026-11-13 16:37:23,086 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_1:
+[INFO] 2026-11-13 16:37:23,087 util.py:77 Federal Incumbent present in the PAL frequency range requested by the CBSD
+     who is inside the DPA Neighborhood.
+
+     grant responseCode = 0 and in heartbeat responseCode = 501(SUSPENDED_GRANT)
+     or  grant responseCode = 400
+    
+ok
+test_WINNF_FT_S_GRA_10 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_10) ... [INFO] 2026-11-13 16:41:23,170 sas_testcase.py:527 Stopping all running servers, if any
+[INFO] 2026-11-13 16:41:23,254 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_10:
+[INFO] 2026-11-13 16:41:23,254 util.py:77 First request for 2 devices granted as PAL and GAA channel,
+    send next request for PAL and GAA channel for the same frequency range.
+
+    Response Code '0' for first request and '401' for next request.
+    
+[INFO] 2026-11-13 16:41:23,332 sas_testcase.py:527 Stopping all running servers, if any
+ok
+test_WINNF_FT_S_GRA_11 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_11) ... [INFO] 2026-11-13 16:41:23,416 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_11:
+[INFO] 2026-11-13 16:41:23,416 util.py:77 Un-Supported CBSD maximum EIRP
+
+    The response should be:
+    - 103 (INVALID_VALUE) for all initial grant requests
+    - 0 for all 2nd grant requests
+    
+[INFO] 2026-11-13 16:41:23,530 sas_testcase.py:527 Stopping all running servers, if any
+ok
+test_WINNF_FT_S_GRA_12 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_12) ... [INFO] 2026-11-13 16:41:23,615 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_12:
+[INFO] 2026-11-13 16:41:23,616 util.py:77 Blacklisted CBSD in Array Request (responseCode 101)
+
+    The response should be:
+    - responseCode 0 for the first and second cbsdIds
+    - responseCode 101 for the third cbsdId
+    
+[INFO] 2026-11-13 16:41:23,684 sas_testcase.py:527 Stopping all running servers, if any
+ok
+test_WINNF_FT_S_GRA_13 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_13) ... [INFO] 2026-11-13 16:41:23,765 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_13:
+[INFO] 2026-11-13 16:41:23,765 util.py:77 Requests for multiple PAL channels and for multiple GAA channels.
+
+    No incumbent present in the PAL and GAA frequency ranges used in the
+    requests.
+
+    The response should be 0.
+    
+[INFO] 2026-11-13 16:41:23,860 sas_testcase.py:527 Stopping all running servers, if any
+ok
+test_WINNF_FT_S_GRA_15 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_15) ... [INFO] 2026-11-13 16:41:23,943 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_15:
+[INFO] 2026-11-13 16:41:23,943 util.py:77 Two grant requests: 1. Missing maxEirp and 2. Invalid frequency range.
+
+    Returns 102 (MISSING_PARAM) for first request.
+            103 (INVALID_VALUE) for second request.
+    
+[INFO] 2026-11-13 16:41:23,991 sas_testcase.py:527 Stopping all running servers, if any
+ok
+test_WINNF_FT_S_GRA_16 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_16) ... [INFO] 2026-11-13 16:41:24,064 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_16:
+[INFO] 2026-11-13 16:41:24,064 util.py:77 Two grant requests for overlapping frequency range.
+
+    Returns 401 (GRANT_CONFLICT) for at least one request.
+    
+[INFO] 2026-11-13 16:41:24,105 sas_testcase.py:527 Stopping all running servers, if any
+ok
+test_WINNF_FT_S_GRA_17_0_default (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_17_0_default)
+[Configurable] Array grant request. ... [INFO] 2026-11-13 16:41:24,187 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_17_0_default:
+[INFO] 2026-11-13 16:41:24,187 util.py:77 [Configurable] Array grant request.
+[INFO] 2026-11-13 16:41:34,318 sas_testcase.py:527 Stopping all running servers, if any
+ok
+test_WINNF_FT_S_GRA_2 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_2) ... [INFO] 2026-11-13 16:41:34,399 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_2:
+[INFO] 2026-11-13 16:41:34,399 util.py:77 Grant request array with various required parameters missing.
+
+    1. Missing cbsdId
+    2. Missing operationParam object
+    3. Missing maxEirp
+    4. Missing highFrequency
+    5. Missing lowFrequency
+
+    Returns 102 (MISSING_PARAM) for all requests.
+    
+ok
+test_WINNF_FT_S_GRA_3 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_3) ... [INFO] 2026-11-13 16:41:34,489 sas_testcase.py:527 Stopping all running servers, if any
+[INFO] 2026-11-13 16:41:34,569 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_3:
+[INFO] 2026-11-13 16:41:34,569 util.py:77 CBSD grant request when CBSD ID does not exist in SAS.
+    CBSD sends grant request when its CBSD Id is not in SAS. The response
+    should be FAIL.
+    
+[INFO] 2026-11-13 16:41:34,579 sas_testcase.py:527 Stopping all running servers, if any
+ok
+test_WINNF_FT_S_GRA_4 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_4) ... [INFO] 2026-11-13 16:41:34,657 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_4:
+[INFO] 2026-11-13 16:41:34,657 util.py:77 cbsdId send by the CBSD is not its cbsdId but some other.
+
+     SAS rejects the request by sending responseCode 103
+    
+[INFO] 2026-11-13 16:41:34,706 sas_testcase.py:527 Stopping all running servers, if any
+ok
+test_WINNF_FT_S_GRA_5_0_default (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_5_0_default)
+SAS rejects GrantRequest if the CBSD already has a Grant from another SAS. ... [INFO] 2026-11-13 16:41:34,783 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_5_0_default:
+[INFO] 2026-11-13 16:41:34,783 util.py:77  SAS rejects GrantRequest if the CBSD already has a Grant from another SAS.
+
+    
+[INFO] 2026-11-13 16:41:34,801 sas_test_harness.py:84 Created a SAS TH with name (SAS-Test-Harness-1), host_name (localhost), port (9010), cert_file (certs/sas.cert), key_file (certs/sas.key), ca_cert_file (certs/ca.cert). (Note that the SAS TH has not yet been started.)
+[INFO] 2026-11-13 16:41:34,801 sas_test_harness.py:135 Temp dump dir path = /harness/src/harness/SAS-Test-Harness-Data/2026-11-13_16-41-34-801662
+/harness/src/harness/sas_test_harness.py:100: DeprecationWarning: setDaemon() is deprecated, set the daemon attribute instead
+  self.setDaemon(True)
+/harness/src/harness/sas_test_harness.py:107: DeprecationWarning: ssl.wrap_socket() is deprecated, use SSLContext.wrap_socket()
+  self.server.socket = ssl.wrap_socket(
+/usr/local/lib/python3.11/ssl.py:1487: DeprecationWarning: ssl.PROTOCOL_TLSv1_2 is deprecated
+  context = SSLContext(ssl_version)
+[INFO] 2026-11-13 16:41:34,809 sas_testcase.py:534 Injecting FCC IDs for CBSDs in the SAS test harness into the SAS UUT.
+[INFO] 2026-11-13 16:41:34,809 sas_test_harness.py:328 FAD Records generated successfully.The files are placed under the path:/harness/src/harness/SAS-Test-Harness-Data/2026-11-13_16-41-34-801662
+[INFO] 2026-11-13 16:41:34,809 sas_test_harness.py:175 Started Test Harness Server: SAS-Test-Harness-1 at https://localhost:9010/v1.3
+/harness/src/harness/util.py:313: ResourceWarning: unclosed file <_io.BufferedReader name='certs/sas.cert'>
+  certificate_string = open(certificate,"rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+127.0.0.1 - - [13/Nov/2026 16:41:34] "GET /v1.3/dump HTTP/1.1" 200 -
+127.0.0.1 - - [13/Nov/2026 16:41:34] "GET /v1.3/cbsd/activity_dump_file_cbsd0.json HTTP/1.1" 200 -
+[INFO] 2026-11-13 16:41:55,378 sas_test_harness.py:184 Shutting down Test Harness Server:SAS-Test-Harness-1 at https://localhost:9010/v1.3
+[INFO] 2026-11-13 16:41:55,378 sas_test_harness.py:192 Stopped Test Harness Server:SAS-Test-Harness-1
+[INFO] 2026-11-13 16:41:55,379 sas_test_harness.py:208 all dump records generated by this testcase are cleaned successfully
+[INFO] 2026-11-13 16:41:55,379 sas_testcase.py:527 Stopping all running servers, if any
+ok
+test_WINNF_FT_S_GRA_6_0_default (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_6_0_default)
+SAS terminates Grant upon learning that the CBSD has a Grant from another SAS ... [INFO] 2026-11-13 16:41:55,464 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_6_0_default:
+[INFO] 2026-11-13 16:41:55,464 util.py:77  SAS terminates Grant upon learning that the CBSD has a Grant from another SAS
+
+    The response should be 500 for HeartBeat Response.
+    
+[INFO] 2026-11-13 16:41:55,498 sas_test_harness.py:84 Created a SAS TH with name (SAS-TestHarness-1), host_name (localhost), port (9010), cert_file (certs/sas.cert), key_file (certs/sas.key), ca_cert_file (certs/ca.cert). (Note that the SAS TH has not yet been started.)
+[INFO] 2026-11-13 16:41:55,498 sas_test_harness.py:135 Temp dump dir path = /harness/src/harness/SAS-Test-Harness-Data/2026-11-13_16-41-55-498484
+[INFO] 2026-11-13 16:41:55,499 sas_testcase.py:534 Injecting FCC IDs for CBSDs in the SAS test harness into the SAS UUT.
+[INFO] 2026-11-13 16:41:55,500 sas_test_harness.py:328 FAD Records generated successfully.The files are placed under the path:/harness/src/harness/SAS-Test-Harness-Data/2026-11-13_16-41-55-498484
+[INFO] 2026-11-13 16:41:55,500 sas_test_harness.py:175 Started Test Harness Server: SAS-TestHarness-1 at https://localhost:9010/v1.3
+127.0.0.1 - - [13/Nov/2026 16:41:55] "GET /v1.3/dump HTTP/1.1" 200 -
+127.0.0.1 - - [13/Nov/2026 16:41:55] "GET /v1.3/cbsd/activity_dump_file_cbsd0.json HTTP/1.1" 200 -
+[INFO] 2026-11-13 16:42:15,546 sas_test_harness.py:184 Shutting down Test Harness Server:SAS-TestHarness-1 at https://localhost:9010/v1.3
+[INFO] 2026-11-13 16:42:15,546 sas_test_harness.py:192 Stopped Test Harness Server:SAS-TestHarness-1
+[INFO] 2026-11-13 16:42:15,547 sas_test_harness.py:208 all dump records generated by this testcase are cleaned successfully
+[INFO] 2026-11-13 16:42:15,547 sas_testcase.py:527 Stopping all running servers, if any
+ok
+test_WINNF_FT_S_GRA_7 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_7) ... [INFO] 2026-11-13 16:42:15,670 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_7:
+[INFO] 2026-11-13 16:42:15,670 util.py:77 Invalid operationFrequencyRange.
+
+    The response should be:
+    - 103 (INVALID_VALUE) for first request.
+    - 103 or 300 (UNSUPPORTED_SPECTRUM) for second and third requests.
+    
+[INFO] 2026-11-13 16:42:15,724 sas_testcase.py:527 Stopping all running servers, if any
+ok
+test_WINNF_FT_S_GRA_8 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_8) ... [INFO] 2026-11-13 16:42:15,804 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_8:
+[INFO] 2026-11-13 16:42:15,804 util.py:77 CBSD requests a frequency range which is a mix of PAL and GAA channel.
+
+    The Response Code should be 103.
+    
+[INFO] 2026-11-13 16:42:15,850 sas_testcase.py:527 Stopping all running servers, if any
+ok
+test_WINNF_FT_S_GRA_9 (testcases.WINNF_FT_S_GRA_testcase.GrantTestcase.test_WINNF_FT_S_GRA_9) ... [INFO] 2026-11-13 16:42:15,928 util.py:76 Running WinnForum test case test_WINNF_FT_S_GRA_9:
+[INFO] 2026-11-13 16:42:15,928 util.py:77 Frequency range requested by a CBSD overlaps with PAL channel and
+    the CBSD is inside claimed PPA boundary.
+
+    Response Code should be 400 for second device
+    
+[INFO] 2026-11-13 16:42:26,009 sas_testcase.py:527 Stopping all running servers, if any
+ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 303.004s
+
+OK

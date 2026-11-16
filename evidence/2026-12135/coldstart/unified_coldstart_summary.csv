@@ -1,9 +1,0 @@
-profile_id,n_ok,n_fail,metric,median,mean,p95,iqr,min,max,ci95_low,ci95_high,experimental_unit,p95_is_point_estimate
-br_anatel_privativa,30,0,cold_start_total_ms,701.976,701.183,707.448,7.514,693.055,712.3,699.348,703.017,independent_docker_container,1
-cbrs_winnforum,30,0,cold_start_total_ms,701.217,705.747,758.145,7.44,694.235,798.073,697.993,713.502,independent_docker_container,1
-lab_custom_3p8,30,0,cold_start_total_ms,701.668,704.887,756.817,8.656,688.607,757.819,699.204,710.571,independent_docker_container,1
-synth_narrow_5mhz,30,0,cold_start_total_ms,701.057,701.218,707.447,5.992,694.279,710.261,699.671,702.765,independent_docker_container,1
-synth_protections_all_off,30,0,cold_start_total_ms,702.759,703.019,711.101,5.516,696.43,715.038,701.39,704.647,independent_docker_container,1
-synth_protections_all_on,30,0,cold_start_total_ms,700.571,700.805,711.491,7.952,690.855,715.552,698.501,703.109,independent_docker_container,1
-synth_short_timers,30,0,cold_start_total_ms,701.521,703.213,715.104,6.219,694.637,723.514,700.902,705.524,independent_docker_container,1
-synth_wide_20mhz,30,0,cold_start_total_ms,702.088,702.221,708.991,8.323,694.325,709.3,700.575,703.868,independent_docker_container,1

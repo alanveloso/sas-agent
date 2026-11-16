@@ -1,0 +1,88 @@
+[INFO] 2026-11-13 16:30:37,478 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_11:
+[INFO] 2026-11-13 16:30:37,478 util.py:77 [Configurable] One-time registration.
+[INFO] 2026-11-13 16:30:37,479 util.py:127 test_WINNF_FT_S_REG_11: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_REG_11/default.config'
+[INFO] 2026-11-13 16:30:37,504 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_12:
+[INFO] 2026-11-13 16:30:37,504 util.py:77 [Configurable] Re-registration (including intervening blacklist).
+[INFO] 2026-11-13 16:30:37,504 util.py:127 test_WINNF_FT_S_REG_12: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_REG_12/default.config'
+[INFO] 2026-11-13 16:30:37,507 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_13:
+[INFO] 2026-11-13 16:30:37,507 util.py:77 [Configurable] Unsupported SAS Protocol version.
+[INFO] 2026-11-13 16:30:37,507 util.py:127 test_WINNF_FT_S_REG_13: Creating default config at '/harness/src/harness/testcases/configs/test_WINNF_FT_S_REG_13/default.config'
+test_WINNF_FT_S_REG_1 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_1) ... [INFO] 2026-11-13 16:30:37,652 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_1:
+[INFO] 2026-11-13 16:30:37,652 util.py:77 Array Multi-Step registration for CBSDs (Cat A and B).
+
+    The response should be SUCCESS.
+    
+ok
+test_WINNF_FT_S_REG_10 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_10) ... [INFO] 2026-11-13 16:30:37,807 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_10:
+[INFO] 2026-11-13 16:30:37,807 util.py:77 Unsupported SAS protocol version in Array request (responseCode 100).
+
+    The response should be FAILURE 100.
+    
+ok
+test_WINNF_FT_S_REG_11_0_default (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_11_0_default)
+[Configurable] One-time registration. ... [INFO] 2026-11-13 16:30:37,941 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_11_0_default:
+[INFO] 2026-11-13 16:30:37,941 util.py:77 [Configurable] One-time registration.
+ok
+test_WINNF_FT_S_REG_12_0_default (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_12_0_default)
+[Configurable] Re-registration (including intervening blacklist). ... [INFO] 2026-11-13 16:30:38,092 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_12_0_default:
+[INFO] 2026-11-13 16:30:38,092 util.py:77 [Configurable] Re-registration (including intervening blacklist).
+ok
+test_WINNF_FT_S_REG_13_0_default (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_13_0_default)
+[Configurable] Unsupported SAS Protocol version. ... [INFO] 2026-11-13 16:30:38,234 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_13_0_default:
+[INFO] 2026-11-13 16:30:38,234 util.py:77 [Configurable] Unsupported SAS Protocol version.
+ok
+test_WINNF_FT_S_REG_2 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_2) ... [INFO] 2026-11-13 16:30:38,333 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_2:
+[INFO] 2026-11-13 16:30:38,333 util.py:77 Array Re-registration of multiple CBSDs.
+
+    The response should be SUCCESS for Re-registration.
+    
+ok
+test_WINNF_FT_S_REG_3 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_3) ... [INFO] 2026-11-13 16:30:38,556 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_3:
+[INFO] 2026-11-13 16:30:38,556 util.py:77 Array Single-Step registration for CBSDs (Cat A and B).
+
+    The response should be SUCCESS.
+    
+ok
+test_WINNF_FT_S_REG_4 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_4) ... [INFO] 2026-11-13 16:30:38,744 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_4:
+[INFO] 2026-11-13 16:30:38,744 util.py:77 Array Re-registration of Single-step-registered CBSD (CBSD ID exists).
+
+    The response should be SUCCESS.
+    
+ok
+test_WINNF_FT_S_REG_5 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_5) ... [INFO] 2026-11-13 16:31:39,097 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_5:
+[INFO] 2026-11-13 16:31:39,098 util.py:77 Missing Required parameters in Array Registration request.
+
+    The response should be MISSING_PARAM 102.
+    
+ok
+test_WINNF_FT_S_REG_6 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_6) ... [INFO] 2026-11-13 16:31:39,279 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_6:
+[INFO] 2026-11-13 16:31:39,280 util.py:77 Pending registration in Array request (responseCode 200).
+
+    The response should be:
+    - responseCode 0 for CBSD 1.
+    - responseCode 200 for CBSDs 2 and 3.
+    
+ok
+test_WINNF_FT_S_REG_7 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_7) ... [INFO] 2026-11-13 16:31:39,418 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_7:
+[INFO] 2026-11-13 16:31:39,418 util.py:77 Invalid parameters in Array Registration Request
+
+    The response should be 103.
+    
+ok
+test_WINNF_FT_S_REG_8 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_8) ... [INFO] 2026-11-13 16:31:39,797 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_8:
+[INFO] 2026-11-13 16:31:39,798 util.py:77 Invalid REG-Conditional parameters in Array Registration Request (responseCode 103)
+    The response should be SUCCESS for the first CBSD,
+    FAILURE 103 for the second and third CBSDs.
+    
+ok
+test_WINNF_FT_S_REG_9 (testcases.WINNF_FT_S_REG_testcase.RegistrationTestcase.test_WINNF_FT_S_REG_9) ... [INFO] 2026-11-13 16:31:39,925 util.py:76 Running WinnForum test case test_WINNF_FT_S_REG_9:
+[INFO] 2026-11-13 16:31:39,926 util.py:77 Blacklisted CBSD in Array Registration request (responseCode 101).
+
+    The response should be BLACKLISTED 101.
+    
+ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 62.482s
+
+OK

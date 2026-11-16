@@ -1,0 +1,84 @@
+{
+  "label": "coloc_sust_A_p3_r3",
+  "timestamp_utc": "2026-11-13T14:58:18Z",
+  "passed": true,
+  "timed_out": false,
+  "sensor": "k10temp:Tctl",
+  "max_tctl_c_threshold": 65.0,
+  "max_load1_threshold": 1.0,
+  "max_cpu_pct_threshold": 10.0,
+  "wait_sec": 0.53,
+  "final": {
+    "loadavg_1m": 0.1708984375,
+    "loadavg_5m": 0.14111328125,
+    "loadavg_15m": 0.24169921875,
+    "cpu_percent_prior": 1.0,
+    "memory_used_percent_prior": 19.3,
+    "temperatures_c": {
+      "ath11k_hwmon:ath11k_hwmon_0": 47.0,
+      "acpitz:acpitz_0": 56.0,
+      "nvme:Composite": 42.85,
+      "nvme:Sensor 1": 50.85,
+      "nvme:Sensor 2": 42.85,
+      "k10temp:Tctl": 56.0,
+      "spd5118:spd5118_0": 50.5,
+      "thinkpad:CPU": 56.0,
+      "thinkpad:thinkpad_1": 56.0,
+      "thinkpad:thinkpad_2": 0.0,
+      "thinkpad:thinkpad_3": 56.0,
+      "thinkpad:thinkpad_4": 56.0,
+      "amdgpu:edge": 47.0
+    },
+    "temperature_max_c": 56.0,
+    "temperature_tctl_c": 56.0,
+    "cpu_freq": {
+      "freq_mhz_mean": 1578.857875,
+      "freq_mhz_min": 1100.334,
+      "freq_mhz_max": 3243.23,
+      "freq_mhz_per_cpu": [
+        1100.334,
+        1297.478,
+        1100.334,
+        1100.334,
+        2166.95,
+        1600.295,
+        3243.23,
+        2035.372,
+        1338.208,
+        1100.334,
+        3241.397,
+        1100.334,
+        1288.608,
+        1100.334,
+        1347.85,
+        1100.334
+      ],
+      "governor": "powersave"
+    },
+    "throttling_hints": {
+      "sources": [
+        "powercap",
+        "sysfs_thermal"
+      ],
+      "powercap_zones": [
+        "intel-rapl",
+        "intel-rapl:0",
+        "intel-rapl:0:0"
+      ],
+      "thermal_zones": [
+        {
+          "zone": "thermal_zone0",
+          "type": "acpitz",
+          "temp_c": 56.0
+        }
+      ]
+    },
+    "elapsed_wait_sec": 0.53
+  },
+  "n_samples": 1,
+  "git": {
+    "commit": "310ed1e229cbb017341d00ec87fbf3b7593c2a29",
+    "dirty": false,
+    "dirty_file_count": 0
+  }
+}
